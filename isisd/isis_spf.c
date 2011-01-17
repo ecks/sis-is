@@ -1049,12 +1049,16 @@ isis_run_spf (struct isis_area *area, int level, int family)
 	    {
 	      if (LSP_PSEUDO_ID (lsp_id))
 		{
+			zlog_debug ("SS: Psuedo LSP; Area: %s", lsp->area->area_tag);
+			
 		  isis_spf_process_pseudo_lsp (spftree, lsp, vertex->d_N,
 					       vertex->depth, family);
 
 		}
 	      else
 		{
+			zlog_debug ("SS: Non-Psuedo LSP; Area: %s", lsp->area->area_tag);
+			
 		  isis_spf_process_lsp (spftree, lsp, vertex->d_N,
 					vertex->depth, family);
 		}
