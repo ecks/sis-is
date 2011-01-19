@@ -1284,17 +1284,21 @@ ip_address_uninstall (struct vty *vty, struct interface *ifp,
       return CMD_WARNING;
     }
 
-#if 0
+// HSA BEGIN: modify bug # 486 https://bugzilla.quagga.net/show_bug.cgi?id=486
+
   /* Redistribute this information. */
   zebra_interface_address_delete_update (ifp, ifc);
 
   /* Remove connected route. */
   connected_down_ipv4 (ifp, ifc);
 
+  if_subnet_delete (ifp, ifc);
+
   /* Free address information. */
   listnode_delete (ifp->connected, ifc);
   connected_free (ifc);
-#endif
+
+// HSA END
 
   return CMD_SUCCESS;
 }
