@@ -200,14 +200,13 @@ static void sisis_exit (int status)
   int *socket;
   struct interface *ifp;
   extern struct zclient *zclient;
-  extern struct zclient *zlookup;
 
   /* it only makes sense for this to be called on a clean exit */
   assert (status == 0);
 
-  /* reverse sisis_master_init */
-  for (ALL_LIST_ELEMENTS (sisis_info->sisis_addrs, node, nnode, sisis_addr))
-    sisis_delete (sisis_addr);
+  /* TODO: reverse sisis_master_init */
+  //for (ALL_LIST_ELEMENTS (sisis_info->sisis_addrs, node, nnode, sisis_addr))
+    //sisis_delete (sisis_addr);
   list_free (sisis_info->sisis_addrs);
 
   /* reverse sisis_master_init */
@@ -266,8 +265,6 @@ static void sisis_exit (int status)
   // vty_terminate ();
   if (zclient)
     zclient_free (zclient);
-  if (zlookup)
-    zclient_free (zlookup);
 
   /* reverse sisis_master_init */
   if (master)
