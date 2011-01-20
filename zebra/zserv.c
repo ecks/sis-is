@@ -722,9 +722,13 @@ static int zread_interface_address_add_or_delete (int command, struct zserv *cli
 {
 	unsigned int ifindex;
   struct prefix p;
+	struct stream *s;
 
   memset (&p, 0, sizeof(p));
-
+	
+	/* Get input stream.  */
+  s = client->ibuf;
+	
   /* Get interface index. */
   ifindex = stream_getl (s);
 	
