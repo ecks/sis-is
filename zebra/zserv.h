@@ -26,8 +26,6 @@
 #include "if.h"
 #include "workqueue.h"
 
-#include "zebra/interface.h"
-
 /* Default port information. */
 #define ZEBRA_VTY_PORT                2601
 
@@ -100,6 +98,7 @@ extern void route_read (void);
 extern void zebra_route_map_init (void);
 extern void zebra_snmp_init (void);
 extern void zebra_vty_init (void);
+extern int ip_address_install (struct vty *, struct interface *, const char *, const char *, const char *);
 
 extern int zsend_interface_add (struct zserv *, struct interface *);
 extern int zsend_interface_delete (struct zserv *, struct interface *);
