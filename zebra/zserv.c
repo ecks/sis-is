@@ -715,6 +715,111 @@ zread_interface_add (struct zserv *client, u_short length)
   return 0;
 }
 
+/* 
+ * Parse the ZEBRA_INTERFACE_ADDRESS_ADD or ZEBRA_INTERFACE_ADDRESS_DELETE sent from client. Adds address to interface
+ */
+static int zread_interface_address_add_or_delete (int command, struct zserv *client, u_short length)
+{
+	unsigned int ifindex;
+  struct prefix p;
+
+  memset (&p, 0, sizeof(p));
+
+  /* Get interface index. */
+  ifindex = stream_getl (s);
+	
+	// IPv4 prefix
+  memset (&p, 0, sizeof (struct prefix_ipv4));
+  p.family = AF_INET;
+  p.prefixlen = stream_getc (s);
+  stream_get (&p.prefix, s, PSIZE (p.prefixlen));
+	
+	char * addr_str[INET_ADDRSTRLEN+3];
+	inet_ntop (AF_INET, p.prefix, addr_str, INET_ADDRSTRLEN),
+	sprintf(addr_str, "%s/%d", addr_str, p.prefixlen);
+	
+	// Get interface
+	struct interface *ifp = if_lookup_by_index (ifindex);
+	if (ifp)
+	{
+		if (command == ZEBRA_INTERFACE_ADDRESS_ADD)
+			ip_address_install (NULL, ifp, addr_str, NULL, NULL);
+		else if (command == ZEBRA_INTERFACE_ADDRESS_DELETE)
+			ip_address_uninstall (NULL, ifp, addr_str, NULL, NULL);
+	}
+	
+	/*
+  int i;
+  struct prefix_ipv4 p;
+  u_char message;
+  struct stream *s;
+  unsigned int ifindex;
+  u_char ifname_len;
+
+  // Get input stream
+  s = client->ibuf;
+
+	rib->type = stream_getc (s);
+  rib->flags = stream_getc (s);
+  message = stream_getc (s); 
+  rib->uptime = time (NULL);
+
+  // IPv4 prefix
+  memset (&p, 0, sizeof (struct prefix_ipv4));
+  p.family = AF_INET;
+  p.prefixlen = stream_getc (s);
+  stream_get (&p.prefix, s, PSIZE (p.prefixlen));
+
+  // Nexthop parse.
+  if (CHECK_FLAG (message, ZAPI_MESSAGE_NEXTHOP))
+    {
+      nexthop_num = stream_getc (s);
+
+      for (i = 0; i < nexthop_num; i++)
+	{
+	  nexthop_type = stream_getc (s);
+
+	  switch (nexthop_type)
+	    {
+	    case ZEBRA_NEXTHOP_IFINDEX:
+	      ifindex = stream_getl (s);
+	      nexthop_ifindex_add (rib, ifindex);
+	      break;
+	    case ZEBRA_NEXTHOP_IFNAME:
+	      ifname_len = stream_getc (s);
+	      stream_forward_getp (s, ifname_len);
+	      break;
+	    case ZEBRA_NEXTHOP_IPV4:
+	      nexthop.s_addr = stream_get_ipv4 (s);
+	      nexthop_ipv4_add (rib, &nexthop, NULL);
+	      break;
+	    case ZEBRA_NEXTHOP_IPV6:
+	      stream_forward_getp (s, IPV6_MAX_BYTELEN);
+	      break;
+      case ZEBRA_NEXTHOP_BLACKHOLE:
+        nexthop_blackhole_add (rib);
+        break;
+	    }
+	}
+    }
+
+  // Distance
+  if (CHECK_FLAG (message, ZAPI_MESSAGE_DISTANCE))
+    rib->distance = stream_getc (s);
+
+  // Metric
+  if (CHECK_FLAG (message, ZAPI_MESSAGE_METRIC))
+    rib->metric = stream_getl (s);
+    
+  // Table
+  rib->table=zebrad.rtm_table_default;
+  rib_add_ipv4_multipath (&p, rib);
+  
+	*/
+	
+  return 0;
+}
+
 /* Unregister zebra server interface information. */
 static int
 zread_interface_delete (struct zserv *client, u_short length)
@@ -1243,6 +1348,10 @@ zebra_client_read (struct thread *thread)
     case ZEBRA_INTERFACE_ADD:
       zread_interface_add (client, length);
       break;
+		case ZEBRA_INTERFACE_ADDRESS_ADD:
+		case ZEBRA_INTERFACE_ADDRESS_DELETE:
+			zread_interface_address_add_or_delete (command, client, length);
+			break;
     case ZEBRA_INTERFACE_DELETE:
       zread_interface_delete (client, length);
       break;

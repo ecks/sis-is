@@ -202,6 +202,8 @@ AC_ARG_ENABLE(watchquagga,
 [  --disable-watchquagga   do not build watchquagga])
 AC_ARG_ENABLE(isisd,
 [  --enable-isisd          build isisd])
+AC_ARG_ENABLE(sisisd,
+[  --enable-sisisd          build sisisd])
 AC_ARG_ENABLE(solaris,
 [  --enable-solaris          build solaris])
 AC_ARG_ENABLE(bgp-announce,
@@ -1230,6 +1232,12 @@ case "${enable_isisd}" in
   *    ) ;;
 esac
 
+case "${enable_sisisd}" in
+  "yes") SISISD="sisisd";;
+  "no" ) SISISD="";;
+  *    ) ;;
+esac
+
 # XXX Perhaps auto-enable on Solaris, but that's messy for cross builds.
 case "${enable_solaris}" in
   "yes") SOLARIS="solaris";;
@@ -1252,6 +1260,7 @@ AC_SUBST(OSPFD)
 AC_SUBST(OSPF6D)
 AC_SUBST(WATCHQUAGGA)
 AC_SUBST(ISISD)
+AC_SUBST(SISISD)
 AC_SUBST(SOLARIS)
 AC_SUBST(VTYSH)
 AC_SUBST(INCLUDES)
@@ -1493,6 +1502,7 @@ AC_DEFINE_UNQUOTED(PATH_ZEBRA_PID, "$quagga_statedir/zebra.pid",zebra PID)
 AC_DEFINE_UNQUOTED(PATH_RIPD_PID, "$quagga_statedir/ripd.pid",ripd PID)
 AC_DEFINE_UNQUOTED(PATH_RIPNGD_PID, "$quagga_statedir/ripngd.pid",ripngd PID)
 AC_DEFINE_UNQUOTED(PATH_BGPD_PID, "$quagga_statedir/bgpd.pid",bgpd PID)
+AC_DEFINE_UNQUOTED(PATH_SISISD_PID, "$quagga_statedir/sisisd.pid",sisisd PID)
 AC_DEFINE_UNQUOTED(PATH_OSPFD_PID, "$quagga_statedir/ospfd.pid",ospfd PID)
 AC_DEFINE_UNQUOTED(PATH_OSPF6D_PID, "$quagga_statedir/ospf6d.pid",ospf6d PID)
 AC_DEFINE_UNQUOTED(PATH_ISISD_PID, "$quagga_statedir/isisd.pid",isisd PID)
@@ -1528,7 +1538,7 @@ AC_MSG_RESULT($ac_cv_htonl_works)
 
 AC_CONFIG_FILES([Makefile lib/Makefile zebra/Makefile ripd/Makefile 
 	  ripngd/Makefile bgpd/Makefile ospfd/Makefile watchquagga/Makefile
-	  ospf6d/Makefile isisd/Makefile vtysh/Makefile doc/Makefile 
+	  ospf6d/Makefile isisd/Makefile sisisd/Makefile vtysh/Makefile doc/Makefile 
 	  ospfclient/Makefile tests/Makefile m4/Makefile redhat/Makefile
 	  pkgsrc/Makefile
 	  redhat/quagga.spec 
