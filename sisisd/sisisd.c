@@ -31,7 +31,7 @@ struct sisis_info * sisis_info;
 void sisis_init ()
 {
   /* Init zebra. */
-  isis_zebra_init ();
+  sisis_zebra_init ();
 	
 	/* NOTES:
 	  zapi_ipv4_route (ZEBRA_IPV4_ROUTE_ADD, zclient, (struct prefix_ipv4 *) p, &api);
@@ -50,7 +50,7 @@ time_t sisis_clock (void)
   return tv.tv_sec;
 }
 
-void isis_master_init (void)
+void sisis_master_init (void)
 {
   memset (&sisis_info, 0, sizeof (struct sisis_info));
 
@@ -60,4 +60,27 @@ void isis_master_init (void)
   sisis_info->port = SISIS_PORT_DEFAULT;
   sisis_info->master = thread_master_create();
   sisis_info->start_time = sisis_clock();
+}
+
+void sisis_zebra_init (void)
+{
+  /* Set default values. */
+  zclient = zclient_new ();
+  zclient_init (zclient, ZEBRA_ROUTE_BGP);
+  zclient->router_id_update = NULL;
+  zclient->interface_add = NULL;
+  zclient->interface_delete = NULL;
+  zclient->interface_address_add = NULL;
+  zclient->interface_address_delete = NULL;
+  zclient->ipv4_route_add = NULL;
+  zclient->ipv4_route_delete = NULL;
+  zclient->interface_up = NULL;
+  zclient->interface_down = NULL;
+#ifdef HAVE_IPV6
+  zclient->ipv6_route_add = NULL;
+  zclient->ipv6_route_delete = NULL;
+#endif /* HAVE_IPV6 */
+
+  /* Interface related init. */
+  // TODO: if_init ();
 }
