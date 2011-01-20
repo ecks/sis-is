@@ -14,7 +14,7 @@ libsisis_a_SOURCES = \
 	sisisd.c sisis_zebra.c
 
 noinst_HEADERS = \
-	sisisd.h sisis_zebra.h \
+	sisisd.h sisis_zebra.h
 
 sisisd_SOURCES = sisis_main.c
 sisisd_LDADD = libsisis.a ../lib/libzebra.la @LIBCAP@ @LIBM@
