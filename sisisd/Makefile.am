@@ -11,7 +11,7 @@ noinst_LIBRARIES = libsisis.a
 sbin_PROGRAMS = sisisd
 
 libsisis_a_SOURCES = \
-	sisisd.c sisis_zebra.c
+	sisisd.c sisis_zebra.c sisis_main.c
 
 noinst_HEADERS = \
 	sisisd.h sisis_zebra.h
