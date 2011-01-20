@@ -31,7 +31,7 @@
 /* All information about zebra. */
 struct zclient *zclient = NULL;
 
-static struct sisis_info sisis_info;
+static struct sisis_info sisis_info_real;
 
 void sisis_init ()
 {
@@ -57,9 +57,9 @@ time_t sisis_clock (void)
 
 void sisis_master_init (void)
 {
-  memset (&sisis_info, 0, sizeof (struct sisis_info));
+  memset (&sisis_info_real, 0, sizeof (struct sisis_info));
 
-  sisis_info = &sisis_info;
+  sisis_info = &sisis_info_real;
   sisis_info->sisis_addrs = list_new();
   sisis_info->listen_sockets = list_new();
   sisis_info->port = SISIS_PORT_DEFAULT;
