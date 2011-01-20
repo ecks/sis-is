@@ -257,8 +257,9 @@ static void sisis_exit (int status)
   prefix_list_delete_hook (NULL);
   prefix_list_reset ();
 
+  // TODO: Remove
   /* reverse community_list_init */
-  community_list_terminate (sisis_clist);
+  //community_list_terminate (sisis_clist);
 
   // TODO: Remove
   //cmd_terminate ();
@@ -274,10 +275,13 @@ static void sisis_exit (int status)
 
   if (zlog_default)
     closezlog (zlog_default);
-
-  if (CONF_sisis_DEBUG (normal, NORMAL))
+  
+  // TODO: Remove
+  /*
+  if (CONF_SISIS_DEBUG (normal, NORMAL))
     log_memstats_stderr ("sisisd");
-
+  */
+  
   exit (status);
 }
 
