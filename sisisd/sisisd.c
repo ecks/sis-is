@@ -23,8 +23,12 @@
 
 #include "prefix.h"
 #include "zebra/interface.h"
+#include "zclient.h"
 
 #include "sisisd/sisisd.h"
+
+/* All information about zebra. */
+struct zclient *zclient = NULL;
 
 struct sisis_info * sisis_info;
 
