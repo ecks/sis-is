@@ -39,7 +39,7 @@
 #include "filter.h"
 #include "plist.h"
 
-#include "sisis/sisisd.h"
+#include "sisisd/sisisd.h"
 
 /* sisis options, we use GNU getopt library. */
 static const struct option longopts[] = 
