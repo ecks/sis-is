@@ -721,7 +721,7 @@ zread_interface_add (struct zserv *client, u_short length)
 static int zread_interface_address_add_or_delete (int command, struct zserv *client, u_short length)
 {
 	unsigned int ifindex;
-  struct prefix p;
+  struct prefix_ipv4 p;
 	struct stream *s;
 
   memset (&p, 0, sizeof(p));
@@ -739,8 +739,8 @@ static int zread_interface_address_add_or_delete (int command, struct zserv *cli
   stream_get (&p.prefix, s, PSIZE (p.prefixlen));
 	
 	char * addr_str[INET_ADDRSTRLEN+3];
-	inet_ntop (AF_INET, p.prefix, addr_str, INET_ADDRSTRLEN),
-	sprintf(addr_str, "%s/%d", addr_str, p.prefixlen);
+	inet_ntop (AF_INET, p.prefix, &addr_str, INET_ADDRSTRLEN),
+	sprintf(&addr_str, "%s/%d", addr_str, p.prefixlen);
 	
 	// Get interface
 	struct interface *ifp = if_lookup_by_index (ifindex);
