@@ -391,7 +391,7 @@ int main (int argc, char **argv)
   zlog_notice ("sisisd %s starting: sisis@%s:%d", QUAGGA_VERSION,
 	       (sisis_info->address ? sisis_info->address : "<all>"),
 	       sisis_info->port);
-
+  
   /* Start finite state machine, here we go! */
   while (thread_fetch (master, &thread))
     thread_call (&thread);
