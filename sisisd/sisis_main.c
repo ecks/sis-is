@@ -155,7 +155,7 @@ void sighup (void)
 
   /* Terminate all thread. */
   sisis_terminate ();
-  sisis_reset ();
+  // TODO: Remove // sisis_reset ();
   zlog_info ("sisisd restarting!");
 
   // TODO: Remove or fix
@@ -240,22 +240,22 @@ static void sisis_exit (int status)
 
   // reverse sisis_scan_init
   sisis_scan_finish ();
-  */
 
-  /* reverse access_list_init */
+  // reverse access_list_init
   access_list_add_hook (NULL);
   access_list_delete_hook (NULL);
   access_list_reset ();
 
-  /* reverse sisis_filter_init */
+  // reverse sisis_filter_init
   as_list_add_hook (NULL);
   as_list_delete_hook (NULL);
   sisis_filter_reset ();
 
-  /* reverse prefix_list_init */
+  // reverse prefix_list_init
   prefix_list_add_hook (NULL);
   prefix_list_delete_hook (NULL);
   prefix_list_reset ();
+  */
 
   // TODO: Remove
   /* reverse community_list_init */

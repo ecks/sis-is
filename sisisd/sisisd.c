@@ -26,6 +26,7 @@
 #include "zclient.h"
 
 #include "sisisd/sisisd.h"
+#include "sisisd/sisis_zebra.h"
 
 /* All information about zebra. */
 struct zclient *zclient = NULL;
@@ -87,4 +88,9 @@ void sisis_zebra_init (void)
 
   /* Interface related init. */
   // TODO: if_init ();
+}
+
+void sisis_terminate (void)
+{
+  // TODO
 }

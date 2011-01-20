@@ -66,6 +66,6 @@ struct sisis_info * sisis_info;
 void sisis_init (void);
 time_t sisis_clock (void);
 void sisis_master_init (void);
-void sisis_zebra_init (void);
+void sisis_terminate (void);
 
 #endif /* SISISD_H */
