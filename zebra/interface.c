@@ -1150,7 +1150,7 @@ ALIAS (no_bandwidth_if,
        "Set bandwidth informational parameter\n"
        "Bandwidth in kilobits\n")
 
-static int
+int
 ip_address_install (struct vty *vty, struct interface *ifp,
 		    const char *addr_str, const char *peer_str,
 		    const char *label)
@@ -1237,7 +1237,7 @@ ip_address_install (struct vty *vty, struct interface *ifp,
   return CMD_SUCCESS;
 }
 
-static int
+int
 ip_address_uninstall (struct vty *vty, struct interface *ifp,
 		      const char *addr_str, const char *peer_str,
 		      const char *label)

@@ -739,7 +739,7 @@ static int zread_interface_address_add_or_delete (int command, struct zserv *cli
   stream_get (&p.prefix, s, PSIZE (p.prefixlen));
 	
 	char addr_str[INET_ADDRSTRLEN+3];
-	inet_ntop (AF_INET, p.prefix, &addr_str, INET_ADDRSTRLEN),
+	inet_ntop (AF_INET, &p.prefix, addr_str, INET_ADDRSTRLEN),
 	sprintf(&addr_str, "%s/%d", addr_str, p.prefixlen);
 	
 	// Get interface
