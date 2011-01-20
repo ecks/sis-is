@@ -50,7 +50,6 @@ static const struct option longopts[] =
   { "sisis_port",  required_argument, NULL, 'p'},
   { "listenon",    required_argument, NULL, 'l'},
   { "retain",      no_argument,       NULL, 'r'},
-  { "no_kernel",   no_argument,       NULL, 'n'},
   { "user",        required_argument, NULL, 'u'},
   { "group",       required_argument, NULL, 'g'},
   { "version",     no_argument,       NULL, 'v'},
@@ -305,7 +304,7 @@ int main (int argc, char **argv)
   /* Command line argument treatment. */
   while (1) 
   {
-    opt = getopt_long (argc, argv, "df:i:hp:l:rnu:g:v", longopts, 0);
+    opt = getopt_long (argc, argv, "df:i:hp:l:ru:g:v", longopts, 0);
     
     if (opt == EOF)
       break;
@@ -336,9 +335,6 @@ int main (int argc, char **argv)
       case 'l':
         sisis_info->address = optarg;
         /* listenon implies -n */
-      case 'n':
-        sisis_option_set (SISIS_OPT_NO_FIB);
-        break;
       case 'u':
         sisisd_privs.user = optarg;
         break;
@@ -359,7 +355,7 @@ int main (int argc, char **argv)
     }
 
   /* Make thread master. */
-  master = sisis_master->master;
+  master = sisis_info->master;
 
   /* Initializations. */
   srand (time (NULL));
