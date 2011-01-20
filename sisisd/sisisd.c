@@ -36,6 +36,7 @@ void sisis_init ()
 	/* NOTES:
 	  zapi_ipv4_route (ZEBRA_IPV4_ROUTE_ADD, zclient, (struct prefix_ipv4 *) p, &api);
 	  zapi_ipv4_route (ZEBRA_IPV4_ROUTE_DELETE, zclient, (struct prefix_ipv4 *) p, &api);
+	*/
 }
 
 /* time_t value that is monotonicly increasing

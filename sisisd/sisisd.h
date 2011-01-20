@@ -23,7 +23,8 @@
 #define SISISD_H
 
 #define SISISD_VERSION "1.0"
-#define SISIS_REGISTRATION_PORT 54345
+//#define SISIS_REGISTRATION_PORT 54345
+#define SISIS_PORT_DEFAULT 54345
 
 /* Default configuration settings for sisisd.  */
 #define SISIS_DEFAULT_CONFIG             "sisisd.conf"
