@@ -25,8 +25,21 @@
 #include "zebra/interface.h"
 #include "zclient.h"
 
+#include "thread.h"
+#include "sockunion.h"
+#include "sockopt.h"
+#include "memory.h"
+#include "log.h"
+#include "if.h"
+#include "prefix.h"
+#include "command.h"
+#include "privs.h"
+#include "linklist.h"
+
 #include "sisisd/sisisd.h"
 #include "sisisd/sisis_zebra.h"
+
+extern struct zebra_privs_t sisisd_privs;
 
 /* All information about zebra. */
 struct zclient *zclient = NULL;
@@ -158,7 +171,12 @@ int sisis_socket (unsigned short port, const char *address)
 /* Receive a message */
 sisis_recvfrom(struct thread *thread)
 {
-recvfrom(int sockfd, void *buf, int len, unsigned int flags,
+	int sisis_sock;
+  int accept_sock;
+  union sockunion su;
+  struct sisis_listener *listener = THREAD_ARG(thread);
+	
+//recvfrom(int sockfd, void *buf, int len, unsigned int flags,
              struct sockaddr *from, int *fromlen);
 }
 
