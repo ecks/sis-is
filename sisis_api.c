@@ -13,6 +13,8 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
+#include "sisis_api.h"
+
 int sisis_socket = 0;
 struct sockaddr_in sisis_listener_addr;
 

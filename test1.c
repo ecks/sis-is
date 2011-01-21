@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #include <signal.h>
 
+#include "sisis_api.h"
+
 int sockfd = -1, con = -1;
 
 void terminate(int signal)
