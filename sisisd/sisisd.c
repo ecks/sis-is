@@ -145,9 +145,9 @@ static int sisis_recvfrom(struct thread *thread)
 	struct sockaddr from;
 	memset (&from, 0, sizeof (struct sockaddr));
 	char buf[1024];
-	memset (buf, '\0', 1024);
-	int recv_len;
-	recvfrom(sisis_sock, buf, 1024, 0, &from, &recv_len);
+	memset (buf, 0, 1024);
+	int recv_len, from_len;
+	recv_len = recvfrom(sisis_sock, buf, 1024, 0, &from, &from_len);
 	if (recv_len < 0)
 	{
 		zlog_err ("Receive length is negative value %d", recv_len);
