@@ -55,7 +55,7 @@ void sisis_init ()
   sisis_zebra_init ();
 	
 	// Start listener
-	zlog_debug("Port: %d; Address:%s\n", sisis_info->port, sisis_info->address);
+	//zlog_debug("Port: %d; Address:%s\n", sisis_info->port, sisis_info->address);
 	sisis_socket(sisis_info->port, sisis_info->address);
 	
 	/* NOTES:
@@ -143,7 +143,7 @@ static int sisis_recvfrom(struct thread *thread)
 	}
 	
 	// Add thread again
-	//listener->thread = thread_add_read (sisis_info->master, sisis_recvfrom, listener, sisis_sock);
+	listener->thread = thread_add_read (sisis_info->master, sisis_recvfrom, listener, sisis_sock);
 	
 	// Get message
 	struct sockaddr from;
@@ -236,7 +236,7 @@ int sisis_socket (unsigned short port, const char *address)
   int ret, en;
 	
 	// Open socket
-  sock = socket (AF_INET, SOCK_STREAM, 0);
+  sock = socket (AF_INET, SOCK_DGRAM, 0);
   if (sock < 0)
 	{
 		zlog_err ("socket: %s", safe_strerror (errno));
