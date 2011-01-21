@@ -127,6 +127,28 @@ struct sisis_listener
   struct thread *thread;
 };
 
+/* Receive a message */
+static int sisis_recvfrom(struct thread *thread)
+{
+	int sisis_sock;
+  int accept_sock;
+  union sockunion su;
+  struct sisis_listener *listener = THREAD_ARG(thread);
+	
+	su = listener->su;
+	if (su.sa.sa_family == AF_INET)
+	{
+		// Get message
+		struct sockaddr from;
+		memset (&from, 0, sizeof (struct sockaddr));
+		char buf[1024];
+		int recv_len;
+		recvfrom(listener->fd, buf, 1024, 0, &from, &recv_len);
+		
+		printf("Message: %s\n", buf);
+	}
+}
+
 // Create SIS-IS listener from existing socket
 static int sisis_listener (int sock, struct sockaddr *sa, socklen_t salen)
 {
@@ -232,27 +254,7 @@ int sisis_socket (unsigned short port, const char *address)
   return sock;
 }
 
-/* Receive a message */
-sisis_recvfrom(struct thread *thread)
-{
-	int sisis_sock;
-  int accept_sock;
-  union sockunion su;
-  struct sisis_listener *listener = THREAD_ARG(thread);
-	
-	su = listener->su;
-	if (su.sa.sa_family == AF_INET)
-	{
-		// Get message
-		struct sockaddr from;
-		memset (&from, 0, sizeof (struct sockaddr));
-		char buf[1024];
-		int recv_len;
-		recvfrom(listener->fd, buf, 1024, 0, &from, &recv_len);
-		
-		printf("Message: %s\n", buf);
-	}
-}
+
 
 #if 0
 // TODO: Remove
