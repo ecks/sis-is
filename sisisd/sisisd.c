@@ -123,14 +123,11 @@ void sisis_terminate (void)
 void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * from, socklen_t from_len)
 {
 	// Get message version
-	short version = -1;
+	unsigned short version = -1;
 	if (msg_len >= 2)
-	{
-		unsigned short version = *(unsigned short *)msg;
-		version = ntohs(version);
-	}
+		version = ntohs(*(unsigned short *)msg);
 	printf("Message:\n");
-	printf("\tVersion: %u", version);
+	printf("\tVersion: %u\n", version);
 	if (version == 1)
 	{
 		// Get command
@@ -140,7 +137,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 			command = *(unsigned short *)(msg+2);
 			command = ntohs(command);
 		}
-		printf("\tCommand: %u", command);
+		printf("\tCommand: %u\n", command);
 		switch (command)
 		{
 			case SISIS_CMD_REGISTER_ADDRESS:
