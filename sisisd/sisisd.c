@@ -133,10 +133,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 		// Get command
 		unsigned short command = -1;
 		if (msg_len >= 4)
-		{
-			command = *(unsigned short *)(msg+2);
-			command = ntohs(command);
-		}
+			command = ntohs(*(unsigned short *)(msg+2));
 		printf("\tCommand: %u\n", command);
 		switch (command)
 		{
