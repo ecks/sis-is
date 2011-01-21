@@ -171,7 +171,7 @@ static int sisis_recvfrom(struct thread *thread)
 	printf("Message from %s[%d]: %s\n", fromStr, recv_len, buf);
 	
 	// Process message
-	sisis_process_message(buf, recv_len, sisis_sock, from, from_len);
+	sisis_process_message(buf, recv_len, sisis_sock, &from, from_len);
 }
 
 // Create SIS-IS listener from existing socket
