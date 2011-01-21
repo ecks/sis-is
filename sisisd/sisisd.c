@@ -137,7 +137,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 		return;
 	}
 	
-	zapi_interface_address(ZEBRA_INTERFACE_ADDRESS_ADD, zclient, (struct prefix_ipv4 *) p, ifindex);
+	zapi_interface_address(ZEBRA_INTERFACE_ADDRESS_ADD, zclient, &p, ifindex);
 	
 	char * reply = "Received message.";
 	sendto(sock, reply, strlen(reply), 0, from, from_len); 
