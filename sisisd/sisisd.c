@@ -150,7 +150,7 @@ static int sisis_recvfrom(struct thread *thread)
 	char buf[1024];
 	memset (buf, 0, 1024);
 	int recv_len;
-	int fromlen = sizeof from;
+	int from_len = sizeof from;
 	recv_len = recvfrom(sisis_sock, buf, 1024, 0, &from, &from_len);
 	if (recv_len < 0)
 	{
