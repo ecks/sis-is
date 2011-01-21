@@ -145,7 +145,7 @@ static int sisis_recvfrom(struct thread *thread)
 	recvfrom(sisis_sock, buf, 1024, 0, &from, &recv_len);
 	
 	char fromStr[256];
-	inet_ntop(from.sa_family, &from->sa_data, fromStr, sizeof fromStr);
+	inet_ntop(from.sa_family, &(from.sa_data), fromStr, sizeof fromStr);
 	printf("Message from %s[%d]: %s\n", fromStr, recv_len, buf);
 	
 	// Add thread again
