@@ -1018,3 +1018,30 @@ zclient_event (enum event event, struct zclient *zclient)
       break;
     }
 }
+
+// Add or delete an IP addess from and interface
+int zapi_interface_address (u_char cmd, struct zclient *zclient, struct prefix_ipv4 *p, unsigned int ifindex)
+{
+  int i;
+  int psize;
+  struct stream *s;
+
+  /* Reset stream. */
+  s = zclient->obuf;
+  stream_reset (s);
+  
+  zclient_create_header (s, cmd);
+  
+	// Put ifindex
+	stream_putl (s, ifindex);
+	
+  /* Put prefix information. */
+  psize = PSIZE (p->prefixlen);
+  stream_putc (s, p->prefixlen);
+  stream_write (s, (u_char *) & p->prefix, psize);
+
+  /* Put length at the first point of the stream. */
+  stream_putw_at (s, 0, stream_get_endp (s));
+
+  return zclient_send_message(zclient);
+}
