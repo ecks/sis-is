@@ -4,7 +4,7 @@
  * University of Delaware
  */
 
-#if !defined SISIS_API_H
+#ifndef SISIS_API_H
 #define SISIS_API_H
 
 #define SISIS_VERSION 1
@@ -13,8 +13,8 @@
 #define SISIS_CMD_REGISTER_ADDRESS				1
 #define SISIS_CMD_UNREGISTER_ADDRESS			2
 
-int sisis_listener_port = 54345;
-char * sisis_listener_ip_addr = "127.0.0.1";
+int sisis_listener_port;
+char * sisis_listener_ip_addr;
 
 /**
  * Registers SIS-IS process.
