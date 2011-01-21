@@ -96,6 +96,8 @@ int sisis_register(unsigned int ptype, unsigned int host_num, char * sisis_addr)
 	sisis_send(buf, buf_len);
 	free(buf);
 	
+	// TODO: Wait for message back
+	
 	return 0;
 }
 
