@@ -18,8 +18,8 @@
 int sisis_socket = 0;
 struct sockaddr_in sisis_listener_addr;
 
-sisis_listener_port = 54345;
-sisis_listener_ip_addr = "127.0.0.1";
+int sisis_listener_port = 54345;
+char * sisis_listener_ip_addr = "127.0.0.1";
 
 /**
  * Sets up socket to SIS-IS listener.

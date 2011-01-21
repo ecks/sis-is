@@ -13,8 +13,8 @@
 #define SISIS_CMD_REGISTER_ADDRESS				1
 #define SISIS_CMD_UNREGISTER_ADDRESS			2
 
-int sisis_listener_port;
-char * sisis_listener_ip_addr;
+extern int sisis_listener_port;
+extern char * sisis_listener_ip_addr;
 
 /**
  * Registers SIS-IS process.
