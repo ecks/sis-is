@@ -142,29 +142,30 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 		{
 			case SISIS_CMD_REGISTER_ADDRESS:
 			case SISIS_CMD_UNREGISTER_ADDRESS:
-				char ip_addr[INET_ADDRSTRLEN];
-				memcpy(ip_addr, msg+4, from_len-4);
-				
-				// Get loopback ifindex
-				int ifindex = if_nametoindex("lo");
-				
-				// Set up prefix
-				struct prefix_ipv4 p;
-				p.family = AF_INET;
-				p.prefixlen = 32;
-				if (inet_pton(AF_INET, ip_addr, &p.prefix.s_addr) != 1)
 				{
-					zlog_err ("sisis_process_message: Invalid SIS-IS address: %d", ip_addr);
-					return;
+					char ip_addr[INET_ADDRSTRLEN];
+					memcpy(ip_addr, msg+4, from_len-4);
+					
+					// Get loopback ifindex
+					int ifindex = if_nametoindex("lo");
+					
+					// Set up prefix
+					struct prefix_ipv4 p;
+					p.family = AF_INET;
+					p.prefixlen = 32;
+					if (inet_pton(AF_INET, ip_addr, &p.prefix.s_addr) != 1)
+					{
+						zlog_err ("sisis_process_message: Invalid SIS-IS address: %s", ip_addr);
+						return;
+					}
+					
+					int zcmd = (command == SISIS_CMD_REGISTER_ADDRESS) ? ZEBRA_INTERFACE_ADDRESS_ADD : ZEBRA_INTERFACE_ADDRESS_DELETE;
+					zapi_interface_address(zcmd, zclient, &p, ifindex);
+					
+					char reply[256];
+					sprintf(reply, "%s SIS-IS address: %s.\n", (zcmd == ZEBRA_INTERFACE_ADDRESS_ADD) ? "Added " : "Removed ", ip_addr);
+					sendto(sock, reply, strlen(reply), 0, from, from_len);
 				}
-				
-				int zcmd = (command == SISIS_CMD_REGISTER_ADDRESS) ? ZEBRA_INTERFACE_ADDRESS_ADD : ZEBRA_INTERFACE_ADDRESS_DELETE;
-				zapi_interface_address(zcmd, zclient, &p, ifindex);
-				
-				char reply[256];
-				sprintf(reply, "%s SIS-IS address: %s.\n", (zcmd == ZEBRA_INTERFACE_ADDRESS_ADD) ? "Added " : "Removed ", ip_addr);
-				sendto(sock, reply, strlen(reply), 0, from, from_len);
-				
 				break;
 		}
 	}
