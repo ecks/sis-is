@@ -119,6 +119,12 @@ void sisis_terminate (void)
 }
 
 
+void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * from, socklen_t from_len)
+{
+	char * reply = "Received message."
+	sendto(sock, reply, strlen(reply), 0, from, from_len); 
+}
+
 
 /* SIS-IS listening socket. */
 struct sisis_listener
@@ -162,6 +168,9 @@ static int sisis_recvfrom(struct thread *thread)
 	char fromStr[256];
 	inet_ntop(from.sa_family, &(from.sa_data), fromStr, sizeof fromStr);
 	printf("Message from %s[%d]: %s\n", fromStr, recv_len, buf);
+	
+	// Process message
+	sisis_process_message(buf, recv_len, sisis_sock, from, from_len);
 }
 
 // Create SIS-IS listener from existing socket
