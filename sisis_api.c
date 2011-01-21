@@ -78,7 +78,7 @@ int sisis_construct_message(char * buf, unsigned short version, unsigned short c
  * 
  * Returns zero on success.
  */
-int sisis_register(unsigned int ptype, unsigned int host_num, char ** sisis_addr)
+int sisis_register(unsigned int ptype, unsigned int host_num, char * sisis_addr)
 {
 	// Construct SIS-IS address
 	sprintf(sisis_addr, "26.0.%u.%u", ptype, host_num);

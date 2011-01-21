@@ -4,7 +4,7 @@
  * University of Delaware
  */
 
-#ifndef SISIS_API_H
+#if !defined SISIS_API_H
 #define SISIS_API_H
 
 #define SISIS_VERSION 1
@@ -20,7 +20,7 @@ char * sisis_listener_ip_addr = "127.0.0.1";
  * Registers SIS-IS process.
  * Returns SIS-IS/IP address or NULL on error.
  */
-int sisis_register(unsigned int ptype, unsigned int host_num, char ** sisis_addr);
+int sisis_register(unsigned int ptype, unsigned int host_num, char * sisis_addr);
 
 /**
  * Unregisters SIS-IS process.
