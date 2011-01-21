@@ -140,10 +140,13 @@ static int sisis_recvfrom(struct thread *thread)
 	struct sockaddr from;
 	memset (&from, 0, sizeof (struct sockaddr));
 	char buf[1024];
+	memset (buf, '\0', 1024);
 	int recv_len;
 	recvfrom(sisis_sock, buf, 1024, 0, &from, &recv_len);
 	
-	printf("Message [%d]: %s\n", recv_len, buf);
+	char fromStr[32];
+	inet_ntop(from->sa_family, from, fromStr, sizeof fromStr);
+	printf("Message from %s[%d]: %s\n", fromStr, recv_len, buf);
 	
 	// Add thread again
 	listener->thread = thread_add_read (sisis_info->master, sisis_recvfrom, listener, sisis_sock);
