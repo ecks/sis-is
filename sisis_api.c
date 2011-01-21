@@ -63,10 +63,10 @@ int sisis_send(char * buf, unsigned int buf_len)
  * Constructs SIS-IS message.  Remember to free memory when done.
  * Returns length of message.
  */
-int sisis_construct_message(char * buf, unsigned short version, unsigned short cmd, void * data, unsigned short data_len)
+int sisis_construct_message(char ** buf, unsigned short version, unsigned short cmd, void * data, unsigned short data_len)
 {
 	unsigned int buf_len = data_len + 4;
-	buf = malloc(sizeof(char) * buf_len);
+	*buf = malloc(sizeof(char) * buf_len);
 	version = htons(version);
 	memcpy(buf, &version, 2);
 	memcpy(buf+2, &cmd, 2);
@@ -91,7 +91,7 @@ int sisis_register(unsigned int ptype, unsigned int host_num, char * sisis_addr)
 	
 	// Send message
 	char * buf;
-	unsigned int buf_len = sisis_construct_message(buf, SISIS_VERSION, SISIS_CMD_REGISTER_ADDRESS, sisis_addr, strlen(sisis_addr));
+	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, SISIS_CMD_REGISTER_ADDRESS, sisis_addr, strlen(sisis_addr));
 	sisis_send(buf, buf_len);
 	free(buf);
 	
@@ -113,7 +113,7 @@ int sisis_unregister(unsigned int ptype, unsigned int host_num)
 	
 	// Send message
 	char * buf;
-	unsigned int buf_len = sisis_construct_message(buf, SISIS_VERSION, SISIS_CMD_UNREGISTER_ADDRESS, sisis_addr, strlen(sisis_addr));
+	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, SISIS_CMD_UNREGISTER_ADDRESS, sisis_addr, strlen(sisis_addr));
 	sisis_send(buf, buf_len);
 	free(buf);
 	
