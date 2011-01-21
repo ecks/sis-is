@@ -130,27 +130,23 @@ struct sisis_listener
 /* Receive a message */
 static int sisis_recvfrom(struct thread *thread)
 {
-	printf("Here\n");
 	int sisis_sock;
 	union sockunion su;
   struct sisis_listener *listener = THREAD_ARG(thread);
 	
 	sisis_sock = THREAD_FD (thread);
-  su = listener->su;
-	if (su.sa.sa_family == AF_INET)
-	{
-		// Get message
-		struct sockaddr from;
-		memset (&from, 0, sizeof (struct sockaddr));
-		char buf[1024];
-		int recv_len;
-		recvfrom(sisis_sock, buf, 1024, 0, &from, &recv_len);
-		
-		printf("Message: %s\n", buf);
-	}
+	
+	// Get message
+	struct sockaddr from;
+	memset (&from, 0, sizeof (struct sockaddr));
+	char buf[1024];
+	int recv_len;
+	recvfrom(sisis_sock, buf, 1024, 0, &from, &recv_len);
+	
+	printf("Message [%d]: %s\n", recv_len, buf);
 	
 	// Add thread again
-	listener->thread = thread_add_read (sisis_info->master, &sisis_recvfrom, listener, sisis_sock);
+	listener->thread = thread_add_read (sisis_info->master, sisis_recvfrom, listener, sisis_sock);
 }
 
 // Create SIS-IS listener from existing socket
@@ -195,7 +191,7 @@ static int sisis_listener (int sock, struct sockaddr *sa, socklen_t salen)
   listener = XMALLOC (MTYPE_SISIS_LISTENER, sizeof(*listener));
   listener->fd = sock;
   memcpy(&listener->su, sa, salen);
-  listener->thread = thread_add_read (sisis_info->master, &sisis_recvfrom, listener, sock);
+  listener->thread = thread_add_read (sisis_info->master, sisis_recvfrom, listener, sock);
   listnode_add (sisis_info->listen_sockets, listener);
 /*
 	// Start listening
