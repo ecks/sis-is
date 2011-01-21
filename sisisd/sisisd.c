@@ -55,7 +55,7 @@ void sisis_init ()
   sisis_zebra_init ();
 	
 	// Start listener
-	printf("Port: %d; Address:%s", sisis_info->port, sisis_info->address);
+	zlog_debug("Port: %d; Address:%s\n", sisis_info->port, sisis_info->address);
 	sisis_socket(sisis_info->port, sisis_info->address);
 	
 	/* NOTES:
