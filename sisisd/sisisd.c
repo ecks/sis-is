@@ -141,6 +141,9 @@ static int sisis_recvfrom(struct thread *thread)
 		return -1;
 	}
 	
+	// Add thread again
+	listener->thread = thread_add_read (sisis_info->master, sisis_recvfrom, listener, sisis_sock);
+	
 	// Get message
 	struct sockaddr from;
 	memset (&from, 0, sizeof (struct sockaddr));
@@ -157,9 +160,6 @@ static int sisis_recvfrom(struct thread *thread)
 	char fromStr[256];
 	inet_ntop(from.sa_family, &(from.sa_data), fromStr, sizeof fromStr);
 	printf("Message from %s[%d]: %s\n", fromStr, recv_len, buf);
-	
-	// Add thread again
-	listener->thread = thread_add_read (sisis_info->master, sisis_recvfrom, listener, sisis_sock);
 }
 
 // Create SIS-IS listener from existing socket
