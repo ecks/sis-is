@@ -150,7 +150,7 @@ static int sisis_recvfrom(struct thread *thread)
 	}
 	
 	// Add thread again
-	listener->thread = thread_add_read (sisis_info->master, sisis_recvfrom, listener, sock);
+	listener->thread = thread_add_read (sisis_info->master, sisis_recvfrom, listener, listener->fd);
 }
 
 // Create SIS-IS listener from existing socket
