@@ -137,7 +137,7 @@ static int sisis_recvfrom(struct thread *thread)
 	sisis_sock = THREAD_FD (thread);
 	if (sisis_sock < 0)
 	{
-		zlog_err ("sisis_sock is negative value %d", accept_sock);
+		zlog_err ("sisis_sock is negative value %d", sisis_sock);
 		return -1;
 	}
 	
