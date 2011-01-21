@@ -126,7 +126,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 	short version = -1;
 	if (msg_len >= 2)
 	{
-		unsigned short version = &(unsigned short *)msg;
+		unsigned short version = *(unsigned short *)msg;
 		version = ntohs(version);
 	}
 	if (version == 1)
@@ -135,7 +135,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 		unsigned short command = -1;
 		if (msg_len >= 4)
 		{
-			command = &(unsigned short *)(msg+2);
+			command = *(unsigned short *)(msg+2);
 			command = ntohs(command);
 		}
 		switch (command)
