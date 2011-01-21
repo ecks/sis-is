@@ -55,7 +55,7 @@ void sisis_init ()
   sisis_zebra_init ();
 	
 	// Start listener
-	sisis_socket();
+	sisis_socket(sisis_info->port, sisis_info->address);
 	
 	/* NOTES:
 	  zapi_interface_address(ZEBRA_INTERFACE_ADDRESS_ADD, zclient, (struct prefix_ipv4 *) p, &api);
@@ -86,6 +86,7 @@ void sisis_master_init (void)
   sisis_info->port = SISIS_PORT_DEFAULT;
   sisis_info->master = thread_master_create();
   sisis_info->start_time = sisis_clock();
+	sisis_info->address = "127.0.0.1";
 }
 
 void sisis_zebra_init (void)
