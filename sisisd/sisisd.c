@@ -122,27 +122,52 @@ void sisis_terminate (void)
 // TODO: Add the header file
 void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * from, socklen_t from_len)
 {
-	char * ip_addr = "26.0.1.1";
-	
-	// Get loopback ifindex
-	int ifindex = if_nametoindex("lo");
-	
-	// Set up prefix
-	struct prefix_ipv4 p;
-	p.family = AF_INET;
-	p.prefixlen = 32;
-	if (inet_pton(AF_INET, ip_addr, &p.prefix.s_addr) != 1)
+	// Get message version
+	short version = -1;
+	if (msg_len >= 2)
 	{
-		zlog_err ("sisis_process_message: Invalid SIS-IS address: %d", ip_addr);
-		return;
+		unsigned short version = &(unsigned short *)msg;
+		version = ntohs(version);
 	}
-	
-	int cmd = ZEBRA_INTERFACE_ADDRESS_ADD;
-	zapi_interface_address(cmd, zclient, &p, ifindex);
-	
-	char reply[256];
-	sprintf(reply, "%s SIS-IS address: %s.\n", (cmd == ZEBRA_INTERFACE_ADDRESS_ADD) ? "Added " : "Removed ", ip_addr);
-	sendto(sock, reply, strlen(reply), 0, from, from_len); 
+	if (version == 1)
+	{
+		// Get command
+		unsigned short command = -1;
+		if (msg_len >= 4)
+		{
+			command = &(unsigned short *)(msg+2);
+			command = ntohs(command);
+		}
+		switch (command)
+		{
+			case SISIS_CMD_REGISTER_ADDRESS:
+			case SISIS_CMD_UNREGISTER_ADDRESS:
+				char ip_addr[INET_ADDRSTRLEN];
+				memcpy(ip_addr, msg+4, from_len-4);
+				
+				// Get loopback ifindex
+				int ifindex = if_nametoindex("lo");
+				
+				// Set up prefix
+				struct prefix_ipv4 p;
+				p.family = AF_INET;
+				p.prefixlen = 32;
+				if (inet_pton(AF_INET, ip_addr, &p.prefix.s_addr) != 1)
+				{
+					zlog_err ("sisis_process_message: Invalid SIS-IS address: %d", ip_addr);
+					return;
+				}
+				
+				int zcmd = (command == SISIS_CMD_REGISTER_ADDRESS) ? ZEBRA_INTERFACE_ADDRESS_ADD : ZEBRA_INTERFACE_ADDRESS_DELETE;
+				zapi_interface_address(zcmd, zclient, &p, ifindex);
+				
+				char reply[256];
+				sprintf(reply, "%s SIS-IS address: %s.\n", (zcmd == ZEBRA_INTERFACE_ADDRESS_ADD) ? "Added " : "Removed ", ip_addr);
+				sendto(sock, reply, strlen(reply), 0, from, from_len);
+				
+				break;
+		}
+	}
 }
 
 

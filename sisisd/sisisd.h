@@ -29,6 +29,10 @@
 /* Default configuration settings for sisisd.  */
 #define SISIS_DEFAULT_CONFIG             "sisisd.conf"
 
+// SIS-IS Commands
+#define SISIS_CMD_REGISTER_ADDRESS				1
+#define SISIS_CMD_UNREGISTER_ADDRESS			2
+
 struct sisis_info
 {
   /* SIS-IS Addresses */
