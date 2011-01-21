@@ -192,7 +192,7 @@ static int sisis_listener (int sock, struct sockaddr *sa, socklen_t salen)
   listener = XMALLOC (MTYPE_SISIS_LISTENER, sizeof(*listener));
   listener->fd = sock;
   memcpy(&listener->su, sa, salen);
-  listener->thread = thread_add_read (sisis_info->master, recvfrom, listener, sock);
+  listener->thread = thread_add_read (sisis_info->master, sisis_recvfrom, listener, sock);
   listnode_add (sisis_info->listen_sockets, listener);
 /*
 	// Start listening
