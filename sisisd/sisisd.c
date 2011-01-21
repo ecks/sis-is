@@ -130,7 +130,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 	// Set up prefix
 	struct prefix_ipv4 p;
 	p.family = AF_INET;
-	p.prefixlen = stream_getc (s);
+	p.prefixlen = 32;
 	if (inet_pton(AF_INET, ip_addr, &p.prefix.s_addr) != 1)
 	{
 		zlog_err ("sisis_process_message: Invalid SIS-IS address: %d", ip_addr);
