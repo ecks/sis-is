@@ -129,6 +129,8 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 		unsigned short version = *(unsigned short *)msg;
 		version = ntohs(version);
 	}
+	printf("Message:\n");
+	printf("\tVersion: %u", version);
 	if (version == 1)
 	{
 		// Get command
@@ -138,6 +140,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 			command = *(unsigned short *)(msg+2);
 			command = ntohs(command);
 		}
+		printf("\tCommand: %u", command);
 		switch (command)
 		{
 			case SISIS_CMD_REGISTER_ADDRESS:
@@ -213,7 +216,7 @@ static int sisis_recvfrom(struct thread *thread)
 	
 	char fromStr[256];
 	inet_ntop(from.sa_family, &(from.sa_data), fromStr, sizeof fromStr);
-	printf("Message from %s[%d]: %s\n", fromStr, recv_len, buf);
+	//printf("Message from %s[%d]: %s\n", fromStr, recv_len, buf);
 	
 	// Process message
 	sisis_process_message(buf, recv_len, sisis_sock, &from, from_len);
