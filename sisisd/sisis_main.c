@@ -266,9 +266,9 @@ static void sisis_exit (int status)
   if (zclient)
     zclient_free (zclient);
 
-  /* reverse sisis_master_init */
-  if (master)
-    thread_master_free (master);
+  /* TODO: reverse sisis_master_init */
+  //if (master)
+    //thread_master_free (master);
 
   if (zlog_default)
     closezlog (zlog_default);
