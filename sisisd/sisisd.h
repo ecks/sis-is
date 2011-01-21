@@ -68,4 +68,6 @@ time_t sisis_clock (void);
 void sisis_master_init (void);
 void sisis_terminate (void);
 
+extern int sisis_socket (unsigned short, const char *);
+
 #endif /* SISISD_H */

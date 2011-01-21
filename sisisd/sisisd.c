@@ -41,9 +41,14 @@ void sisis_init ()
   /* Init zebra. */
   sisis_zebra_init ();
 	
+	// Start listener
+	sisis_socket();
+	
 	/* NOTES:
-	  zapi_ipv4_route (ZEBRA_IPV4_ROUTE_ADD, zclient, (struct prefix_ipv4 *) p, &api);
-	  zapi_ipv4_route (ZEBRA_IPV4_ROUTE_DELETE, zclient, (struct prefix_ipv4 *) p, &api);
+	  zapi_interface_address(ZEBRA_INTERFACE_ADDRESS_ADD, zclient, (struct prefix_ipv4 *) p, &api);
+	  zapi_interface_address(ZEBRA_INTERFACE_ADDRESS_DELETE, zclient, (struct prefix_ipv4 *) p, &api);
+	  X zapi_ipv4_route (ZEBRA_IPV4_ROUTE_ADD, zclient, (struct prefix_ipv4 *) p, &api);
+	  X zapi_ipv4_route (ZEBRA_IPV4_ROUTE_DELETE, zclient, (struct prefix_ipv4 *) p, &api);
 	*/
 }
 
@@ -96,4 +101,207 @@ void sisis_zebra_init (void)
 void sisis_terminate (void)
 {
   // TODO
+}
+
+
+
+/* SIS-IS listening socket. */
+struct sisis_listener
+{
+  int fd;
+  union sockunion su;
+  struct thread *thread;
+};
+
+// Open SIS-IS socket
+int sisis_socket (unsigned short port, const char *address)
+{
+  int sock;
+  int socklen;
+  struct sockaddr_in sin;
+  int ret, en;
+	
+	// Open socket
+  sock = socket (AF_INET, SOCK_STREAM, 0);
+  if (sock < 0)
+	{
+		zlog_err ("socket: %s", safe_strerror (errno));
+		return sock;
+	}
+	
+	// Set address and port
+  memset (&sin, 0, sizeof (struct sockaddr_in));
+  sin.sin_family = AF_INET;
+  sin.sin_port = htons (port);
+  socklen = sizeof (struct sockaddr_in);
+
+  if (address && ((ret = inet_aton(address, &sin.sin_addr)) < 1))
+	{
+		zlog_err("bgp_socket: could not parse ip address %s: %s",
+							address, safe_strerror (errno));
+		return ret;
+	}
+#ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
+  sin.sin_len = socklen;
+#endif /* HAVE_STRUCT_SOCKADDR_IN_SIN_LEN */
+
+	// Create listener
+  ret = sisis_listener (sock, (struct sockaddr *) &sin, socklen);
+  if (ret < 0) 
+	{
+		close (sock);
+		return ret;
+	}
+  return sock;
+}
+
+/* Receive a message */
+sisis_recvfrom(struct thread *thread)
+{
+recvfrom(int sockfd, void *buf, int len, unsigned int flags,
+             struct sockaddr *from, int *fromlen);
+}
+
+#if 0
+// TODO: Remove
+/* Accept SIS-IS connection. */
+static int sisis_accept (struct thread *thread)
+{
+  int sisis_sock;
+  int accept_sock;
+  union sockunion su;
+  struct sisis_listener *listener = THREAD_ARG(thread);
+  struct peer *peer;
+  struct peer *peer1;
+  char buf[SU_ADDRSTRLEN];
+
+  /* Register accept thread. */
+  accept_sock = THREAD_FD (thread);
+  if (accept_sock < 0)
+	{
+		zlog_err ("accept_sock is negative value %d", accept_sock);
+		return -1;
+	}
+  listener->thread = thread_add_read (master, bgp_accept, listener, accept_sock);
+
+  /* Accept client connection. */
+  bgp_sock = sockunion_accept (accept_sock, &su);
+  if (bgp_sock < 0)
+    {
+      zlog_err ("[Error] BGP socket accept failed (%s)", safe_strerror (errno));
+      return -1;
+    }
+
+  if (BGP_DEBUG (events, EVENTS))
+    zlog_debug ("[Event] BGP connection from host %s", inet_sutop (&su, buf));
+  
+  /* Check remote IP address */
+  peer1 = peer_lookup (NULL, &su);
+  if (! peer1 || peer1->status == Idle)
+    {
+      if (BGP_DEBUG (events, EVENTS))
+	{
+	  if (! peer1)
+	    zlog_debug ("[Event] BGP connection IP address %s is not configured",
+		       inet_sutop (&su, buf));
+	  else
+	    zlog_debug ("[Event] BGP connection IP address %s is Idle state",
+		       inet_sutop (&su, buf));
+	}
+      close (bgp_sock);
+      return -1;
+    }
+
+  /* In case of peer is EBGP, we should set TTL for this connection.  */
+  if (peer_sort (peer1) == BGP_PEER_EBGP)
+    sockopt_ttl (peer1->su.sa.sa_family, bgp_sock, peer1->ttl);
+
+  /* Make dummy peer until read Open packet. */
+  if (BGP_DEBUG (events, EVENTS))
+    zlog_debug ("[Event] Make dummy peer structure until read Open packet");
+
+  {
+    char buf[SU_ADDRSTRLEN + 1];
+
+    peer = peer_create_accept (peer1->bgp);
+    SET_FLAG (peer->sflags, PEER_STATUS_ACCEPT_PEER);
+    peer->su = su;
+    peer->fd = bgp_sock;
+    peer->status = Active;
+    peer->local_id = peer1->local_id;
+    peer->v_holdtime = peer1->v_holdtime;
+    peer->v_keepalive = peer1->v_keepalive;
+
+    /* Make peer's address string. */
+    sockunion2str (&su, buf, SU_ADDRSTRLEN);
+    peer->host = XSTRDUP (MTYPE_BGP_PEER_HOST, buf);
+  }
+
+  BGP_EVENT_ADD (peer, TCP_connection_open);
+
+  return 0;
+}
+#endif
+
+// Create SIS-IS listener from existing socket
+static int sisis_listener (int sock, struct sockaddr *sa, socklen_t salen)
+{
+  struct sisis_listener *listener;
+  int ret, en;
+
+  sockopt_reuseaddr (sock);
+  sockopt_reuseport (sock);
+
+#ifdef IPTOS_PREC_INTERNETCONTROL
+  if (sa->sa_family == AF_INET)
+    setsockopt_ipv4_tos (sock, IPTOS_PREC_INTERNETCONTROL);
+#endif
+
+#ifdef IPV6_V6ONLY
+  /* Want only IPV6 on ipv6 socket (not mapped addresses) */
+  if (sa->sa_family == AF_INET6) {
+    int on = 1;
+    setsockopt (sock, IPPROTO_IPV6, IPV6_V6ONLY,
+		(void *) &on, sizeof (on));
+  }
+#endif
+
+  if (sisisd_privs.change (ZPRIVS_RAISE) )
+    zlog_err ("sisis_socket: could not raise privs");
+
+	// Bind
+  ret = bind (sock, sa, salen);
+  en = errno;
+  if (sisisd_privs.change (ZPRIVS_LOWER) )
+    zlog_err ("sisis_bind_address: could not lower privs");
+
+  if (ret < 0)
+	{
+		zlog_err ("bind: %s", safe_strerror (en));
+		return ret;
+	}
+	
+	// Update listener infprmation
+  listener = XMALLOC (MTYPE_SISIS_LISTENER, sizeof(*listener));
+  listener->fd = sock;
+  memcpy(&listener->su, sa, salen);
+  listener->thread = thread_add_read (master, recvfrom, listener, sock);
+  listnode_add (bm->listen_sockets, listener);
+/*
+	// Start listening
+  ret = listen (sock, 3);
+  if (ret < 0)
+	{
+		zlog_err ("listen: %s", safe_strerror (errno));
+		return ret;
+	}
+
+	// Update listener infprmation
+  listener = XMALLOC (MTYPE_SISIS_LISTENER, sizeof(*listener));
+  listener->fd = sock;
+  memcpy(&listener->su, sa, salen);
+  listener->thread = thread_add_read (master, sisis_accept, listener, sock);
+  listnode_add (bm->listen_sockets, listener);
+*/
+  return 0;
 }
