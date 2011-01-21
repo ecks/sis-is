@@ -61,7 +61,7 @@ struct sisis_addr
   time_t expires;
 };
 
-static struct sisis_info * sisis_info;
+extern struct sisis_info * sisis_info;
 
 void sisis_init (void);
 time_t sisis_clock (void);
