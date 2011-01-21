@@ -33,6 +33,9 @@ struct zclient *zclient = NULL;
 
 static struct sisis_info sisis_info_real;
 
+/* SIS-IS process wide configuration pointer to export.  */
+struct sisis_info *sisis_info;
+
 void sisis_init ()
 {
   /* Init zebra. */
