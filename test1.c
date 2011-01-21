@@ -59,7 +59,7 @@ int main (int argc, char ** argv)
 	}
 	
 	// Status
-	printf("Opening socket at %s on port %s.\n", , argv[3]);
+	printf("Opening socket at %s on port %s.\n", sisis_addr, argv[3]);
 	
 	// Set up socket address info
 	memset(&hints, 0, sizeof hints);
