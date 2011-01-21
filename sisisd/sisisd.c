@@ -126,6 +126,69 @@ struct sisis_listener
   struct thread *thread;
 };
 
+// Create SIS-IS listener from existing socket
+static int sisis_listener (int sock, struct sockaddr *sa, socklen_t salen)
+{
+  struct sisis_listener *listener;
+  int ret, en;
+
+  sockopt_reuseaddr (sock);
+  sockopt_reuseport (sock);
+
+#ifdef IPTOS_PREC_INTERNETCONTROL
+  if (sa->sa_family == AF_INET)
+    setsockopt_ipv4_tos (sock, IPTOS_PREC_INTERNETCONTROL);
+#endif
+
+#ifdef IPV6_V6ONLY
+  /* Want only IPV6 on ipv6 socket (not mapped addresses) */
+  if (sa->sa_family == AF_INET6) {
+    int on = 1;
+    setsockopt (sock, IPPROTO_IPV6, IPV6_V6ONLY,
+		(void *) &on, sizeof (on));
+  }
+#endif
+
+  if (sisisd_privs.change (ZPRIVS_RAISE) )
+    zlog_err ("sisis_socket: could not raise privs");
+
+	// Bind
+  ret = bind (sock, sa, salen);
+  en = errno;
+  if (sisisd_privs.change (ZPRIVS_LOWER) )
+    zlog_err ("sisis_bind_address: could not lower privs");
+
+  if (ret < 0)
+	{
+		zlog_err ("bind: %s", safe_strerror (en));
+		return ret;
+	}
+	
+	// Update listener infprmation
+  listener = XMALLOC (MTYPE_SISIS_LISTENER, sizeof(*listener));
+  listener->fd = sock;
+  memcpy(&listener->su, sa, salen);
+  listener->thread = thread_add_read (master, recvfrom, listener, sock);
+  listnode_add (bm->listen_sockets, listener);
+/*
+	// Start listening
+  ret = listen (sock, 3);
+  if (ret < 0)
+	{
+		zlog_err ("listen: %s", safe_strerror (errno));
+		return ret;
+	}
+
+	// Update listener infprmation
+  listener = XMALLOC (MTYPE_SISIS_LISTENER, sizeof(*listener));
+  listener->fd = sock;
+  memcpy(&listener->su, sa, salen);
+  listener->thread = thread_add_read (master, sisis_accept, listener, sock);
+  listnode_add (bm->listen_sockets, listener);
+*/
+  return 0;
+}
+
 // Open SIS-IS socket
 int sisis_socket (unsigned short port, const char *address)
 {
@@ -176,8 +239,18 @@ sisis_recvfrom(struct thread *thread)
   union sockunion su;
   struct sisis_listener *listener = THREAD_ARG(thread);
 	
-//recvfrom(int sockfd, void *buf, int len, unsigned int flags,
-             struct sockaddr *from, int *fromlen);
+	su = listener.su;
+	if (su.sa.sa_family == AF_INET)
+	{
+		// Get message
+		struct sockaddr from;
+		memset (&from, 0, sizeof (struct sockaddr));
+		char buf[1024];
+		int recv_len;
+		recvfrom(listener.fd, buf, 1024, 0, &from, &recv_len);
+		
+		printf("Message: %s\n", buf);
+	}
 }
 
 #if 0
@@ -260,66 +333,3 @@ static int sisis_accept (struct thread *thread)
   return 0;
 }
 #endif
-
-// Create SIS-IS listener from existing socket
-static int sisis_listener (int sock, struct sockaddr *sa, socklen_t salen)
-{
-  struct sisis_listener *listener;
-  int ret, en;
-
-  sockopt_reuseaddr (sock);
-  sockopt_reuseport (sock);
-
-#ifdef IPTOS_PREC_INTERNETCONTROL
-  if (sa->sa_family == AF_INET)
-    setsockopt_ipv4_tos (sock, IPTOS_PREC_INTERNETCONTROL);
-#endif
-
-#ifdef IPV6_V6ONLY
-  /* Want only IPV6 on ipv6 socket (not mapped addresses) */
-  if (sa->sa_family == AF_INET6) {
-    int on = 1;
-    setsockopt (sock, IPPROTO_IPV6, IPV6_V6ONLY,
-		(void *) &on, sizeof (on));
-  }
-#endif
-
-  if (sisisd_privs.change (ZPRIVS_RAISE) )
-    zlog_err ("sisis_socket: could not raise privs");
-
-	// Bind
-  ret = bind (sock, sa, salen);
-  en = errno;
-  if (sisisd_privs.change (ZPRIVS_LOWER) )
-    zlog_err ("sisis_bind_address: could not lower privs");
-
-  if (ret < 0)
-	{
-		zlog_err ("bind: %s", safe_strerror (en));
-		return ret;
-	}
-	
-	// Update listener infprmation
-  listener = XMALLOC (MTYPE_SISIS_LISTENER, sizeof(*listener));
-  listener->fd = sock;
-  memcpy(&listener->su, sa, salen);
-  listener->thread = thread_add_read (master, recvfrom, listener, sock);
-  listnode_add (bm->listen_sockets, listener);
-/*
-	// Start listening
-  ret = listen (sock, 3);
-  if (ret < 0)
-	{
-		zlog_err ("listen: %s", safe_strerror (errno));
-		return ret;
-	}
-
-	// Update listener infprmation
-  listener = XMALLOC (MTYPE_SISIS_LISTENER, sizeof(*listener));
-  listener->fd = sock;
-  memcpy(&listener->su, sa, salen);
-  listener->thread = thread_add_read (master, sisis_accept, listener, sock);
-  listnode_add (bm->listen_sockets, listener);
-*/
-  return 0;
-}
