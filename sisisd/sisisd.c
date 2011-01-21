@@ -135,6 +135,11 @@ static int sisis_recvfrom(struct thread *thread)
   struct sisis_listener *listener = THREAD_ARG(thread);
 	
 	sisis_sock = THREAD_FD (thread);
+	if (sisis_sock < 0)
+	{
+		zlog_err ("sisis_sock is negative value %d", accept_sock);
+		return -1;
+	}
 	
 	// Get message
 	struct sockaddr from;
@@ -143,6 +148,11 @@ static int sisis_recvfrom(struct thread *thread)
 	memset (buf, '\0', 1024);
 	int recv_len;
 	recvfrom(sisis_sock, buf, 1024, 0, &from, &recv_len);
+	if (recv_len < 0)
+	{
+		zlog_err ("Receive length is negative value %d", recv_len);
+		return -1;
+	}
 	
 	char fromStr[256];
 	inet_ntop(from.sa_family, &(from.sa_data), fromStr, sizeof fromStr);
