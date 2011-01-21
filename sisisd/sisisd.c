@@ -55,6 +55,7 @@ void sisis_init ()
   sisis_zebra_init ();
 	
 	// Start listener
+	printf("Port: %d; Address:%s", sisis_info->port, sisis_info->address);
 	sisis_socket(sisis_info->port, sisis_info->address);
 	
 	/* NOTES:
@@ -154,7 +155,7 @@ static int sisis_recvfrom(struct thread *thread)
 	recv_len = recvfrom(sisis_sock, buf, 1024, 0, &from, &from_len);
 	if (recv_len < 0)
 	{
-		zlog_err ("Receive length is negative value %d: Error #%d", recv_len, errno);
+		zlog_err ("Receive length is negative value %d.  Error #%d: $s", recv_len, errno, safe_strerror(errno));
 		return -1;
 	}
 	
