@@ -148,6 +148,9 @@ static int sisis_recvfrom(struct thread *thread)
 		
 		printf("Message: %s\n", buf);
 	}
+	
+	// Add thread again
+	listener->thread = thread_add_read (sisis_info->master, sisis_recvfrom, listener, sock);
 }
 
 // Create SIS-IS listener from existing socket
