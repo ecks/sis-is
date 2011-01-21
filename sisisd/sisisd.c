@@ -122,6 +122,23 @@ void sisis_terminate (void)
 // TODO: Add the header file
 void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * from, socklen_t from_len)
 {
+	char * ip_addr = "26.0.1.1";
+	
+	// Get loopback ifindex
+	int ifindex = if_nametoindex("lo");
+	
+	// Set up prefix
+	struct prefix_ipv4 p;
+	p.family = AF_INET;
+	p.prefixlen = stream_getc (s);
+	if (inet_pton(AF_INET, ip_addr, &p.prefix.s_addr) != 1)
+	{
+		zlog_err ("sisis_process_message: Invalid SIS-IS address: %d", ip_addr);
+		return;
+	}
+	
+	zapi_interface_address(ZEBRA_INTERFACE_ADDRESS_ADD, zclient, (struct prefix_ipv4 *) p, ifindex);
+	
 	char * reply = "Received message.";
 	sendto(sock, reply, strlen(reply), 0, from, from_len); 
 }
