@@ -60,7 +60,7 @@ int sisis_send(char * buf, unsigned int buf_len)
  * Constructs SIS-IS message.  Remember to free memory when done.
  * Returns length of message.
  */
-int sisis_construct_message(char * &buf, unsigned short version, unsigned short cmd, void * data, unsigned short data_len)
+int sisis_construct_message(char ** buf, unsigned short version, unsigned short cmd, void * data, unsigned short data_len)
 {
 	unsigned int buf_len = data_len + 4;
 	buf = malloc(sizeof(char) * buf_len);
