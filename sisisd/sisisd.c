@@ -168,8 +168,8 @@ static int sisis_listener (int sock, struct sockaddr *sa, socklen_t salen)
   listener = XMALLOC (MTYPE_SISIS_LISTENER, sizeof(*listener));
   listener->fd = sock;
   memcpy(&listener->su, sa, salen);
-  listener->thread = thread_add_read (master, recvfrom, listener, sock);
-  listnode_add (bm->listen_sockets, listener);
+  listener->thread = thread_add_read (sisis_info->master, recvfrom, listener, sock);
+  listnode_add (sisis_info->listen_sockets, listener);
 /*
 	// Start listening
   ret = listen (sock, 3);
@@ -239,7 +239,7 @@ sisis_recvfrom(struct thread *thread)
   union sockunion su;
   struct sisis_listener *listener = THREAD_ARG(thread);
 	
-	su = listener.su;
+	su = listener->su;
 	if (su.sa.sa_family == AF_INET)
 	{
 		// Get message
@@ -247,7 +247,7 @@ sisis_recvfrom(struct thread *thread)
 		memset (&from, 0, sizeof (struct sockaddr));
 		char buf[1024];
 		int recv_len;
-		recvfrom(listener.fd, buf, 1024, 0, &from, &recv_len);
+		recvfrom(listener->fd, buf, 1024, 0, &from, &recv_len);
 		
 		printf("Message: %s\n", buf);
 	}
