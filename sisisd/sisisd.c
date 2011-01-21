@@ -119,9 +119,10 @@ void sisis_terminate (void)
 }
 
 
+// TODO: Add the header file
 void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * from, socklen_t from_len)
 {
-	char * reply = "Received message."
+	char * reply = "Received message.";
 	sendto(sock, reply, strlen(reply), 0, from, from_len); 
 }
 
