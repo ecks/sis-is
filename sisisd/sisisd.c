@@ -143,7 +143,7 @@ static int sisis_recvfrom(struct thread *thread)
 	}
 	
 	// Add thread again
-	listener->thread = thread_add_read (sisis_info->master, sisis_recvfrom, listener, sisis_sock);
+	//listener->thread = thread_add_read (sisis_info->master, sisis_recvfrom, listener, sisis_sock);
 	
 	// Get message
 	struct sockaddr from;
@@ -155,7 +155,7 @@ static int sisis_recvfrom(struct thread *thread)
 	recv_len = recvfrom(sisis_sock, buf, 1024, 0, &from, &from_len);
 	if (recv_len < 0)
 	{
-		zlog_err ("Receive length is negative value %d.  Error #%d: $s", recv_len, errno, safe_strerror(errno));
+		zlog_err ("Receive length is negative value %d.  Error #%d: %s", recv_len, errno, safe_strerror(errno));
 		return -1;
 	}
 	
