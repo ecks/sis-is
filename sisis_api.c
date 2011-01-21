@@ -68,6 +68,7 @@ int sisis_construct_message(char ** buf, unsigned short version, unsigned short 
 	unsigned int buf_len = data_len + 4;
 	*buf = malloc(sizeof(char) * buf_len);
 	version = htons(version);
+	cmd = htons(cmd);
 	memcpy(*buf, &version, 2);
 	memcpy(*buf+2, &cmd, 2);
 	memcpy(*buf+4, data, data_len);
