@@ -130,6 +130,7 @@ struct sisis_listener
 /* Receive a message */
 static int sisis_recvfrom(struct thread *thread)
 {
+	printf("Here\n");
 	int sisis_sock;
   int accept_sock;
   union sockunion su;
