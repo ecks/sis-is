@@ -65,7 +65,7 @@ int main (int argc, char ** argv)
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_INET;	// IPv4
 	hints.ai_socktype = SOCK_STREAM;
-	getaddrinfo(sisis_addr, argv[2], &hints, &addr);
+	getaddrinfo(sisis_addr, argv[3], &hints, &addr);
 	
 	// Create socket
 	if ((sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)) == -1)
