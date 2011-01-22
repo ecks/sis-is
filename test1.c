@@ -16,15 +16,26 @@
 #include "sisis_api.h"
 
 int sockfd = -1, con = -1;
+int ptype, host_num;
 
-void terminate(int signal)
+void close_listener()
 {
-	printf("Terminating...\n");
 	if (sockfd != -1)
 	{
 		printf("Closing listening socket...\n");
 		close(sockfd);
+		
+		// Unregister
+		sisis_unregister(ptype, host_num);
+		
+		sockfd = -1;
 	}
+}
+
+void terminate(int signal)
+{
+	printf("Terminating...\n");
+	close_listener();
 	if (con != -1)
 	{
 		printf("Closing remove connection socket...\n");
@@ -46,7 +57,6 @@ int main (int argc, char ** argv)
 	}
 	
 	// Get process type and host number
-	int ptype, host_num;
 	sscanf (argv[1], "%d", &ptype);
 	sscanf (argv[2], "%d", &host_num);
 	char sisis_addr[INET_ADDRSTRLEN];
@@ -112,6 +122,10 @@ int main (int argc, char ** argv)
 			// Send data back
 			if (send(con, buf, len, 0) == -1)
 				printf("Failed to send message.\n");
+			
+			// Exit if needed
+			if (strcmp(buf, "exit\n") == 0)
+				break;
 		}
 		else
 			printf("Failed to receive message.\n");
@@ -122,6 +136,5 @@ int main (int argc, char ** argv)
 	}
 	
 	// Close socket
-	close(sockfd);
-	sockfd = -1;
+	close_listener();
 }
