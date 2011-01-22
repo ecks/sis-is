@@ -57,8 +57,8 @@ int main (int argc, char ** argv)
 	}
 	
 	// Get process type and host number
-	sscanf (argv[1], "%d", &ptype);
-	sscanf (argv[2], "%d", &host_num);
+	sscanf (argv[1], "%d", &host_num);
+	sscanf (argv[2], "%d", &ptype);
 	char sisis_addr[INET_ADDRSTRLEN];
 	
 	// Register address
