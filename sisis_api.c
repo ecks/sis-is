@@ -56,7 +56,29 @@ int sisis_send(char * buf, unsigned int buf_len)
 	unsigned int rtn = -1;
 	if (sisis_socket)
 		rtn = sendto(sisis_socket, buf, buf_len, 0, (struct sockaddr *) &sisis_listener_addr, sizeof (sisis_listener_addr));
-	return -1;
+	return rtn;
+}
+
+/**
+ * Receive a message from the SIS-IS listener.
+ */
+int sisis_recv(char * buf, unsigned int buf_len)
+{
+	// Set up address info
+	struct sockaddr_in addr;
+	memset(&addr, 0, sizeof(addr));	// Clear structure
+	int addr_len;
+	
+	unsigned int rtn = -1;
+	if (sisis_socket)
+	{
+		do
+		{
+			rtn = -1;
+			rtn = recvfrom(sisis_socket, buf, buf_len, 0, (struct sockaddr *) &addr, &addr_len));
+		}while (addr.sin_family != sisis_listener_addr.sin_family || addr.sin_addr.s_addr != sisis_listener_addr.sin_addr.s_addr || addr.sin_port != sisis_listener_addr.sin_port);
+	}
+	return rtn;
 }
 
 /**
@@ -118,6 +140,8 @@ int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, 
 	free(buf);
 	
 	// TODO: Wait for message back
+	// TODO: Set timeout on receive
+	sisis_recv();
 	
 	return 0;
 }
