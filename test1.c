@@ -17,7 +17,7 @@
 #include "sisis_api.h"
 
 int sockfd = -1, con = -1;
-int ptype, host_num;
+int ptype, host_num, pid;
 
 void close_listener()
 {
@@ -27,7 +27,7 @@ void close_listener()
 		close(sockfd);
 		
 		// Unregister
-		sisis_unregister(ptype, host_num);
+		sisis_unregister(ptype, host_num, pid);
 		
 		sockfd = -1;
 	}
@@ -63,7 +63,7 @@ int main (int argc, char ** argv)
 	char sisis_addr[INET_ADDRSTRLEN];
 	
 	// Get pid
-	int pid = getpid();
+	pid = getpid();
 	
 	// Register address
 	if (sisis_register(ptype, host_num, pid, sisis_addr) != 0)
