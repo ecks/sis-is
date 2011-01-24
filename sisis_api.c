@@ -67,7 +67,7 @@ int sisis_recv(char * buf, unsigned int buf_len)
 	// Set up address info
 	struct sockaddr_in addr;
 	memset(&addr, 0, sizeof(addr));	// Clear structure
-	int addr_len;
+	int addr_len = sizeof(addr);
 	
 	unsigned int rtn = -1;
 	if (sisis_socket)
