@@ -75,7 +75,7 @@ int sisis_recv(char * buf, unsigned int buf_len)
 		do
 		{
 			rtn = -1;
-			rtn = recvfrom(sisis_socket, buf, buf_len, 0, (struct sockaddr *) &addr, &addr_len));
+			rtn = recvfrom(sisis_socket, buf, buf_len, 0, (struct sockaddr *) &addr, &addr_len);
 		}while (addr.sin_family != sisis_listener_addr.sin_family || addr.sin_addr.s_addr != sisis_listener_addr.sin_addr.s_addr || addr.sin_port != sisis_listener_addr.sin_port);
 	}
 	return rtn;
@@ -141,7 +141,8 @@ int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, 
 	
 	// TODO: Wait for message back
 	// TODO: Set timeout on receive
-	sisis_recv();
+	char recv_buf[1024];
+	int recv_buf_len = sisis_recv(recv_buf, 1024);
 	
 	return 0;
 }
