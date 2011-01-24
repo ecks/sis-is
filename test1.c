@@ -4,6 +4,7 @@
  * University of Delaware
  */
 
+#include <unistd.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -61,8 +62,11 @@ int main (int argc, char ** argv)
 	sscanf (argv[2], "%d", &ptype);
 	char sisis_addr[INET_ADDRSTRLEN];
 	
+	// Get pid
+	int pid = getpid();
+	
 	// Register address
-	if (sisis_register(ptype, host_num, sisis_addr) != 0)
+	if (sisis_register(ptype, host_num, pid, sisis_addr) != 0)
 	{
 		printf("Failed to register SIS-IS address.\n");
 		exit(1);

@@ -17,15 +17,27 @@ extern int sisis_listener_port;
 extern char * sisis_listener_ip_addr;
 
 /**
- * Registers SIS-IS process.
- * Returns SIS-IS/IP address or NULL on error.
+ * Construct SIS-IS address.
+ *
+ * sisis_addr String to store resulting SIS-IS/IP address in.
+ * 
+ * Returns zero on success.
  */
-int sisis_register(unsigned int ptype, unsigned int host_num, char * sisis_addr);
+int sisis_create_addr(unsigned int ptype, unsigned int host_num, unsigned int pid, char * sisis_addr);
+
+/**
+ * Registers SIS-IS process.
+ *
+ * sisis_addr String to store resulting SIS-IS/IP address in.
+ * 
+ * Returns zero on success.
+ */
+int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, char * sisis_addr);
 
 /**
  * Unregisters SIS-IS process.
  * Returns zero on success.
  */
-int sisis_unregister(unsigned int ptype, unsigned int host_num);
+int sisis_unregister(unsigned int ptype, unsigned int host_num, unsigned int pid);
 
 #endif // SISIS_API_H

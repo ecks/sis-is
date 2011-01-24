@@ -76,16 +76,37 @@ int sisis_construct_message(char ** buf, unsigned short version, unsigned short 
 }
 
 /**
+ * Construct SIS-IS address.
+ *
+ * sisis_addr String to store resulting SIS-IS/IP address in.
+ * 
+ * Returns zero on success.
+ */
+int sisis_create_addr(unsigned int ptype, unsigned int host_num, unsigned int pid, char * sisis_addr)
+{
+	// Check bounds
+	if (ptype > 255 || host_num > 255)
+		return 1;
+	pid %= 256;
+	
+	// Construct SIS-IS address
+	sprintf(sisis_addr, "26.%u.%u.%u", ptype, host_num, pid);
+	
+	return 0;
+}
+
+/**
  * Registers SIS-IS process.
  *
  * sisis_addr String to store resulting SIS-IS/IP address in.
  * 
  * Returns zero on success.
  */
-int sisis_register(unsigned int ptype, unsigned int host_num, char * sisis_addr)
+int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, char * sisis_addr)
 {
 	// Construct SIS-IS address
-	sprintf(sisis_addr, "26.0.%u.%u", ptype, host_num);
+	if (sisis_create_addr(ptype, host_num, pid, sisis_addr))
+		return 1;
 	
 	// Setup socket
 	sisis_socket_open();
@@ -105,11 +126,12 @@ int sisis_register(unsigned int ptype, unsigned int host_num, char * sisis_addr)
  * Unregisters SIS-IS process.
  * Returns zero on success.
  */
-int sisis_unregister(unsigned int ptype, unsigned int host_num)
+int sisis_unregister(unsigned int ptype, unsigned int host_num, unsigned int pid)
 {
 	// Construct SIS-IS address
 	char sisis_addr[INET_ADDRSTRLEN];
-	sprintf(sisis_addr, "26.0.%u.%u", ptype, host_num);
+	if (sisis_create_addr(ptype, host_num, pid, sisis_addr))
+		return 1;
 	
 	// Setup socket
 	sisis_socket_open();
