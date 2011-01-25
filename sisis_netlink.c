@@ -317,7 +317,7 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h)
 			route.src = src;
 			route.ifindex = index;
 			route.vrf_id = table;
-			route metric = metric;
+			route.metric = metric;
 			route.distance = 0;
 
       sisis_rib_add_ipv4 (route);
@@ -338,7 +338,7 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h)
 			route.gate = gate;
 			route.ifindex = index;
 			route.vrf_id = table;
-			route metric = metric;
+			route.metric = metric;
 			route.distance = 0;
 
       sisis_rib_add_ipv6 (route);
