@@ -20,8 +20,6 @@
  * 02111-1307, USA.  
  */
 
-#include <sisisd.h>
-
 /* Hack for GNU libc version 2. */
 #ifndef MSG_TRUNC
 #define MSG_TRUNC      0x20
@@ -34,6 +32,14 @@
 #include "table.h"
 #include "rib.h"
 #include "privs.h"
+
+extern int sisis_rib_add_ipv4 (int type, int flags, struct prefix_ipv4 *p, 
+	      struct in_addr *gate, struct in_addr *src,
+	      unsigned int ifindex, u_int32_t vrf_id,
+	      u_int32_t metric, u_char distance);
+extern int sisis_rib_add_ipv6 (int type, int flags, struct prefix_ipv6 *p,
+	      struct in6_addr *gate, unsigned int ifindex, u_int32_t vrf_id,
+	      u_int32_t metric, u_char distance);
 
 /* Socket interface to kernel */
 struct nlsock

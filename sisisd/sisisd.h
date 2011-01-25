@@ -22,8 +22,6 @@
 #ifndef SISISD_H
 #define SISISD_H
 
-#include "linklist.h"
-
 #define SISISD_VERSION "1.0"
 //#define SISIS_REGISTRATION_PORT 54345
 #define SISIS_PORT_DEFAULT 54345
