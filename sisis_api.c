@@ -204,8 +204,10 @@ int sisis_rib_add_ipv4 (route_ipv4 route)
 	return 0;
 }
 
+#ifdef HAVE_IPV6
 // TODO
 int sisis_rib_add_ipv6 (route_ipv6 route)
 {
 	return 0;
 }
+#endif /* HAVE_IPV6 */

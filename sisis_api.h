@@ -49,6 +49,8 @@ int sisis_unregister(unsigned int ptype, unsigned int host_num, unsigned int pid
  */
 int sisis_dump_kernel_routes();
 int sisis_rib_add_ipv4(struct route_ipv4);
+#ifdef HAVE_IPV6
 int sisis_rib_add_ipv6(struct route_ipv6);
+#endif /* HAVE_IPV6 */
 
 #endif // _SISIS_API_H
