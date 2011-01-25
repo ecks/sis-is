@@ -218,16 +218,14 @@ static void sisis_exit (int status)
   }
   list_delete (sisis_info->listen_sockets);
   
-  exit (status);
-
-  /* reverse sisis_zebra_init/if_init */
+  /* TODO: Remove  
+  // reverse sisis_zebra_init/if_init
   if (retain_mode)
     if_add_hook (IF_DELETE_HOOK, NULL);
   for (ALL_LIST_ELEMENTS (iflist, node, nnode, ifp))
     if_delete (ifp);
   list_free (iflist);
 
-  /* TODO: Remove
   // reverse sisis_attr_init
   sisis_attr_finish ();
 
