@@ -159,6 +159,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 					int zcmd = (command == SISIS_CMD_REGISTER_ADDRESS) ? ZEBRA_INTERFACE_ADDRESS_ADD : ZEBRA_INTERFACE_ADDRESS_DELETE;
 					zapi_interface_address(zcmd, zclient, &p, ifindex);
 					
+					// TODO: Change reply
 					char reply[256];
 					sprintf(reply, "%s SIS-IS address: %s.\n", (zcmd == ZEBRA_INTERFACE_ADDRESS_ADD) ? "Added " : "Removed ", ip_addr);
 					sendto(sock, reply, strlen(reply), 0, from, from_len);
@@ -168,6 +169,29 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 	}
 }
 
+/* Add an IPv4 Address to RIB. */
+int sisis_rib_add_ipv4 (int type, int flags, struct prefix_ipv4 *p, 
+	      struct in_addr *gate, struct in_addr *src,
+	      unsigned int ifindex, u_int32_t vrf_id,
+	      u_int32_t metric, u_char distance)
+{
+	// Set up prefix
+	char prefix_str[INET_ADDRSTRLEN];
+	struct prefix_ipv4 p;
+	p.family = AF_INET;
+	p.prefixlen = 32;
+	if (inet_pton(AF_INET, prefix_str, &p.prefix.s_addr) != 1)
+	printf("%s/%d [%u/%u]", prefix_str, p.prefixlen, distance, metric);
+	return 0;
+}
+
+// TODO
+int sisis_rib_add_ipv6 (int type, int flags, struct prefix_ipv6 *p,
+	      struct in6_addr *gate, unsigned int ifindex, u_int32_t vrf_id,
+	      u_int32_t metric, u_char distance)
+{
+	return 0;
+}
 
 /* SIS-IS listening socket. */
 struct sisis_listener

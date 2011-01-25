@@ -64,6 +64,8 @@ void sigusr1 (void);
 
 static void sisis_exit (int);
 
+extern void sisis_kernel_init(void);
+
 static struct quagga_signal_t sisis_signals[] = 
 {
   { 
@@ -368,6 +370,7 @@ int main (int argc, char **argv)
 
   /* sisis related initialization.  */
   sisis_init();
+  sisis_kernel_init();
 
   // TODO: Remove
   /* Parse config file. */
@@ -395,7 +398,9 @@ int main (int argc, char **argv)
   /* Start finite state machine, here we go! */
   while (thread_fetch (master, &thread))
     thread_call (&thread);
-
+  
+  // TODO: Fix memory issues on exit
+  
   /* Not reached. */
   return (0);
 }

@@ -72,6 +72,14 @@ time_t sisis_clock (void);
 void sisis_master_init (void);
 void sisis_terminate (void);
 
+int sisis_rib_add_ipv4 (int type, int flags, struct prefix_ipv4 *p, 
+	      struct in_addr *gate, struct in_addr *src,
+	      unsigned int ifindex, u_int32_t vrf_id,
+	      u_int32_t metric, u_char distance);
+int sisis_rib_add_ipv6 (int type, int flags, struct prefix_ipv6 *p,
+	      struct in6_addr *gate, unsigned int ifindex, u_int32_t vrf_id,
+	      u_int32_t metric, u_char distance);
+
 extern int sisis_socket (unsigned short, const char *);
 
 #endif /* SISISD_H */
