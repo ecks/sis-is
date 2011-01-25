@@ -188,11 +188,10 @@ int sisis_rib_add_ipv4 (int type, int flags, struct prefix_ipv4 *p,
 {
 	// Set up prefix
 	char prefix_str[INET_ADDRSTRLEN];
-	struct prefix_ipv4 p;
-	p.family = AF_INET;
-	p.prefixlen = 32;
-	if (inet_pton(AF_INET, prefix_str, &p.prefix.s_addr) != 1)
-	printf("%s/%d [%u/%u]", prefix_str, p.prefixlen, distance, metric);
+	p->family = AF_INET;
+	p->prefixlen = 32;
+	if (inet_pton(AF_INET, prefix_str, &p->prefix.s_addr) != 1)
+	printf("%s/%d [%u/%u]", prefix_str, p->prefixlen, distance, metric);
 	return 0;
 }
 
