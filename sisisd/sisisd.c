@@ -54,9 +54,6 @@ void sisis_init ()
   /* Init zebra. */
   sisis_zebra_init ();
 	
-	// Init kernel communication
-	sisis_kernel_init();
-	
 	// Start listener
 	//zlog_debug("Port: %d; Address:%s\n", sisis_info->port, sisis_info->address);
 	sisis_socket(sisis_info->port, sisis_info->address);
@@ -168,42 +165,8 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 					sendto(sock, reply, strlen(reply), 0, from, from_len);
 				}
 				break;
-			case SISIS_CMD_DUMP_ROUTES:
-				printf("Dumping Kernel Routes:\n");
-				switch(sisis_netlink_route_read())
-				{
-					case 0:
-						printf("Done dumping kernel routes.\n");
-						break;
-					default:
-						printf("Error dumping kernel routes.\n");
-				}
-				break;
 		}
 	}
-}
-
-/* Add an IPv4 Address to RIB. */
-int sisis_rib_add_ipv4 (int type, int flags, struct prefix_ipv4 *p, 
-	      struct in_addr *gate, struct in_addr *src,
-	      unsigned int ifindex, u_int32_t vrf_id,
-	      u_int32_t metric, u_char distance)
-{
-	// Set up prefix
-	char prefix_str[INET_ADDRSTRLEN];
-	p->family = AF_INET;
-	p->prefixlen = 32;
-	if (inet_ntop(AF_INET, &(p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
-		printf("%s/%d [%u/%u]\n", prefix_str, p->prefixlen, distance, metric);
-	return 0;
-}
-
-// TODO
-int sisis_rib_add_ipv6 (int type, int flags, struct prefix_ipv6 *p,
-	      struct in6_addr *gate, unsigned int ifindex, u_int32_t vrf_id,
-	      u_int32_t metric, u_char distance)
-{
-	return 0;
 }
 
 /* SIS-IS listening socket. */

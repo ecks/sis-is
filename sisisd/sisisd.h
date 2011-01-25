@@ -32,7 +32,6 @@
 // SIS-IS Commands
 #define SISIS_CMD_REGISTER_ADDRESS				1
 #define SISIS_CMD_UNREGISTER_ADDRESS			2
-#define SISIS_CMD_DUMP_ROUTES             3
 
 struct sisis_info
 {
@@ -81,8 +80,6 @@ int sisis_rib_add_ipv6 (int type, int flags, struct prefix_ipv6 *p,
 	      struct in6_addr *gate, unsigned int ifindex, u_int32_t vrf_id,
 	      u_int32_t metric, u_char distance);
 
-extern void sisis_kernel_init(void);
-extern int sisis_netlink_route_read (void);
 extern int sisis_socket (unsigned short, const char *);
 
 #endif /* SISISD_H */
