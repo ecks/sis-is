@@ -12,6 +12,7 @@
 // SIS-IS Commands
 #define SISIS_CMD_REGISTER_ADDRESS				1
 #define SISIS_CMD_UNREGISTER_ADDRESS			2
+#define SISIS_CMD_DUMP_ROUTES             3
 
 extern int sisis_listener_port;
 extern char * sisis_listener_ip_addr;

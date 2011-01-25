@@ -148,6 +148,24 @@ int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, 
 }
 
 /**
+ * Dump kernel routing table.
+ * Returns zero on success.
+ */
+int sisis_dump_kernel_routes()
+{
+	// Setup socket
+	sisis_socket_open();
+	
+	// Send message
+	char * buf;
+	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, SISIS_CMD_DUMP_ROUTES, NULL, 0);
+	sisis_send(buf, buf_len);
+	free(buf);
+	
+	return 0;
+}
+
+/**
  * Unregisters SIS-IS process.
  * Returns zero on success.
  */
