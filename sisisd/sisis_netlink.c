@@ -25,13 +25,7 @@
 #define MSG_TRUNC      0x20
 #endif /* MSG_TRUNC */
 
-#include "linklist.h"
-#include "log.h"
-#include "prefix.h"
-#include "connected.h"
-#include "table.h"
-#include "rib.h"
-#include "privs.h"
+#include <zebra.h>
 
 extern int sisis_rib_add_ipv4 (int type, int flags, struct prefix_ipv4 *p, 
 	      struct in_addr *gate, struct in_addr *src,
