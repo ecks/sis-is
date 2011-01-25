@@ -123,7 +123,6 @@ int main (int argc, char ** argv)
 		if ((len = recv(con, buf, 1023, 0)) > 0)
 		{
 			buf[len] = '\0';
-			printf("Received \"%s\".\n", buf);
 			
 			// Send data back
 			if (send(con, buf, len, 0) == -1)
@@ -132,6 +131,8 @@ int main (int argc, char ** argv)
 			// Trim
 			while (buf[len-1] == '\r' || buf[len-1] == '\n')
 				buf[--len] = '\0';
+			
+			printf("Received \"%s\".\n", buf);
 			
 			// Exit if needed
 			if (strcmp(buf, "exit") == 0)
