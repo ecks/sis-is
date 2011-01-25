@@ -212,10 +212,13 @@ static void sisis_exit (int status)
   /* reverse sisis_master_init */
   for (ALL_LIST_ELEMENTS_RO(sisis_info->listen_sockets, node, socket))
   {
+    printf("Closing %d.\n", *(int *)(long *)socket);
     if (close (*(int *)(long *)socket) == -1)
-      zlog_err ("close (%d): %s", (int)(long)socket, safe_strerror (errno));
+      zlog_err ("close (%d): %s", *(int *)(long *)socket, safe_strerror (errno));
   }
   list_delete (sisis_info->listen_sockets);
+  
+  exit (status);
 
   /* reverse sisis_zebra_init/if_init */
   if (retain_mode)
