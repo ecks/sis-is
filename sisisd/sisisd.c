@@ -169,14 +169,14 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 				}
 				break;
 			case SISIS_CMD_DUMP_ROUTES:
-				printf("Dumping Kernel Routes:");
+				printf("Dumping Kernel Routes:\n");
 				switch(sisis_netlink_route_read())
 				{
 					case 0:
-						printf("Done dumping kernel routes.");
+						printf("Done dumping kernel routes.\n");
 						break;
 					default:
-						printf("Error dumping kernel routes.");
+						printf("Error dumping kernel routes.\n");
 				}
 				break;
 		}
@@ -193,8 +193,8 @@ int sisis_rib_add_ipv4 (int type, int flags, struct prefix_ipv4 *p,
 	char prefix_str[INET_ADDRSTRLEN];
 	p->family = AF_INET;
 	p->prefixlen = 32;
-	if (inet_pton(AF_INET, prefix_str, &p->prefix.s_addr) != 1)
-	printf("%s/%d [%u/%u]", prefix_str, p->prefixlen, distance, metric);
+	if (inet_ntop(AF_INET, &(p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
+		printf("%s/%d [%u/%u]\n", prefix_str, p->prefixlen, distance, metric);
 	return 0;
 }
 
