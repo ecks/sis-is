@@ -36,7 +36,7 @@ struct route_ipv4
 {
 	int type;
 	int flags;
-	struct prefix_ipv4 *p,
+	struct prefix_ipv4 *p;
 	struct in_addr *gate;
 	struct in_addr *src;
 	unsigned int ifindex;
@@ -50,7 +50,7 @@ struct route_ipv6
 {
 	int type;
 	int flags;
-	struct prefix_ipv6 *p,
+	struct prefix_ipv6 *p;
 	struct in_addr *gate;
 	unsigned int ifindex;
 	u_int32_t vrf_id;
