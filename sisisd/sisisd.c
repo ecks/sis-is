@@ -165,6 +165,9 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 					sendto(sock, reply, strlen(reply), 0, from, from_len);
 				}
 				break;
+			case SISIS_CMD_ROUTE_DUMP:
+				sisis_netlink_route_read();
+				break;
 		}
 	}
 }
