@@ -27,13 +27,8 @@
 #define MSG_TRUNC      0x20
 #endif /* MSG_TRUNC */
 
-#include "linklist.h"
-#include "if.h"
 #include "log.h"
 #include "prefix.h"
-#include "connected.h"
-#include "table.h"
-#include "rib.h"
 #include "privs.h"
 
 /* Socket interface to kernel */
