@@ -30,7 +30,6 @@
 #include "if.h"
 #include "log.h"
 #include "prefix.h"
-#include "table.h"
 #include "privs.h"
 
 extern int sisis_rib_add_ipv4 (int type, int flags, struct prefix_ipv4 *p, 
@@ -67,7 +66,7 @@ extern struct zebra_privs_t zserv_privs;
 
 /* Make socket for Linux netlink interface. */
 static int
-netlink_socket (struct nlsock *nl, unsigned long groups)
+sisis_netlink_socket (struct nlsock *nl, unsigned long groups)
 {
   int ret;
   struct sockaddr_nl snl;
@@ -242,15 +241,6 @@ sisis_netlink_parse_info (int (*filter) (struct sockaddr_nl *, struct nlmsghdr *
               /* If the error field is zero, then this is an ACK */
               if (err->error == 0)
                 {
-                  if (IS_ZEBRA_DEBUG_KERNEL)
-                    {
-                      zlog_debug ("%s: %s ACK: type=%s(%u), seq=%u, pid=%u",
-                                 __FUNCTION__, nl->name,
-                                 lookup (nlmsg_str, err->msg.nlmsg_type),
-                                 err->msg.nlmsg_type, err->msg.nlmsg_seq,
-                                 err->msg.nlmsg_pid);
-                    }
-
                   /* return if not a multipart message, otherwise continue */
                   if (!(h->nlmsg_flags & NLM_F_MULTI))
                     {
@@ -272,11 +262,6 @@ sisis_netlink_parse_info (int (*filter) (struct sockaddr_nl *, struct nlmsghdr *
 		       (-errnum == ENODEV || -errnum == ESRCH))
 		      || (msg_type == RTM_NEWROUTE && -errnum == EEXIST)))
 		{
-		  if (IS_ZEBRA_DEBUG_KERNEL)
-		    zlog_debug ("%s: error: %s type=%s(%u), seq=%u, pid=%u",
-				nl->name, safe_strerror (-errnum),
-				lookup (nlmsg_str, msg_type),
-				msg_type, err->msg.nlmsg_seq, err->msg.nlmsg_pid);
 		  return 0;
 		}
 
@@ -288,18 +273,10 @@ sisis_netlink_parse_info (int (*filter) (struct sockaddr_nl *, struct nlmsghdr *
             }
 
           /* OK we got netlink message. */
-          if (IS_ZEBRA_DEBUG_KERNEL)
-            zlog_debug ("sisis_netlink_parse_info: %s type %s(%u), seq=%u, pid=%u",
-                       nl->name,
-                       lookup (nlmsg_str, h->nlmsg_type), h->nlmsg_type,
-                       h->nlmsg_seq, h->nlmsg_pid);
-
+          
           /* skip unsolicited messages originating from command socket */
           if (nl != &sisis_netlink_cmd && h->nlmsg_pid == sisis_netlink_cmd.snl.nl_pid)
             {
-              if (IS_ZEBRA_DEBUG_KERNEL)
-                zlog_debug ("sisis_netlink_parse_info: %s packet comes from %s",
-                            sisis_netlink_cmd.name, nl->name);
               continue;
             }
 
@@ -440,12 +417,9 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h)
 
 /* Routing table read function using netlink interface.  Only called
    bootstrap time. */
-int
-sisis_netlink_route_read (void)
+int sisis_netlink_route_read (void)
 {
   int ret;
-	
-	kernel_init();
 
   /* Get IPv4 routing table. */
   ret = sisis_netlink_request (AF_INET, RTM_GETROUTE, &sisis_netlink_cmd);
@@ -460,7 +434,7 @@ sisis_netlink_route_read (void)
   ret = sisis_netlink_request (AF_INET6, RTM_GETROUTE, &sisis_netlink_cmd);
   if (ret < 0)
     return ret;
-  ret = sisis_sisis_netlink_parse_info (sisis_netlink_routing_table, &sisis_netlink_cmd);
+  ret = sisis_netlink_parse_info (sisis_netlink_routing_table, &sisis_netlink_cmd);
   if (ret < 0)
     return ret;
 #endif /* HAVE_IPV6 */
@@ -469,9 +443,9 @@ sisis_netlink_route_read (void)
 }
 
 /* Exported interface function.  This function simply calls
-   netlink_socket (). */
+   sisis_netlink_socket (). */
 void
 sisis_kernel_init (void)
 {
-  netlink_socket (&sisis_netlink_cmd, 0);
+  sisis_netlink_socket (&sisis_netlink_cmd, 0);
 }
