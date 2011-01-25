@@ -22,6 +22,7 @@
 
 #include "sisis_structs.h"
 #include "sisis_api.h"
+#include <errno.h>
 #include <sys/socket.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
@@ -40,19 +41,6 @@ struct nlsock
   const char *name;
 } sisis_netlink_cmd  = { -1, 0, {0}, "netlink-cmd"};        /* command channel */
 
-static const struct message nlmsg_str[] = {
-  {RTM_NEWROUTE, "RTM_NEWROUTE"},
-  {RTM_DELROUTE, "RTM_DELROUTE"},
-  {RTM_GETROUTE, "RTM_GETROUTE"},
-  {RTM_NEWLINK,  "RTM_NEWLINK"},
-  {RTM_DELLINK,  "RTM_DELLINK"},
-  {RTM_GETLINK,  "RTM_GETLINK"},
-  {RTM_NEWADDR,  "RTM_NEWADDR"},
-  {RTM_DELADDR,  "RTM_DELADDR"},
-  {RTM_GETADDR,  "RTM_GETADDR"},
-  {0, NULL}
-};
-
 /* Make socket for Linux netlink interface. */
 static int
 sisis_netlink_socket (struct nlsock *nl, unsigned long groups)
@@ -65,11 +53,7 @@ sisis_netlink_socket (struct nlsock *nl, unsigned long groups)
 
   sock = socket (AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
   if (sock < 0)
-    {
-      zlog_err("Can't open %s socket: %s", nl->name,
-            safe_strerror (errno));
       return -1;
-    }
 
   memset (&snl, 0, sizeof snl);
   snl.nl_family = AF_NETLINK;
@@ -81,9 +65,7 @@ sisis_netlink_socket (struct nlsock *nl, unsigned long groups)
 
   if (ret < 0)
     {
-      zlog_err("Can't bind %s socket to group 0x%x: %s",
-            nl->name, snl.nl_groups, safe_strerror (save_errno));
-      close (sock);
+			close (sock);
       return -1;
     }
 
@@ -92,8 +74,6 @@ sisis_netlink_socket (struct nlsock *nl, unsigned long groups)
   ret = getsockname (sock, (struct sockaddr *) &snl, (socklen_t *) &namelen);
   if (ret < 0 || namelen != sizeof snl)
     {
-      zlog_err("Can't get %s socket name: %s", nl->name,
-            safe_strerror (errno));
       close (sock);
       return -1;
     }
@@ -120,10 +100,7 @@ sisis_netlink_request (int family, int type, struct nlsock *nl)
 
   /* Check netlink socket. */
   if (nl->sock < 0)
-    {
-      zlog_err("%s socket isn't active.", nl->name);
       return -1;
-    }
 
   memset (&snl, 0, sizeof snl);
   snl.nl_family = AF_NETLINK;
@@ -141,11 +118,7 @@ sisis_netlink_request (int family, int type, struct nlsock *nl)
   save_errno = errno;
 
   if (ret < 0)
-    {
-      zlog_err("%s sendto failed: %s", nl->name,
-            safe_strerror (save_errno));
       return -1;
-    }
 
   return 0;
 }
@@ -175,23 +148,14 @@ sisis_netlink_parse_info (int (*filter) (struct sockaddr_nl *, struct nlmsghdr *
             continue;
           if (errno == EWOULDBLOCK || errno == EAGAIN)
             break;
-          zlog_err("%s recvmsg overrun: %s",
-	  	nl->name, safe_strerror(errno));
           continue;
         }
 
       if (status == 0)
-        {
-          zlog_err("%s EOF", nl->name);
           return -1;
-        }
 
       if (msg.msg_namelen != sizeof snl)
-        {
-          zlog_err("%s sender address length error: length %d",
-                nl->name, msg.msg_namelen);
           return -1;
-        }
       
       for (h = (struct nlmsghdr *) buf; NLMSG_OK (h, (unsigned int) status);
            h = NLMSG_NEXT (h, status))
@@ -219,11 +183,7 @@ sisis_netlink_parse_info (int (*filter) (struct sockaddr_nl *, struct nlmsghdr *
                 }
 
               if (h->nlmsg_len < NLMSG_LENGTH (sizeof (struct nlmsgerr)))
-                {
-                  zlog_err("%s error: message truncated",
-                        nl->name);
                   return -1;
-                }
 
               /* Deal with errors that occur because of races in link handling */
 	      if (nl == &sisis_netlink_cmd
@@ -233,11 +193,6 @@ sisis_netlink_parse_info (int (*filter) (struct sockaddr_nl *, struct nlmsghdr *
 		{
 		  return 0;
 		}
-
-	      zlog_err ("%s error: %s, type=%s(%u), seq=%u, pid=%u",
-			nl->name, safe_strerror (-errnum),
-			lookup (nlmsg_str, msg_type),
-			msg_type, err->msg.nlmsg_seq, err->msg.nlmsg_pid);
               return -1;
             }
 
@@ -251,24 +206,14 @@ sisis_netlink_parse_info (int (*filter) (struct sockaddr_nl *, struct nlmsghdr *
 
           error = (*filter) (&snl, h);
           if (error < 0)
-            {
-              zlog_err("%s filter function error", nl->name);
               ret = error;
-            }
         }
 
       /* After error care. */
       if (msg.msg_flags & MSG_TRUNC)
-        {
-          zlog_err("%s error: message truncated", nl->name);
           continue;
-        }
       if (status)
-        {
-          zlog_err("%s error: data remnant size %d", nl->name,
-                status);
           return -1;
-        }
     }
   return ret;
 }
