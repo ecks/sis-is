@@ -84,6 +84,14 @@ sisis_netlink_socket (struct nlsock *nl, unsigned long groups)
   return ret;
 }
 
+/* Exported interface function.  This function simply calls
+   sisis_netlink_socket (). */
+void sisis_kernel_init (void)
+{
+	if (sisis_netlink_cmd.sock == -1)
+		sisis_netlink_socket (&sisis_netlink_cmd, 0);
+}
+
 /* Get type specified information from netlink. */
 static int
 sisis_netlink_request (int family, int type, struct nlsock *nl)
@@ -376,13 +384,4 @@ int sisis_netlink_route_read (void)
 #endif /* HAVE_IPV6 */
 
   return 0;
-}
-
-/* Exported interface function.  This function simply calls
-   sisis_netlink_socket (). */
-void
-sisis_kernel_init (void)
-{
-	if (sisis_netlink_cmd->sock == -1)
-		sisis_netlink_socket (&sisis_netlink_cmd, 0);
 }
