@@ -274,7 +274,7 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h)
 
   memset (tb, 0, sizeof tb);
   sisis_netlink_parse_rtattr (tb, RTA_MAX, RTM_RTA (rtm), len);
-
+/*
   if (rtm->rtm_flags & RTM_F_CLONED)
     return 0;
   if (rtm->rtm_protocol == RTPROT_REDIRECT)
@@ -283,7 +283,7 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h)
     //return 0;
 
   if (rtm->rtm_src_len != 0)
-    return 0;
+    return 0;*/
 
   index = 0;
   metric = 0;
