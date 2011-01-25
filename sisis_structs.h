@@ -9,6 +9,9 @@
 #ifndef _SISIS_STRUCTS_H
 #define _SISIS_STRUCTS_H
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include <netinet/in.h>
 
 /* IPv4 prefix structure. */
