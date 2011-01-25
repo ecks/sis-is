@@ -212,12 +212,14 @@ static void sisis_exit (int status)
   list_free (sisis_info->sisis_addrs);
 
   /* reverse sisis_master_init */
+  /* TODO: Fix bug
   for (ALL_LIST_ELEMENTS_RO(sisis_info->listen_sockets, node, socket))
   {
     if (close ((int)(long)socket) == -1)
       zlog_err ("close (%d): %s", (int)(long)socket, safe_strerror (errno));
   }
   list_delete (sisis_info->listen_sockets);
+  */
 
   /* reverse sisis_zebra_init/if_init */
   if (retain_mode)
