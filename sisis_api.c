@@ -187,6 +187,7 @@ int sisis_dump_kernel_routes()
 	free(buf);
 	*/
 	
+	printf("Route Table:\n");
 	sisis_netlink_route_read();
 	
 	return 0;
@@ -195,6 +196,7 @@ int sisis_dump_kernel_routes()
 /* Add an IPv4 Address to RIB. */
 int sisis_rib_add_ipv4 (struct route_ipv4 route)
 {
+	printf("Here\n");
 	// Set up prefix
 	char prefix_str[INET_ADDRSTRLEN];
 	route.p->family = AF_INET;
