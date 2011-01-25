@@ -340,5 +340,6 @@ int sisis_socket (unsigned short port, const char *address)
 		close (sock);
 		return ret;
 	}
+	printf("Socket handle: %d.\n", sock);
   return sock;
 }
