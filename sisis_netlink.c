@@ -352,6 +352,9 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h)
    bootstrap time. */
 int sisis_netlink_route_read (void)
 {
+	// Initialize kernel socket
+	sisis_kernel_init();
+	
   int ret;
 
   /* Get IPv4 routing table. */
@@ -380,5 +383,6 @@ int sisis_netlink_route_read (void)
 void
 sisis_kernel_init (void)
 {
-  sisis_netlink_socket (&sisis_netlink_cmd, 0);
+	if (sisis_netlink_cmd->sock == -1)
+		sisis_netlink_socket (&sisis_netlink_cmd, 0);
 }
