@@ -7,6 +7,8 @@
 #ifndef SISIS_API_H
 #define SISIS_API_H
 
+#include "sisis_structs.h"
+
 #define SISIS_VERSION 1
 
 // SIS-IS Commands
@@ -46,5 +48,7 @@ int sisis_unregister(unsigned int ptype, unsigned int host_num, unsigned int pid
  * Returns zero on success.
  */
 int sisis_dump_kernel_routes();
+int sisis_rib_add_ipv4(struct route_ipv4);
+int sisis_rib_add_ipv6(struct route_ipv6);
 
 #endif // SISIS_API_H

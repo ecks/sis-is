@@ -148,24 +148,6 @@ int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, 
 }
 
 /**
- * Dump kernel routing table.
- * Returns zero on success.
- */
-int sisis_dump_kernel_routes()
-{
-	// Setup socket
-	sisis_socket_open();
-	
-	// Send message
-	char * buf;
-	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, SISIS_CMD_DUMP_ROUTES, NULL, 0);
-	sisis_send(buf, buf_len);
-	free(buf);
-	
-	return 0;
-}
-
-/**
  * Unregisters SIS-IS process.
  * Returns zero on success.
  */
@@ -185,5 +167,45 @@ int sisis_unregister(unsigned int ptype, unsigned int host_num, unsigned int pid
 	sisis_send(buf, buf_len);
 	free(buf);
 	
+	return 0;
+}
+
+/**
+ * Dump kernel routing table.
+ * Returns zero on success.
+ */
+int sisis_dump_kernel_routes()
+{
+	/*
+	// Setup socket
+	sisis_socket_open();
+	
+	// Send message
+	char * buf;
+	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, SISIS_CMD_DUMP_ROUTES, NULL, 0);
+	sisis_send(buf, buf_len);
+	free(buf);
+	*/
+	
+	sisis_netlink_route_read();
+	
+	return 0;
+}
+
+/* Add an IPv4 Address to RIB. */
+int sisis_rib_add_ipv4 (route_ipv4 route)
+{
+	// Set up prefix
+	char prefix_str[INET_ADDRSTRLEN];
+	route->p->family = AF_INET;
+	route->p->prefixlen = 32;
+	if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
+		printf("%s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
+	return 0;
+}
+
+// TODO
+int sisis_rib_add_ipv6 (route_ipv6 route)
+{
 	return 0;
 }
