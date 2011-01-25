@@ -22,6 +22,8 @@
 
 #include "sisis_api.h"
 #include "sisis_structs.h"
+#include <sys/socket.h>
+#include <linux/netlink.h>
 
 /* Hack for GNU libc version 2. */
 #ifndef MSG_TRUNC
