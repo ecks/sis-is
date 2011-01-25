@@ -30,10 +30,7 @@
 #include "if.h"
 #include "log.h"
 #include "prefix.h"
-#include "connected.h"
 #include "table.h"
-#include "rib.h"
-#include "thread.h"
 #include "privs.h"
 
 extern int sisis_rib_add_ipv4 (int type, int flags, struct prefix_ipv4 *p, 
