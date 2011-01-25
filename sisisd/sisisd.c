@@ -297,7 +297,7 @@ static int sisis_listener (int sock, struct sockaddr *sa, socklen_t salen)
   memcpy(&listener->su, sa, salen);
   listener->thread = thread_add_read (sisis_info->master, sisis_recvfrom, listener, sock);
   listnode_add (sisis_info->listen_sockets, listener);
-	printf("Socket %d.\n", listener->fd);
+	
   return 0;
 }
 
