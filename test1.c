@@ -129,8 +129,12 @@ int main (int argc, char ** argv)
 			if (send(con, buf, len, 0) == -1)
 				printf("Failed to send message.\n");
 			
+			// Trim
+			while (buf[len-1] == '\r' || buf[len-1] == '\n')
+				buf[--len] = '\0';
+			
 			// Exit if needed
-			if (strcmp(buf, "exit\n") == 0)
+			if (strcmp(buf, "exit") == 0)
 				break;
 		}
 		else
