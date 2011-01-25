@@ -166,13 +166,14 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 				}
 				break;
 			case SISIS_CMD_DUMP_ROUTES:
+				printf("Dumping Kernel Routes:");
 				switch(sisis_netlink_route_read())
 				{
 					case 0:
-						printf("Done reading kernel routes.");
+						printf("Done dumping kernel routes.");
 						break;
 					default:
-						printf("Error reading kernel routes.");
+						printf("Error dumping kernel routes.");
 				}
 				break;
 		}
