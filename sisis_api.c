@@ -193,7 +193,7 @@ int sisis_dump_kernel_routes()
 }
 
 /* Add an IPv4 Address to RIB. */
-int sisis_rib_add_ipv4 (route_ipv4 route)
+int sisis_rib_add_ipv4 (struct route_ipv4 route)
 {
 	// Set up prefix
 	char prefix_str[INET_ADDRSTRLEN];
@@ -206,7 +206,7 @@ int sisis_rib_add_ipv4 (route_ipv4 route)
 
 #ifdef HAVE_IPV6
 // TODO
-int sisis_rib_add_ipv6 (route_ipv6 route)
+int sisis_rib_add_ipv6 (struct route_ipv6 route)
 {
 	return 0;
 }
