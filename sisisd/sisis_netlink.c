@@ -339,29 +339,28 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h)
   rtm = NLMSG_DATA (h);
 
   if (h->nlmsg_type != RTM_NEWROUTE)
-	{printf("Here1\n");
-    return 0;}
+    return 0;
   if (rtm->rtm_type != RTN_UNICAST)
-  {printf("Here2\n");  return 0;}
+    return 0;
 
   table = rtm->rtm_table;
 
   len = h->nlmsg_len - NLMSG_LENGTH (sizeof (struct rtmsg));
   if (len < 0)
-    {printf("Here3\n");return -1;}
+    return -1;
 
   memset (tb, 0, sizeof tb);
   sisis_netlink_parse_rtattr (tb, RTA_MAX, RTM_RTA (rtm), len);
 
   if (rtm->rtm_flags & RTM_F_CLONED)
-   {printf("Here4\n"); return 0;}
+    return 0;
   if (rtm->rtm_protocol == RTPROT_REDIRECT)
-   {printf("Here5\n"); return 0;}
-  if (rtm->rtm_protocol == RTPROT_KERNEL)
-    {printf("Here6\n");return 0;}
+    return 0;
+  //if (rtm->rtm_protocol == RTPROT_KERNEL)
+    //return 0;
 
   if (rtm->rtm_src_len != 0)
-    {printf("Here7\n");return 0;}
+    return 0;
 
   /* Route which inserted by Zebra. */
   if (rtm->rtm_protocol == RTPROT_ZEBRA)
