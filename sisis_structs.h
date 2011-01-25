@@ -9,6 +9,8 @@
 #ifndef _SISIS_STRUCTS_H
 #define _SISIS_STRUCTS_H
 
+#include <netinet/in.h>
+
 /* IPv4 prefix structure. */
 struct prefix_ipv4
 {
