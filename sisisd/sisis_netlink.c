@@ -62,7 +62,7 @@ static const struct message nlmsg_str[] = {
   {0, NULL}
 };
 
-extern struct zebra_privs_t zserv_privs;
+extern struct zebra_privs_t sisisd_privs;
 
 /* Make socket for Linux netlink interface. */
 static int
@@ -87,7 +87,7 @@ sisis_netlink_socket (struct nlsock *nl, unsigned long groups)
   snl.nl_groups = groups;
 
   /* Bind the socket to the netlink structure for anything. */
-  if (zserv_privs.change (ZPRIVS_RAISE))
+  if (sisisd_privs.change (ZPRIVS_RAISE))
     {
       zlog_err("Can't raise privileges");
       return -1;
@@ -95,7 +95,7 @@ sisis_netlink_socket (struct nlsock *nl, unsigned long groups)
 
   ret = bind (sock, (struct sockaddr *) &snl, sizeof snl);
   save_errno = errno;
-  if (zserv_privs.change (ZPRIVS_LOWER))
+  if (sisisd_privs.change (ZPRIVS_LOWER))
     zlog_err("Can't lower privileges");
 
   if (ret < 0)
@@ -158,7 +158,7 @@ sisis_netlink_request (int family, int type, struct nlsock *nl)
   /* linux appears to check capabilities on every message 
    * have to raise caps for every message sent
    */
-  if (zserv_privs.change (ZPRIVS_RAISE))
+  if (sisisd_privs.change (ZPRIVS_RAISE))
     {
       zlog_err("Can't raise privileges");
       return -1;
@@ -168,7 +168,7 @@ sisis_netlink_request (int family, int type, struct nlsock *nl)
                 (struct sockaddr *) &snl, sizeof snl);
   save_errno = errno;
 
-  if (zserv_privs.change (ZPRIVS_LOWER))
+  if (sisisd_privs.change (ZPRIVS_LOWER))
     zlog_err("Can't lower privileges");
 
   if (ret < 0)
