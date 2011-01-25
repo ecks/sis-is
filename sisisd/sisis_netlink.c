@@ -20,12 +20,21 @@
  * 02111-1307, USA.  
  */
 
+#include <zebra.h>
+
 /* Hack for GNU libc version 2. */
 #ifndef MSG_TRUNC
 #define MSG_TRUNC      0x20
 #endif /* MSG_TRUNC */
 
-#include <zebra.h>
+#include "if.h"
+#include "log.h"
+#include "prefix.h"
+#include "connected.h"
+#include "table.h"
+#include "rib.h"
+#include "thread.h"
+#include "privs.h"
 
 extern int sisis_rib_add_ipv4 (int type, int flags, struct prefix_ipv4 *p, 
 	      struct in_addr *gate, struct in_addr *src,
