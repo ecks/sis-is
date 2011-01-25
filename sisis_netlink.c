@@ -23,6 +23,7 @@
 #include "sisis_structs.h"
 #include "sisis_api.h"
 #include <errno.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
@@ -276,10 +277,6 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h)
   if (rtm->rtm_src_len != 0)
     return 0;
 
-  /* Route which inserted by Zebra. */
-  if (rtm->rtm_protocol == RTPROT_ZEBRA)
-    flags |= ZEBRA_FLAG_SELFROUTE;
-
   index = 0;
   metric = 0;
   dest = NULL;
@@ -313,7 +310,7 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h)
 			
 			// Construct route info
 			struct route_ipv4 route;
-			route.type = ZEBRA_ROUTE_KERNEL;
+			route.type = 1;	// Means nothing right now
 			route.flags = flags;
 			route.p = &p;
 			route.gate = gate;
@@ -335,7 +332,7 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h)
 			
 			// Construct route info
 			struct route_ipv6 route;
-			route.type = ZEBRA_ROUTE_KERNEL;
+			route.type = 1;	// Means nothing right now
 			route.flags = flags;
 			route.p = &p;
 			route.gate = gate;
