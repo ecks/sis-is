@@ -32,6 +32,7 @@
 // SIS-IS Commands
 #define SISIS_CMD_REGISTER_ADDRESS				1
 #define SISIS_CMD_UNREGISTER_ADDRESS			2
+#define SISIS_CMD_DUMP_ROUTES             3
 
 struct sisis_info
 {
