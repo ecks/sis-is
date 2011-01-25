@@ -54,6 +54,9 @@ void sisis_init ()
   /* Init zebra. */
   sisis_zebra_init ();
 	
+	// Init kernel communication
+	sisis_kernel_init();
+	
 	// Start listener
 	//zlog_debug("Port: %d; Address:%s\n", sisis_info->port, sisis_info->address);
 	sisis_socket(sisis_info->port, sisis_info->address);

@@ -64,8 +64,6 @@ void sigusr1 (void);
 
 static void sisis_exit (int);
 
-extern void sisis_kernel_init(void);
-
 static struct quagga_signal_t sisis_signals[] = 
 {
   { 
@@ -370,7 +368,6 @@ int main (int argc, char **argv)
 
   /* sisis related initialization.  */
   sisis_init();
-  sisis_kernel_init();
 
   // TODO: Remove
   /* Parse config file. */
