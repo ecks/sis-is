@@ -261,10 +261,10 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h)
 
   rtm = NLMSG_DATA (h);
 
-  //if (h->nlmsg_type != RTM_NEWROUTE)
-    //return 0;
-  if (rtm->rtm_type != RTN_UNICAST)
+  if (h->nlmsg_type != RTM_NEWROUTE)
     return 0;
+  //if (rtm->rtm_type != RTN_UNICAST)
+    //return 0;
 
   table = rtm->rtm_table;
 
