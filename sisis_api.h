@@ -41,4 +41,10 @@ int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, 
  */
 int sisis_unregister(unsigned int ptype, unsigned int host_num, unsigned int pid);
 
+/**
+ * Dump kernel routing table.
+ * Returns zero on success.
+ */
+int sisis_dump_kernel_routes();
+
 #endif // SISIS_API_H
