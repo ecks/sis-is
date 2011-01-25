@@ -20,8 +20,8 @@
  * 02111-1307, USA.  
  */
 
-#include "sisis_api.h"
 #include "sisis_structs.h"
+#include "sisis_api.h"
 #include <sys/socket.h>
 #include <linux/netlink.h>
 

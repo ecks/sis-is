@@ -4,8 +4,8 @@
  * University of Delaware
  */
 
-#ifndef SISIS_API_H
-#define SISIS_API_H
+#ifndef _SISIS_API_H
+#define _SISIS_API_H
 
 #include "sisis_structs.h"
 
@@ -51,4 +51,4 @@ int sisis_dump_kernel_routes();
 int sisis_rib_add_ipv4(struct route_ipv4);
 int sisis_rib_add_ipv6(struct route_ipv6);
 
-#endif // SISIS_API_H
+#endif // _SISIS_API_H
