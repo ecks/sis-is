@@ -286,23 +286,8 @@ static int sisis_listener (int sock, struct sockaddr *sa, socklen_t salen)
   listener->fd = sock;
   memcpy(&listener->su, sa, salen);
   listener->thread = thread_add_read (sisis_info->master, sisis_recvfrom, listener, sock);
-  listnode_add (sisis_info->listen_sockets, listener);
-/*
-	// Start listening
-  ret = listen (sock, 3);
-  if (ret < 0)
-	{
-		zlog_err ("listen: %s", safe_strerror (errno));
-		return ret;
-	}
-
-	// Update listener infprmation
-  listener = XMALLOC (MTYPE_SISIS_LISTENER, sizeof(*listener));
-  listener->fd = sock;
-  memcpy(&listener->su, sa, salen);
-  listener->thread = thread_add_read (master, sisis_accept, listener, sock);
-  listnode_add (bm->listen_sockets, listener);
-*/
+  listnode_add (sisis_info->listen_sockets, listener->fd);
+	
   return 0;
 }
 
@@ -347,86 +332,3 @@ int sisis_socket (unsigned short port, const char *address)
 	}
   return sock;
 }
-
-
-
-#if 0
-// TODO: Remove
-/* Accept SIS-IS connection. */
-static int sisis_accept (struct thread *thread)
-{
-  int sisis_sock;
-  int accept_sock;
-  union sockunion su;
-  struct sisis_listener *listener = THREAD_ARG(thread);
-  struct peer *peer;
-  struct peer *peer1;
-  char buf[SU_ADDRSTRLEN];
-
-  /* Register accept thread. */
-  accept_sock = THREAD_FD (thread);
-  if (accept_sock < 0)
-	{
-		zlog_err ("accept_sock is negative value %d", accept_sock);
-		return -1;
-	}
-  listener->thread = thread_add_read (master, bgp_accept, listener, accept_sock);
-
-  /* Accept client connection. */
-  bgp_sock = sockunion_accept (accept_sock, &su);
-  if (bgp_sock < 0)
-    {
-      zlog_err ("[Error] BGP socket accept failed (%s)", safe_strerror (errno));
-      return -1;
-    }
-
-  if (BGP_DEBUG (events, EVENTS))
-    zlog_debug ("[Event] BGP connection from host %s", inet_sutop (&su, buf));
-  
-  /* Check remote IP address */
-  peer1 = peer_lookup (NULL, &su);
-  if (! peer1 || peer1->status == Idle)
-    {
-      if (BGP_DEBUG (events, EVENTS))
-	{
-	  if (! peer1)
-	    zlog_debug ("[Event] BGP connection IP address %s is not configured",
-		       inet_sutop (&su, buf));
-	  else
-	    zlog_debug ("[Event] BGP connection IP address %s is Idle state",
-		       inet_sutop (&su, buf));
-	}
-      close (bgp_sock);
-      return -1;
-    }
-
-  /* In case of peer is EBGP, we should set TTL for this connection.  */
-  if (peer_sort (peer1) == BGP_PEER_EBGP)
-    sockopt_ttl (peer1->su.sa.sa_family, bgp_sock, peer1->ttl);
-
-  /* Make dummy peer until read Open packet. */
-  if (BGP_DEBUG (events, EVENTS))
-    zlog_debug ("[Event] Make dummy peer structure until read Open packet");
-
-  {
-    char buf[SU_ADDRSTRLEN + 1];
-
-    peer = peer_create_accept (peer1->bgp);
-    SET_FLAG (peer->sflags, PEER_STATUS_ACCEPT_PEER);
-    peer->su = su;
-    peer->fd = bgp_sock;
-    peer->status = Active;
-    peer->local_id = peer1->local_id;
-    peer->v_holdtime = peer1->v_holdtime;
-    peer->v_keepalive = peer1->v_keepalive;
-
-    /* Make peer's address string. */
-    sockunion2str (&su, buf, SU_ADDRSTRLEN);
-    peer->host = XSTRDUP (MTYPE_BGP_PEER_HOST, buf);
-  }
-
-  BGP_EVENT_ADD (peer, TCP_connection_open);
-
-  return 0;
-}
-#endif
