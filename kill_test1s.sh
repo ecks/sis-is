@@ -1,2 +1,2 @@
 #!/bin/bash
-killall ./test1
+killall test1

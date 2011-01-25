@@ -47,7 +47,7 @@ void terminate(int signal)
 
 int main (int argc, char ** argv)
 {
-	sisis_dump_kernel_routes();
+	//sisis_dump_kernel_routes();
 	
 	struct addrinfo hints, *addr;
 	
