@@ -195,9 +195,6 @@ void sigusr1 (void)
 */
 static void sisis_exit (int status)
 {
-  // TODO: Remove once I fix bug in rest of function
-  exit (status);
-  
   struct sisis_addr *sisis_addr;
   struct listnode *node, *nnode;
   int *socket;
@@ -212,6 +209,9 @@ static void sisis_exit (int status)
     //sisis_delete (sisis_addr);
   list_free (sisis_info->sisis_addrs);
 
+  // TODO: Remove once I fix bug in rest of function
+  exit (status);
+  
   /* reverse sisis_master_init */
   for (ALL_LIST_ELEMENTS_RO(sisis_info->listen_sockets, node, socket))
   {
