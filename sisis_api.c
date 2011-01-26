@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "sisis_api.h"
 
@@ -20,6 +21,9 @@ struct sockaddr_in sisis_listener_addr;
 
 int sisis_listener_port = 54345;
 char * sisis_listener_ip_addr = "127.0.0.1";
+
+// TODO: Support multiple addresses at once.
+pthread_t sisis_reregistration_thread;
 
 /**
  * Sets up socket to SIS-IS listener.
@@ -118,18 +122,14 @@ int sisis_create_addr(unsigned int ptype, unsigned int host_num, unsigned int pi
 }
 
 /**
- * Registers SIS-IS process.
+ * Does actual registration of SIS-IS address.
  *
  * sisis_addr String to store resulting SIS-IS/IP address in.
  * 
  * Returns zero on success.
  */
-int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, char * sisis_addr)
+int sisis_do_register(char * sisis_addr)
 {
-	// Construct SIS-IS address
-	if (sisis_create_addr(ptype, host_num, pid, sisis_addr))
-		return 1;
-	
 	// Setup socket
 	sisis_socket_open();
 	
@@ -143,6 +143,43 @@ int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, 
 	// TODO: Set timeout on receive
 	char recv_buf[1024];
 	int recv_buf_len = sisis_recv(recv_buf, 1024);
+	
+	return 0;
+}
+
+void sisis_reregister(void * arg)
+{
+	char * addr = (char *)arg;
+	do
+	{
+		// Sleep
+		sleep(SISIS_REREGISTRATION_TIMEOUT);
+		
+		// Register
+		sisis_do_register(addr);
+	} while (1);	// TODO: Stop when the address is deregistered
+}
+
+/**
+ * Registers SIS-IS process.
+ *
+ * sisis_addr String to store resulting SIS-IS/IP address in.
+ * 
+ * Returns zero on success.
+ */
+int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, char * sisis_addr)
+{
+	// Construct SIS-IS address
+	if (sisis_create_addr(ptype, host_num, pid, sisis_addr))
+		return 1;
+	
+	// Register
+	sisis_do_register(sisis_addr);
+	
+	// TODO: Support multiple addresses at once.
+	char * thread_sisis_addr = malloc(sizeof(char) * strlen(sisis_addr));
+	strcpy(thread_sisis_addr, sisis_addr);
+	pthread_create(&sisis_reregistration_thread, NULL, sisis_reregister, (void *)thread_sisis_addr);
 	
 	return 0;
 }

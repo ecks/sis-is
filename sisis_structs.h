@@ -14,6 +14,21 @@
 #include <netdb.h>
 #include <netinet/in.h>
 
+/* Linked list */
+/*
+struct list
+{
+	struct listnode * head;
+}
+
+struct listnode
+{
+	struct listnode * prev;
+	struct listnode * next;
+	void * data;
+}
+*/
+
 /* IPv4 prefix structure. */
 struct prefix_ipv4
 {
