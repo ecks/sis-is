@@ -1608,9 +1608,9 @@ int if_addr_expired_checker(struct thread* th)
   struct interface *ifp;
 	struct connected *ifc;
 	
-	for (ALL_LIST_ELEMENTS_RO (iflist, node, ifp))
+	for (ALL_LIST_ELEMENTS (iflist, node, ifp))
   {
-		for (ALL_LIST_ELEMENTS_RO (ifp->connected, node2, ifc))
+		for (ALL_LIST_ELEMENTS (ifp->connected, node2, ifc))
 		{
 			// Check if it expired
 			if (CHECK_FLAG (ifc->flags, ZEBRA_IFA_EXPIRES) && ifc->expires < time(NULL))
