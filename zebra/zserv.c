@@ -20,6 +20,7 @@
  */
 
 #include <zebra.h>
+#include <time.h>
 
 #include "prefix.h"
 #include "command.h"
@@ -747,7 +748,17 @@ static int zread_interface_address_add_or_delete (int command, struct zserv *cli
 	if (ifp)
 	{
 		if (command == ZEBRA_INTERFACE_ADDRESS_ADD)
-			ip_address_install (NULL, ifp, addr_str, NULL, NULL);
+		{
+			// Check for expiration date
+			time_t expires, * expires_ptr = NULL;
+			if (STREAM_READABLE(s) == sizeof(expires))
+			{
+				stream_get (expires, s, sizeof(expires));
+				expires_ptr = &expires;
+			}
+			
+			ip_address_install (NULL, ifp, addr_str, NULL, NULL, expires_ptr);
+		}
 		else if (command == ZEBRA_INTERFACE_ADDRESS_DELETE)
 			ip_address_uninstall (NULL, ifp, addr_str, NULL, NULL);
 	}
