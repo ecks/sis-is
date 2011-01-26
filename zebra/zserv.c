@@ -753,7 +753,7 @@ static int zread_interface_address_add_or_delete (int command, struct zserv *cli
 			time_t expires, * expires_ptr = NULL;
 			if (STREAM_READABLE(s) == sizeof(expires))
 			{
-				stream_get (expires, s, sizeof(expires));
+				stream_get (&expires, s, sizeof(expires));
 				expires_ptr = &expires;
 			}
 			
