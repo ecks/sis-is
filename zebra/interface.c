@@ -1604,13 +1604,13 @@ struct thread * zebra_if_addr_expire_thread = NULL;
 /* Check for interface IP addresses that have expired. */
 int if_addr_expired_checker(struct thread* th)
 {
-	struct listnode *node, *node2;
+	struct listnode *node, *node2, *node3;
   struct interface *ifp;
 	struct connected *ifc;
 	
-	for (ALL_LIST_ELEMENTS (iflist, node, ifp))
+	for (ALL_LIST_ELEMENTS_RO (iflist, node, ifp))
   {
-		for (ALL_LIST_ELEMENTS (ifp->connected, node2, ifc))
+		for (ALL_LIST_ELEMENTS (ifp->connected, node2, node3, ifc))
 		{
 			// Check if it expired
 			if (CHECK_FLAG (ifc->flags, ZEBRA_IFA_EXPIRES) && ifc->expires < time(NULL))
