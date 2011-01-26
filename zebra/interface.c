@@ -48,6 +48,8 @@
 const char *rtadv_pref_strs[] = { "medium", "high", "INVALID", "low", 0 };
 #endif /* RTADV */
 
+extern struct zebra_t zebrad;
+
 /* Called when new interface is added. */
 static int
 if_zebra_new_hook (struct interface *ifp)
@@ -1611,7 +1613,7 @@ int if_addr_expired_checker(struct thread* th)
 		for (ALL_LIST_ELEMENTS_RO (ifp->connected, node2, ifc))
 		{
 			// Check if it expired
-			if (CHECK_FLAG (ifc->flags, ZEBRA_IFA_EXPIRES) && ifc->expires < time())
+			if (CHECK_FLAG (ifc->flags, ZEBRA_IFA_EXPIRES) && ifc->expires < time(NULL))
 			{
 				char buf[256];
 				prefix2str(ifc->address, buf, sizeof(buf));

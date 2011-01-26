@@ -138,7 +138,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 					memcpy(ip_addr, msg+4, from_len-4);
 					
 					// Set expiration
-					time_t expires = time() + SISIS_ADDRESS_TIMEOUT;
+					time_t expires = time(NULL) + SISIS_ADDRESS_TIMEOUT;
 					
 					// Get loopback ifindex
 					int ifindex = if_nametoindex("lo");
