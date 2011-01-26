@@ -22,6 +22,7 @@ Boston, MA 02111-1307, USA.  */
 #define _ZEBRA_IF_H
 
 #include "linklist.h"
+#include <time.h>
 
 /*
   Interface name length.
@@ -162,6 +163,10 @@ struct connected
      Otherwise, if this flag is not set, the destination address
      will either contain a broadcast address or be NULL.
    */
+#define ZEBRA_IFA_EXPIRES       (1 << 2)
+  /* N.B. the ZEBRA_IFA_EXPIRES flag should be set if and only if
+     an expiration time has been configured.
+   */
 
   /* Address of connected network. */
   struct prefix *address;
@@ -172,6 +177,9 @@ struct connected
 
   /* Label for Linux 2.2.X and upper. */
   char *label;
+	
+	/* Expiration date, if ZEBRA_IFA_EXPIRES flag is set. */
+	time_t expires;
 };
 
 /* Does the destination field contain a peer address? */

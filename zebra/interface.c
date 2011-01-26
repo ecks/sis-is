@@ -21,6 +21,7 @@
  */
 
 #include <zebra.h>
+#include <time.h>
 
 #include "if.h"
 #include "vty.h"
@@ -1153,7 +1154,7 @@ ALIAS (no_bandwidth_if,
 int
 ip_address_install (struct vty *vty, struct interface *ifp,
 		    const char *addr_str, const char *peer_str,
-		    const char *label)
+		    const char *label, time_t * expires)
 {
   struct prefix_ipv4 cp;
   struct connected *ifc;
@@ -1195,6 +1196,13 @@ ip_address_install (struct vty *vty, struct interface *ifp,
       /* Add to linked list. */
       listnode_add (ifp->connected, ifc);
     }
+		
+		// Check if this route expires
+		if (expires != NULL)
+		{
+			SET_FLAG (ifc->flags, ZEBRA_IFA_EXPIRES);
+			ifc->expires = *expires;
+		}
 
   /* This address is configured from zebra. */
   if (! CHECK_FLAG (ifc->conf, ZEBRA_IFC_CONFIGURED))
@@ -1315,7 +1323,7 @@ DEFUN (ip_address,
        "Set the IP address of an interface\n"
        "IP address (e.g. 10.0.0.1/8)\n")
 {
-  return ip_address_install (vty, vty->index, argv[0], NULL, NULL);
+  return ip_address_install (vty, vty->index, argv[0], NULL, NULL, NULL);
 }
 
 DEFUN (no_ip_address,
@@ -1339,7 +1347,7 @@ DEFUN (ip_address_label,
        "Label of this address\n"
        "Label\n")
 {
-  return ip_address_install (vty, vty->index, argv[0], NULL, argv[1]);
+  return ip_address_install (vty, vty->index, argv[0], NULL, argv[1], NULL);
 }
 
 DEFUN (no_ip_address_label,

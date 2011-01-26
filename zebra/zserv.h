@@ -22,6 +22,8 @@
 #ifndef _ZEBRA_ZSERV_H
 #define _ZEBRA_ZSERV_H
 
+#include <time.h>
+
 #include "rib.h"
 #include "if.h"
 #include "workqueue.h"
@@ -98,7 +100,7 @@ extern void route_read (void);
 extern void zebra_route_map_init (void);
 extern void zebra_snmp_init (void);
 extern void zebra_vty_init (void);
-extern int ip_address_install (struct vty *, struct interface *, const char *, const char *, const char *);
+extern int ip_address_install (struct vty *, struct interface *, const char *, const char *, const char *, time_t * expires);
 extern int ip_address_uninstall (struct vty *, struct interface *, const char *, const char *, const char *);
 
 extern int zsend_interface_add (struct zserv *, struct interface *);
