@@ -530,6 +530,9 @@ extern const char *zserv_command_string (unsigned int command);
 #define SET_FLAG(V,F)        (V) |= (F)
 #define UNSET_FLAG(V,F)      (V) &= ~(F)
 
+// Timeout to check for expired interface IP addresses
+#define ZEBRA_IF_ADDR_EXPIRATION_THREAD_TIMEOUT			15
+
 /* AFI and SAFI type. */
 typedef u_int16_t afi_t;
 typedef u_int8_t safi_t;

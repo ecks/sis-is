@@ -57,13 +57,6 @@ void sisis_init ()
 	// Start listener
 	//zlog_debug("Port: %d; Address:%s\n", sisis_info->port, sisis_info->address);
 	sisis_socket(sisis_info->port, sisis_info->address);
-	
-	/* NOTES:
-	  zapi_interface_address(ZEBRA_INTERFACE_ADDRESS_ADD, zclient, (struct prefix_ipv4 *) p, &api);
-	  zapi_interface_address(ZEBRA_INTERFACE_ADDRESS_DELETE, zclient, (struct prefix_ipv4 *) p, &api);
-	  X zapi_ipv4_route (ZEBRA_IPV4_ROUTE_ADD, zclient, (struct prefix_ipv4 *) p, &api);
-	  X zapi_ipv4_route (ZEBRA_IPV4_ROUTE_DELETE, zclient, (struct prefix_ipv4 *) p, &api);
-	*/
 }
 
 /* time_t value that is monotonicly increasing
@@ -140,8 +133,12 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 			case SISIS_CMD_REGISTER_ADDRESS:
 			case SISIS_CMD_UNREGISTER_ADDRESS:
 				{
+					short len = ntohs(*(unsigned short *)(msg+4));
 					char ip_addr[INET_ADDRSTRLEN];
 					memcpy(ip_addr, msg+4, from_len-4);
+					
+					// Set expiration
+					time_t expires = time() + SISIS_ADDRESS_TIMEOUT;
 					
 					// Get loopback ifindex
 					int ifindex = if_nametoindex("lo");
@@ -157,7 +154,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 					}
 					
 					int zcmd = (command == SISIS_CMD_REGISTER_ADDRESS) ? ZEBRA_INTERFACE_ADDRESS_ADD : ZEBRA_INTERFACE_ADDRESS_DELETE;
-					zapi_interface_address(zcmd, zclient, &p, ifindex);
+					zapi_interface_address(zcmd, zclient, &p, ifindex, &expires);
 					
 					// TODO: Change reply
 					char reply[256];

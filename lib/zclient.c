@@ -21,6 +21,7 @@
  */
 
 #include <zebra.h>
+#include <time.h>
 
 #include "prefix.h"
 #include "stream.h"
@@ -1019,8 +1020,8 @@ zclient_event (enum event event, struct zclient *zclient)
     }
 }
 
-// Add or delete an IP addess from and interface
-int zapi_interface_address (u_char cmd, struct zclient *zclient, struct prefix_ipv4 *p, unsigned int ifindex)
+// Add or delete an IP address from and interface
+int zapi_interface_address (u_char cmd, struct zclient *zclient, struct prefix_ipv4 *p, unsigned int ifindex, time_t * expires)
 {
   int i;
   int psize;
@@ -1039,6 +1040,10 @@ int zapi_interface_address (u_char cmd, struct zclient *zclient, struct prefix_i
   psize = PSIZE (p->prefixlen);
   stream_putc (s, p->prefixlen);
   stream_write (s, (u_char *) & p->prefix, psize);
+	
+	/* Put Expiration if needed */
+	if (expires)
+		stream_write (s, (u_char *) expires, sizeof(*expires));
 
   /* Put length at the first point of the stream. */
   stream_putw_at (s, 0, stream_get_endp (s));

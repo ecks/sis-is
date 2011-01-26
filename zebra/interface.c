@@ -1597,6 +1597,37 @@ if_config_write (struct vty *vty)
   return 0;
 }
 
+struct thread * zebra_if_addr_expire_thread = NULL;
+
+/* Check for interface IP addresses that have expired. */
+int if_addr_expired_checker(struct thread* th)
+{
+	struct listnode *node, *node2;
+  struct interface *ifp;
+	struct connected *ifc;
+	
+	for (ALL_LIST_ELEMENTS_RO (iflist, node, ifp))
+  {
+		for (ALL_LIST_ELEMENTS_RO (ifp->connected, node2, ifc))
+		{
+			// Check if it expired
+			if (CHECK_FLAG (ifc->flags, ZEBRA_IFA_EXPIRES) && ifc->expires < time())
+			{
+				char buf[256];
+				prefix2str(ifc->address, buf, sizeof(buf));
+				ip_address_uninstall (NULL, ifp, buf, NULL, NULL);
+				zlog_debug ("Address %s expired from interface %s.", ifp->name, ifp->ifindex);
+			}
+		}
+	}
+	
+	// Reschedule thread.
+	zebra_if_addr_expire_thread = thread_add_timer(zebrad.master, if_addr_expired_checker, NULL, ZEBRA_IF_ADDR_EXPIRATION_THREAD_TIMEOUT);
+	
+	return 0;
+}
+
+
 /* Allocate and initialize interface vector. */
 void
 zebra_if_init (void)
@@ -1636,4 +1667,7 @@ zebra_if_init (void)
   install_element (INTERFACE_NODE, &ip_address_label_cmd);
   install_element (INTERFACE_NODE, &no_ip_address_label_cmd);
 #endif /* HAVE_NETLINK */
+
+	// Set up thread to expire interface IP addresses
+	zebra_if_addr_expire_thread = thread_add_timer(zebrad.master, if_addr_expired_checker, NULL, ZEBRA_IF_ADDR_EXPIRATION_THREAD_TIMEOUT);
 }
