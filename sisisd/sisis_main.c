@@ -23,8 +23,6 @@
 #include <zebra.h>
 
 #include "vector.h"
-// TODO: Remove
-// #include "vty.h"
 #include "command.h"
 #include "getopt.h"
 #include "thread.h"
@@ -155,16 +153,7 @@ void sighup (void)
 
   /* Terminate all thread. */
   sisis_terminate ();
-  // TODO: Remove // sisis_reset ();
   zlog_info ("sisisd restarting!");
-
-  // TODO: Remove or fix
-  /* Reload config file. */
-  // vty_read_config (config_file, config_default);
-
-  // TODO: Remove
-  /* Create VTY's socket */
-  //vty_serv_sock (vty_addr, vty_port, SISIS_VTYSH_PATH);
 
   /* Try to return to normal operation. */
 }
@@ -204,11 +193,6 @@ static void sisis_exit (int status)
   /* it only makes sense for this to be called on a clean exit */
   assert (status == 0);
 
-  /* TODO: reverse sisis_master_init */
-  //for (ALL_LIST_ELEMENTS (sisis_info->sisis_addrs, node, nnode, sisis_addr))
-    //sisis_delete (sisis_addr);
-  list_free (sisis_info->sisis_addrs);
-
   /* reverse sisis_master_init */
   for (ALL_LIST_ELEMENTS_RO(sisis_info->listen_sockets, node, socket))
   {
@@ -217,67 +201,15 @@ static void sisis_exit (int status)
   }
   list_delete (sisis_info->listen_sockets);
   
-  /* TODO: Remove  
-  // reverse sisis_zebra_init/if_init
-  if (retain_mode)
-    if_add_hook (IF_DELETE_HOOK, NULL);
-  for (ALL_LIST_ELEMENTS (iflist, node, nnode, ifp))
-    if_delete (ifp);
-  list_free (iflist);
-
-  // reverse sisis_attr_init
-  sisis_attr_finish ();
-
-  // reverse sisis_dump_init
-  sisis_dump_finish ();
-
-  // reverse sisis_route_init
-  sisis_route_finish ();
-
-  // reverse sisis_route_map_init/route_map_init
-  route_map_finish ();
-
-  // reverse sisis_scan_init
-  sisis_scan_finish ();
-
-  // reverse access_list_init
-  access_list_add_hook (NULL);
-  access_list_delete_hook (NULL);
-  access_list_reset ();
-
-  // reverse sisis_filter_init
-  as_list_add_hook (NULL);
-  as_list_delete_hook (NULL);
-  sisis_filter_reset ();
-
-  // reverse prefix_list_init
-  prefix_list_add_hook (NULL);
-  prefix_list_delete_hook (NULL);
-  prefix_list_reset ();
-  */
-
-  // TODO: Remove
-  /* reverse community_list_init */
-  //community_list_terminate (sisis_clist);
-
-  // TODO: Remove
-  //cmd_terminate ();
-  // vty_terminate ();
   if (zclient)
     zclient_free (zclient);
 
-  /* TODO: reverse sisis_master_init */
-  //if (master)
-    //thread_master_free (master);
+  /* reverse sisis_master_init */
+  if (master)
+    thread_master_free (master);
 
   if (zlog_default)
     closezlog (zlog_default);
-  
-  // TODO: Remove
-  /*
-  if (CONF_SISIS_DEBUG (normal, NORMAL))
-    log_memstats_stderr ("sisisd");
-  */
   
   exit (status);
 }
@@ -363,15 +295,9 @@ int main (int argc, char **argv)
   signal_init (master, Q_SIGC(sisis_signals), sisis_signals);
   zprivs_init (&sisisd_privs);
   cmd_init (1);
-  // TODO: Remove
-  // memory_init ();
-
+  
   /* sisis related initialization.  */
   sisis_init();
-
-  // TODO: Remove
-  /* Parse config file. */
-  //vty_read_config (config_file, config_default);
 
   /* Turn into daemon if daemon_mode is set. */
   if (daemon_mode && daemon (0, 0) < 0)
@@ -383,10 +309,6 @@ int main (int argc, char **argv)
   /* Process ID file creation. */
   pid_output (pid_file);
 
-  // TODO: Remove
-  /* Make sisis vty socket. */
-  //vty_serv_sock (vty_addr, vty_port, SISIS_VTYSH_PATH);
-
   /* Print banner. */
   zlog_notice ("sisisd %s starting: sisis@%s:%d", QUAGGA_VERSION,
 	       (sisis_info->address ? sisis_info->address : "<all>"),
@@ -395,8 +317,6 @@ int main (int argc, char **argv)
   /* Start finite state machine, here we go! */
   while (thread_fetch (master, &thread))
     thread_call (&thread);
-  
-  // TODO: Fix memory issues on exit
   
   /* Not reached. */
   return (0);

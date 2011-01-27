@@ -48,7 +48,4 @@ void sisis_zebra_init (void)
   zclient->ipv6_route_add = NULL;
   zclient->ipv6_route_delete = NULL;
 #endif /* HAVE_IPV6 */
-
-  /* Interface related init. */
-  // TODO: if_init ();
 }

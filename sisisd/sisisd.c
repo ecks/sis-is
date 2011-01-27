@@ -75,7 +75,6 @@ void sisis_master_init (void)
   memset (&sisis_info_real, 0, sizeof (struct sisis_info));
 
   sisis_info = &sisis_info_real;
-  sisis_info->sisis_addrs = list_new();
   sisis_info->listen_sockets = list_new();
   sisis_info->port = SISIS_PORT_DEFAULT;
   sisis_info->master = thread_master_create();
@@ -101,9 +100,6 @@ void sisis_zebra_init (void)
   zclient->ipv6_route_add = NULL;
   zclient->ipv6_route_delete = NULL;
 #endif /* HAVE_IPV6 */
-
-  /* Interface related init. */
-  // TODO: if_init ();
 }
 
 void sisis_terminate (void)
@@ -111,8 +107,7 @@ void sisis_terminate (void)
   // TODO
 }
 
-
-// TODO: Add the header file
+// Similar function in sisis_api.c
 void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * from, socklen_t from_len)
 {
 	// Get message version
@@ -123,10 +118,16 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 	printf("\tVersion: %u\n", version);
 	if (version == 1)
 	{
+		// Get request id
+		unsigned int request_id = 0;
+		if (msg_len >= 6)
+			request_id = ntohl(*(unsigned short *)(msg+2));
+		printf("\tRequest Id: %u\n", request_id);
+		
 		// Get command
 		unsigned short command = -1;
-		if (msg_len >= 4)
-			command = ntohs(*(unsigned short *)(msg+2));
+		if (msg_len >= 8)
+			command = ntohs(*(unsigned short *)(msg+6));
 		printf("\tCommand: %u\n", command);
 		switch (command)
 		{
@@ -154,16 +155,34 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 					}
 					
 					int zcmd = (command == SISIS_CMD_REGISTER_ADDRESS) ? ZEBRA_INTERFACE_ADDRESS_ADD : ZEBRA_INTERFACE_ADDRESS_DELETE;
-					zapi_interface_address(zcmd, zclient, &p, ifindex, &expires);
+					int status = zapi_interface_address(zcmd, zclient, &p, ifindex, &expires);
 					
-					// TODO: Change reply
-					char reply[256];
-					sprintf(reply, "%s SIS-IS address: %s.\n", (zcmd == ZEBRA_INTERFACE_ADDRESS_ADD) ? "Added " : "Removed ", ip_addr);
-					sendto(sock, reply, strlen(reply), 0, from, from_len);
+					// Construct reply
+					char * buf;
+					sisis_construct_message(&buf, SISIS_MESSAGE_VERSION, request_id, (status == 0) ? SISIS_ACK : SISIS_NACK, NULL, 0);
+					sendto(sock, buf, strlen(buf), 0, from, from_len);
 				}
 				break;
 		}
 	}
+}
+
+/**
+ * Constructs SIS-IS message.  Remember to free memory when done.
+ * Duplicated in sisis_api.c
+ * Returns length of message.
+ */
+int sisis_construct_message(char ** buf, unsigned short version, unsigned int request_id, unsigned short cmd, void * data, unsigned short data_len)
+{
+	unsigned int buf_len = data_len + 4;
+	*buf = malloc(sizeof(char) * buf_len);
+	version = htons(version);
+	cmd = htons(cmd);
+	memcpy(*buf, &version, 2);
+	memcpy(*buf+2, &request_id, 4);
+	memcpy(*buf+6, &cmd, 2);
+	memcpy(*buf+4, data, data_len);
+	return buf_len;
 }
 
 /* SIS-IS listening socket. */
