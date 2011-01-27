@@ -147,7 +147,7 @@ int sisis_do_register(char * sisis_addr)
 	return 0;
 }
 
-void sisis_reregister(void * arg)
+void * sisis_reregister(void * arg)
 {
 	char * addr = (char *)arg;
 	do
