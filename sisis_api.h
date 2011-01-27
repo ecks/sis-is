@@ -13,10 +13,11 @@
 
 #define SISIS_REREGISTRATION_TIMEOUT			20
 
-// SIS-IS Commands
+// SIS-IS Commands/Messages
 #define SISIS_CMD_REGISTER_ADDRESS				1
 #define SISIS_CMD_UNREGISTER_ADDRESS			2
-#define SISIS_CMD_DUMP_ROUTES             3
+#define SISIS_ACK							            3
+#define SISIS_NACK							     			4
 
 extern int sisis_listener_port;
 extern char * sisis_listener_ip_addr;

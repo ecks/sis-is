@@ -13,6 +13,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <pthread.h>
 
 /* Linked list */
 /*
@@ -28,6 +29,15 @@ struct listnode
 	void * data;
 }
 */
+
+struct sisis_request_ack_info
+{
+	unsigned long request_id;
+	pthread_mutex_t * mutex;
+	short flags;
+	#define SISIS_REQUEST_ACK_INFO_ACKED				1
+	#define SISIS_REQUEST_ACK_INFO_NACKED				2
+};
 
 /* IPv4 prefix structure. */
 struct prefix_ipv4

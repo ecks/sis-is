@@ -13,6 +13,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <time.h>
 
 #include "sisis_api.h"
 
@@ -22,8 +23,19 @@ struct sockaddr_in sisis_listener_addr;
 int sisis_listener_port = 54345;
 char * sisis_listener_ip_addr = "127.0.0.1";
 
+srand(time(NULL));
+unsigned int next_request_id = (unsigned int) rand();
+
 // TODO: Support multiple addresses at once.
 pthread_t sisis_reregistration_thread;
+
+// Listen for messages
+pthread_t sisis_recv_from_thread;
+void * sisis_recv_loop(void *);
+
+// TODO: Handle multiple outstanding requests later
+// Request which we are waiting for an ACK or NACK for
+struct sisis_request_ack_info awaiting_ack;
 
 /**
  * Sets up socket to SIS-IS listener.
@@ -44,12 +56,24 @@ int sisis_socket_open()
 	// Bind client socket
 	if (bind(sisis_socket, (struct sockaddr *) &addr, sizeof (addr)) < 0)
 		return 1;
-
+	
+	/* Not needed anymore
+	// Set timeout
+	struct timeval tv;
+	tv.tv_sec = 5;
+	setsockopt(sisis_socket, SOL_SOCKET, SO_RCVTIMEO,(struct timeval *)&tv,sizeof(struct timeval));
+	*/
+	
 	// Set up SIS-IS listener address structure
 	memset(&sisis_listener_addr, 0, sizeof(sisis_listener_addr));
 	sisis_listener_addr.sin_family = AF_INET;
 	inet_pton(AF_INET, sisis_listener_ip_addr, &(sisis_listener_addr.sin_addr));
 	sisis_listener_addr.sin_port = htons((in_port_t) sisis_listener_port);
+	
+	// Listen for messages
+	char * thread_sisis_addr = malloc(sizeof(char) * strlen(sisis_addr));
+	strcpy(thread_sisis_addr, sisis_addr);
+	pthread_create(&sisis_recv_from_thread, NULL, sisis_recv_loop, NULL);
 }
 
 /**
@@ -61,6 +85,60 @@ int sisis_send(char * buf, unsigned int buf_len)
 	if (sisis_socket)
 		rtn = sendto(sisis_socket, buf, buf_len, 0, (struct sockaddr *) &sisis_listener_addr, sizeof (sisis_listener_addr));
 	return rtn;
+}
+
+/**
+ * Receive messages from the SIS-IS listener.
+ */
+void * sisis_recv_loop(void * null)
+{
+	char buf[1024];
+	int buf_len = sisis_recv(buf, 1024);
+	
+	sisis_process_message(buf, buf_len);
+}
+
+// Similar function in sisisd.c
+void sisis_process_message(char * msg, int msg_len)
+{
+	// Get message version
+	unsigned short version = -1;
+	if (msg_len >= 2)
+		version = ntohs(*(unsigned short *)msg);
+	if (version == 1)
+	{
+		// Get request id
+		unsigned int request_id = 0;
+		if (msg_len >= 6)
+			request_id = ntohl(*(unsigned short *)(msg+2));
+		printf("\tRequest Id: %u\n", request_id);
+		
+		// Get command
+		unsigned short command = -1;
+		if (msg_len >= 4)
+			command = ntohs(*(unsigned short *)(msg+2));
+		printf("\tCommand: %u\n", command);
+		switch (command)
+		{
+			case SISIS_ACK:
+				if (awaiting_ack.request_id == request_id)
+					awaiting_ack.flags |= SISIS_REQUEST_ACK_INFO_ACKED;
+				
+				// Free mutex
+				if (awaiting_ack.mutex)
+					thread_mutex_unlock(awaiting_ack.mutex);
+				break;
+			case SISIS_NACK:
+				if (awaiting_ack.request_id == request_id)
+					awaiting_ack.flags |= SISIS_REQUEST_ACK_INFO_NACKED;
+				
+				// Free mutex
+				if (awaiting_ack.mutex)
+					thread_mutex_unlock(awaiting_ack.mutex);
+				
+				break;
+		}
+	}
 }
 
 /**
@@ -87,17 +165,19 @@ int sisis_recv(char * buf, unsigned int buf_len)
 
 /**
  * Constructs SIS-IS message.  Remember to free memory when done.
+ * Duplicated in sisisd.c
  * Returns length of message.
  */
-int sisis_construct_message(char ** buf, unsigned short version, unsigned short cmd, void * data, unsigned short data_len)
+int sisis_construct_message(char ** buf, unsigned short version, unsigned int request_id, unsigned short cmd, void * data, unsigned short data_len)
 {
-	unsigned int buf_len = data_len + 4;
+	unsigned int buf_len = data_len + 8;
 	*buf = malloc(sizeof(char) * buf_len);
 	version = htons(version);
 	cmd = htons(cmd);
 	memcpy(*buf, &version, 2);
-	memcpy(*buf+2, &cmd, 2);
-	memcpy(*buf+4, data, data_len);
+	memcpy(*buf+2, &request_id, 4);
+	memcpy(*buf+6, &cmd, 2);
+	memcpy(*buf+8, data, data_len);
 	return buf_len;
 }
 
@@ -133,18 +213,39 @@ int sisis_do_register(char * sisis_addr)
 	// Setup socket
 	sisis_socket_open();
 	
+	// Get request id
+	unsigned int request_id = next_request_id++;
+	
+	// Setup and lock mutex
+	pthread_mutex_t * mutex = malloc(sizeof(pthread_mutex_t));
+	pthread_mutex_init(mutex, NULL);
+	pthread_mutex_lock(mutex);
+	
+	// Fill in the awaiting ack info
+	awaiting_ack.request_id = request_id;
+	awaiting_ack.mutex = mutex;
+	awaiting_ack.flags = 0;
+	
 	// Send message
 	char * buf;
-	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, SISIS_CMD_REGISTER_ADDRESS, sisis_addr, strlen(sisis_addr));
+	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, request_id, SISIS_CMD_REGISTER_ADDRESS, sisis_addr, strlen(sisis_addr));
 	sisis_send(buf, buf_len);
 	free(buf);
 	
-	// TODO: Wait for message back
-	// TODO: Set timeout on receive
-	char recv_buf[1024];
-	int recv_buf_len = sisis_recv(recv_buf, 1024);
+	// Wait for ack, nack, or timeout
+	struct timespec timeout;
+  deltatime.tv_sec = 5;
+  deltatime.tv_nsec = 0;
+  int status = pthread_mutex_timedlock_np(mutex, &timeout);
+	if (!status)
+		return 1;
 	
-	return 0;
+	// Remove mutex
+	pthread_mutex_destroy(mutex);
+	free(mutex);
+	
+	// TODO: Check if it was an ack of nack
+	return (awaiting_ack.request_id == request_id && (awaiting_ack.flags & SISIS_REQUEST_ACK_INFO_ACKED)) ? 0 : 1;
 }
 
 void * sisis_reregister(void * arg)
@@ -198,9 +299,12 @@ int sisis_unregister(unsigned int ptype, unsigned int host_num, unsigned int pid
 	// Setup socket
 	sisis_socket_open();
 	
+	// Get request id
+	unsigned int request_id = next_request_id++;
+	
 	// Send message
 	char * buf;
-	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, SISIS_CMD_UNREGISTER_ADDRESS, sisis_addr, strlen(sisis_addr));
+	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, request_id, SISIS_CMD_UNREGISTER_ADDRESS, sisis_addr, strlen(sisis_addr));
 	sisis_send(buf, buf_len);
 	free(buf);
 	
@@ -215,17 +319,6 @@ extern int sisis_netlink_route_read (void);
  */
 int sisis_dump_kernel_routes()
 {
-	/*
-	// Setup socket
-	sisis_socket_open();
-	
-	// Send message
-	char * buf;
-	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, SISIS_CMD_DUMP_ROUTES, NULL, 0);
-	sisis_send(buf, buf_len);
-	free(buf);
-	*/
-	
 	sisis_netlink_route_read();
 	
 	return 0;
