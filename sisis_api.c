@@ -114,7 +114,7 @@ void sisis_process_message(char * msg, int msg_len)
 		// Get request id
 		unsigned int request_id = 0;
 		if (msg_len >= 6)
-			request_id = ntohl(*(unsigned int *)(msg+4));
+			request_id = ntohl(*(unsigned int *)(msg+2));
 		printf("\tRequest Id: %u\n", request_id);
 		
 		// Get command
@@ -183,7 +183,6 @@ int sisis_construct_message(char ** buf, unsigned short version, unsigned int re
 	memcpy(*buf, &version, 2);
 	memcpy(*buf+2, &request_id, 4);
 	memcpy(*buf+6, &cmd, 2);
-	printf("Data[%u]: %s\n", data_len, (char *)data);
 	memcpy(*buf+8, data, data_len);
 	return buf_len;
 }
