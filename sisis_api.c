@@ -183,7 +183,7 @@ int sisis_construct_message(char ** buf, unsigned short version, unsigned int re
 	memcpy(*buf, &version, 2);
 	memcpy(*buf+2, &request_id, 4);
 	memcpy(*buf+6, &cmd, 2);
-	printf("Data[%u]: %s\n", (char *)data, data_len);
+	printf("Data[%u]: %s\n", data_len, (char *)data);
 	memcpy(*buf+8, data, data_len);
 	return buf_len;
 }
