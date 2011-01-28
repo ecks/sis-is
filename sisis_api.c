@@ -167,6 +167,7 @@ int sisis_construct_message(char ** buf, unsigned short version, unsigned int re
 	unsigned int buf_len = data_len + 8;
 	*buf = malloc(sizeof(char) * buf_len);
 	version = htons(version);
+	request_id = htonl(request_id);
 	cmd = htons(cmd);
 	memcpy(*buf, &version, 2);
 	memcpy(*buf+2, &request_id, 4);
@@ -219,7 +220,7 @@ int sisis_do_register(char * sisis_addr)
 	awaiting_ack.request_id = request_id;
 	awaiting_ack.mutex = mutex;
 	awaiting_ack.flags = 0;
-	printf("Request Id: %u", request_id);
+	
 	// Send message
 	char * buf;
 	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, request_id, SISIS_CMD_REGISTER_ADDRESS, sisis_addr, strlen(sisis_addr));
