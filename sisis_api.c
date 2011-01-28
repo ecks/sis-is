@@ -219,7 +219,7 @@ int sisis_do_register(char * sisis_addr)
 	awaiting_ack.request_id = request_id;
 	awaiting_ack.mutex = mutex;
 	awaiting_ack.flags = 0;
-	
+	printf("Request Id: %u", request_id);
 	// Send message
 	char * buf;
 	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, request_id, SISIS_CMD_REGISTER_ADDRESS, sisis_addr, strlen(sisis_addr));
