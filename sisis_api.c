@@ -89,15 +89,20 @@ int sisis_send(char * buf, unsigned int buf_len)
 void * sisis_recv_loop(void * null)
 {
 	char buf[1024];
-	int buf_len = sisis_recv(buf, 1024);
-	
-	sisis_process_message(buf, buf_len);
+	int buf_len = 0;
+	while (1)
+	{
+		printf("Waiting for message.\n");
+		buf_len = sisis_recv(buf, 1024);
+		printf("Message received.\n");
+		sisis_process_message(buf, buf_len);
+	}
 }
 
 // Similar function in sisisd.c
 void sisis_process_message(char * msg, int msg_len)
 {
-	printf("Here1a");
+	printf("Here1a\n");
 	// Get message version
 	unsigned short version = -1;
 	if (msg_len >= 2)
@@ -113,13 +118,13 @@ void sisis_process_message(char * msg, int msg_len)
 		unsigned short command = -1;
 		if (msg_len >= 4)
 			command = ntohs(*(unsigned short *)(msg+2));
-		printf("Command: %s", command);
+		printf("Command: %s\n", command);
 		switch (command)
 		{
 			case SISIS_ACK:
 				if (awaiting_ack.request_id == request_id)
 					awaiting_ack.flags |= SISIS_REQUEST_ACK_INFO_ACKED;
-				printf("Here1b");
+				printf("Here1b\n");
 				// Free mutex
 				if (awaiting_ack.mutex)
 					pthread_mutex_unlock(awaiting_ack.mutex);
@@ -228,7 +233,7 @@ int sisis_do_register(char * sisis_addr)
 	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, request_id, SISIS_CMD_REGISTER_ADDRESS, sisis_addr, strlen(sisis_addr));
 	sisis_send(buf, buf_len);
 	free(buf);
-	printf("Here0");
+	printf("Here0\n");
 	
 	// Wait for ack, nack, or timeout
 	struct timespec timeout;
@@ -237,11 +242,11 @@ int sisis_do_register(char * sisis_addr)
   int status = pthread_mutex_timedlock(mutex, &timeout);
 	if (!status)
 		return 1;
-	printf("Here2");
+	printf("Here2\n");
 	// Remove mutex
 	pthread_mutex_destroy(mutex);
 	free(mutex);
-	printf("Here4");
+	printf("Here4\n");
 	// Check if it was an ack of nack
 	return (awaiting_ack.request_id == request_id && (awaiting_ack.flags & SISIS_REQUEST_ACK_INFO_ACKED)) ? 0 : 1;
 }
