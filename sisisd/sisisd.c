@@ -155,6 +155,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 						char * buf;
 						sisis_construct_message(&buf, SISIS_MESSAGE_VERSION, request_id, SISIS_NACK, NULL, 0);
 						sendto(sock, buf, strlen(buf), 0, from, from_len);
+						free(buf);
 						
 						zlog_err ("sisis_process_message: Invalid SIS-IS address: %s", ip_addr);
 						return;
@@ -166,7 +167,9 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 					// Construct reply
 					char * buf;
 					sisis_construct_message(&buf, SISIS_MESSAGE_VERSION, request_id, (status == 0) ? SISIS_ACK : SISIS_NACK, NULL, 0);
+					printf("\tSending %s\n", (status == 0) ? "ACK" : "NACK");
 					sendto(sock, buf, strlen(buf), 0, from, from_len);
+					free(buf);
 				}
 				break;
 		}
