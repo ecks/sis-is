@@ -269,14 +269,14 @@ int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, 
 		return 1;
 	
 	// Register
-	sisis_do_register(sisis_addr);
+	int rtn = sisis_do_register(sisis_addr);
 	
 	// TODO: Support multiple addresses at once.
 	char * thread_sisis_addr = malloc(sizeof(char) * strlen(sisis_addr));
 	strcpy(thread_sisis_addr, sisis_addr);
 	pthread_create(&sisis_reregistration_thread, NULL, sisis_reregister, (void *)thread_sisis_addr);
 	
-	return 0;
+	return rtn;
 }
 
 /**
