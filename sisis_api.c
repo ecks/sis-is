@@ -241,9 +241,9 @@ int sisis_do_register(char * sisis_addr)
 	
 	// Wait for ack, nack, or timeout
 	struct timespec timeout;
-  timeout.tv_sec = 5;
-  timeout.tv_nsec = 0;
-  int status = pthread_mutex_lock(mutex, &timeout);
+  clock_gettime(CLOCK_REALTIME, &timeout);
+	timeout.tv_sec += 5;
+  int status = pthread_mutex_timedlock(mutex, &timeout);
 	if (!status)
 		return 1;
 	printf("Here2\n");
