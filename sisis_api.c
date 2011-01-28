@@ -114,14 +114,14 @@ void sisis_process_message(char * msg, int msg_len)
 		// Get request id
 		unsigned int request_id = 0;
 		if (msg_len >= 6)
-			request_id = ntohl(*(unsigned short *)(msg+2));
+			request_id = ntohl(*(unsigned int *)(msg+4));
 		printf("\tRequest Id: %u\n", request_id);
 		
 		// Get command
 		unsigned short command = -1;
-		if (msg_len >= 4)
-			command = ntohs(*(unsigned short *)(msg+2));
-		printf("Command: %u\n", command);
+		if (msg_len >= 8)
+			command = ntohs(*(unsigned short *)(msg+6));
+		printf("\tCommand: %u\n", command);
 		switch (command)
 		{
 			case SISIS_ACK:
@@ -173,7 +173,7 @@ int sisis_recv(char * buf, unsigned int buf_len)
  * Duplicated in sisisd.c
  * Returns length of message.
  */
-int sisis_construct_message(char ** buf, unsigned short version, unsigned int request_id, unsigned short cmd, void * data, unsigned short data_len)
+int sisis_construct_message(char ** buf, unsigned short version, unsigned int request_id, unsigned short cmd, void * data, unsigned int data_len)
 {
 	unsigned int buf_len = data_len + 8;
 	*buf = malloc(sizeof(char) * buf_len);
@@ -183,6 +183,7 @@ int sisis_construct_message(char ** buf, unsigned short version, unsigned int re
 	memcpy(*buf, &version, 2);
 	memcpy(*buf+2, &request_id, 4);
 	memcpy(*buf+6, &cmd, 2);
+	printf("Data[%u]: %s\n", (char *)data, data_len);
 	memcpy(*buf+8, data, data_len);
 	return buf_len;
 }
