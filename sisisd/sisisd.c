@@ -138,7 +138,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 					char ip_addr[INET_ADDRSTRLEN+1];
 					memset(ip_addr, 0, INET_ADDRSTRLEN+1);
 					memcpy(ip_addr, msg+8, from_len-8);
-					printf("\tIP Address: %s", ip_addr);
+					printf("\tIP Address: %s\n", ip_addr);
 					
 					// Set expiration
 					time_t expires = time(NULL) + SISIS_ADDRESS_TIMEOUT;
