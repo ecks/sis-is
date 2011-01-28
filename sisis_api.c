@@ -197,7 +197,6 @@ int sisis_create_addr(unsigned int ptype, unsigned int host_num, unsigned int pi
 	
 	// Construct SIS-IS address
 	sprintf(sisis_addr, "26.%u.%u.%u", ptype, host_num, pid);
-	printf("Address: %s\n", sisis_addr);
 	
 	return 0;
 }
@@ -232,20 +231,20 @@ int sisis_do_register(char * sisis_addr)
 	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, request_id, SISIS_CMD_REGISTER_ADDRESS, sisis_addr, strlen(sisis_addr));
 	sisis_send(buf, buf_len);
 	free(buf);
-	printf("Here0\n");
 	
 	// Wait for ack, nack, or timeout
 	struct timespec timeout;
   clock_gettime(CLOCK_REALTIME, &timeout);
 	timeout.tv_sec += 5;
   int status = pthread_mutex_timedlock(mutex, &timeout);
+	printf("Status: %d\n",status);
 	if (!status)
 		return 1;
-	printf("Here2\n");
+	
 	// Remove mutex
 	pthread_mutex_destroy(mutex);
 	free(mutex);
-	printf("Here4\n");
+	
 	// Check if it was an ack of nack
 	return (awaiting_ack.request_id == request_id && (awaiting_ack.flags & SISIS_REQUEST_ACK_INFO_ACKED)) ? 0 : 1;
 }
