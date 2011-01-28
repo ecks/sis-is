@@ -106,7 +106,7 @@ void sisis_process_message(char * msg, int msg_len)
 	unsigned short version = 0;
 	if (msg_len >= 2)
 		version = ntohs(*(unsigned short *)msg);
-	printf("Message:\n");
+	printf("Message[%d]:\n", msg_len);
 	printf("\tVersion: %u\n", version);
 	if (version == 1)
 	{
