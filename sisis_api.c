@@ -243,7 +243,7 @@ int sisis_do_register(char * sisis_addr)
 	struct timespec timeout;
   timeout.tv_sec = 5;
   timeout.tv_nsec = 0;
-  int status = pthread_mutex_timedlock(mutex, &timeout);
+  int status = pthread_mutex_lock(mutex, &timeout);
 	if (!status)
 		return 1;
 	printf("Here2\n");
