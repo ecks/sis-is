@@ -97,6 +97,7 @@ void * sisis_recv_loop(void * null)
 // Similar function in sisisd.c
 void sisis_process_message(char * msg, int msg_len)
 {
+	printf("Here1a");
 	// Get message version
 	unsigned short version = -1;
 	if (msg_len >= 2)
@@ -112,12 +113,13 @@ void sisis_process_message(char * msg, int msg_len)
 		unsigned short command = -1;
 		if (msg_len >= 4)
 			command = ntohs(*(unsigned short *)(msg+2));
+		printf("Command: %s", command);
 		switch (command)
 		{
 			case SISIS_ACK:
 				if (awaiting_ack.request_id == request_id)
 					awaiting_ack.flags |= SISIS_REQUEST_ACK_INFO_ACKED;
-				printf("Here1");
+				printf("Here1b");
 				// Free mutex
 				if (awaiting_ack.mutex)
 					pthread_mutex_unlock(awaiting_ack.mutex);
@@ -239,7 +241,7 @@ int sisis_do_register(char * sisis_addr)
 	// Remove mutex
 	pthread_mutex_destroy(mutex);
 	free(mutex);
-	printf("Here1");
+	printf("Here4");
 	// Check if it was an ack of nack
 	return (awaiting_ack.request_id == request_id && (awaiting_ack.flags & SISIS_REQUEST_ACK_INFO_ACKED)) ? 0 : 1;
 }
