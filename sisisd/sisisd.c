@@ -135,7 +135,8 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 			case SISIS_CMD_UNREGISTER_ADDRESS:
 				{
 					// TODO: This may be better: short len = ntohs(*(unsigned short *)(msg+8));
-					char ip_addr[INET_ADDRSTRLEN];
+					char ip_addr[INET_ADDRSTRLEN+1];
+					memset(ip_addr, 0, INET_ADDRSTRLEN+1);
 					memcpy(ip_addr, msg+8, from_len-8);
 					
 					// Set expiration
