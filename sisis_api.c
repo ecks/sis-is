@@ -22,8 +22,7 @@ struct sockaddr_in sisis_listener_addr;
 
 int sisis_listener_port = 54345;
 char * sisis_listener_ip_addr = "127.0.0.1";
-
-srand( time ( NULL ) );
+srand((int)time(NULL));
 unsigned int next_request_id = (unsigned int) rand();
 
 // TODO: Support multiple addresses at once.
