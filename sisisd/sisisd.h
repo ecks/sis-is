@@ -73,7 +73,7 @@ void sisis_master_init (void);
 void sisis_terminate (void);
 
 // Duplicated in sisis_api.c
-int sisis_construct_message(char ** buf, unsigned short version, unsigned int request_id, unsigned short cmd, void * data, unsigned short data_len);
+int sisis_construct_message(char ** buf, unsigned short version, unsigned int request_id, unsigned short cmd, void * data, unsigned int data_len);
 void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * from, socklen_t from_len);
 
 int sisis_rib_add_ipv4 (int type, int flags, struct prefix_ipv4 *p, 

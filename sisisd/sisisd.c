@@ -181,7 +181,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
  * Duplicated in sisis_api.c
  * Returns length of message.
  */
-int sisis_construct_message(char ** buf, unsigned short version, unsigned int request_id, unsigned short cmd, void * data, unsigned short data_len)
+int sisis_construct_message(char ** buf, unsigned short version, unsigned int request_id, unsigned short cmd, void * data, unsigned int data_len)
 {
 	unsigned int buf_len = data_len + 8;
 	*buf = malloc(sizeof(char) * buf_len);
