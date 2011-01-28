@@ -237,12 +237,8 @@ int sisis_do_register(char * sisis_addr)
   clock_gettime(CLOCK_REALTIME, &timeout);
 	timeout.tv_sec += 5;
   int status = pthread_mutex_timedlock(mutex, &timeout);
-	printf("Status: %d\n",status);
-	if (!status)
-	{
-		printf("Here\n");
+	if (status != 0)
 		return 1;
-	}
 	printf("Id: %d; Flags: %d\n",awaiting_ack.request_id,awaiting_ack.flags);
 	
 	// Remove mutex
