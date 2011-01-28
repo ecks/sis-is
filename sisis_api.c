@@ -239,7 +239,11 @@ int sisis_do_register(char * sisis_addr)
   int status = pthread_mutex_timedlock(mutex, &timeout);
 	printf("Status: %d\n",status);
 	if (!status)
+	{
+		printf("Here\n");
 		return 1;
+	}
+	printf("Id: %d; Flags: %d\n",awaiting_ack.request_id,awaiting_ack.flags);
 	
 	// Remove mutex
 	pthread_mutex_destroy(mutex);
