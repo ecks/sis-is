@@ -107,13 +107,11 @@ void sisis_process_message(char * msg, int msg_len)
 		unsigned int request_id = 0;
 		if (msg_len >= 6)
 			request_id = ntohl(*(unsigned short *)(msg+2));
-		printf("\tRequest Id: %u\n", request_id);
 		
 		// Get command
 		unsigned short command = -1;
 		if (msg_len >= 4)
 			command = ntohs(*(unsigned short *)(msg+2));
-		printf("\tCommand: %u\n", command);
 		switch (command)
 		{
 			case SISIS_ACK:
@@ -288,7 +286,7 @@ int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, 
 int sisis_unregister(unsigned int ptype, unsigned int host_num, unsigned int pid)
 {
 	// Construct SIS-IS address
-	char sisis_addr[INET_ADDRSTRLEN];
+	char sisis_addr[INET_ADDRSTRLEN+1];
 	if (sisis_create_addr(ptype, host_num, pid, sisis_addr))
 		return 1;
 	
