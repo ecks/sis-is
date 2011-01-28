@@ -22,6 +22,9 @@
 extern int sisis_listener_port;
 extern char * sisis_listener_ip_addr;
 
+
+void sisis_process_message(char * msg, int msg_len);
+
 /**
  * Construct SIS-IS address.
  *

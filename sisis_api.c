@@ -23,7 +23,7 @@ struct sockaddr_in sisis_listener_addr;
 int sisis_listener_port = 54345;
 char * sisis_listener_ip_addr = "127.0.0.1";
 
-srand(time(NULL));
+srand( time ( NULL ) );
 unsigned int next_request_id = (unsigned int) rand();
 
 // TODO: Support multiple addresses at once.
@@ -71,8 +71,6 @@ int sisis_socket_open()
 	sisis_listener_addr.sin_port = htons((in_port_t) sisis_listener_port);
 	
 	// Listen for messages
-	char * thread_sisis_addr = malloc(sizeof(char) * strlen(sisis_addr));
-	strcpy(thread_sisis_addr, sisis_addr);
 	pthread_create(&sisis_recv_from_thread, NULL, sisis_recv_loop, NULL);
 }
 
@@ -234,8 +232,8 @@ int sisis_do_register(char * sisis_addr)
 	
 	// Wait for ack, nack, or timeout
 	struct timespec timeout;
-  deltatime.tv_sec = 5;
-  deltatime.tv_nsec = 0;
+  timeout.tv_sec = 5;
+  timeout.tv_nsec = 0;
   int status = pthread_mutex_timedlock_np(mutex, &timeout);
 	if (!status)
 		return 1;
