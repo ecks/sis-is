@@ -93,9 +93,7 @@ void * sisis_recv_loop(void * null)
 	int buf_len = 0;
 	while (1)
 	{
-		printf("Waiting for message.\n");
 		buf_len = sisis_recv(buf, 1024);
-		printf("Message received.\n");
 		sisis_process_message(buf, buf_len);
 	}
 }
@@ -107,21 +105,18 @@ void sisis_process_message(char * msg, int msg_len)
 	unsigned short version = 0;
 	if (msg_len >= 2)
 		version = ntohs(*(unsigned short *)msg);
-	printf("Message[%d]:\n", msg_len);
-	printf("\tVersion: %u\n", version);
 	if (version == 1)
 	{
 		// Get request id
 		unsigned int request_id = 0;
 		if (msg_len >= 6)
 			request_id = ntohl(*(unsigned int *)(msg+2));
-		printf("\tRequest Id: %u\n", request_id);
 		
 		// Get command
 		unsigned short command = -1;
 		if (msg_len >= 8)
 			command = ntohs(*(unsigned short *)(msg+6));
-		printf("\tCommand: %u\n", command);
+		
 		switch (command)
 		{
 			case SISIS_ACK:
@@ -162,7 +157,6 @@ int sisis_recv(char * buf, unsigned int buf_len)
 		{
 			rtn = -1;
 			rtn = recvfrom(sisis_socket, buf, buf_len, 0, (struct sockaddr *) &addr, &addr_len);
-			printf("Message received[%d]\n", rtn);
 		}while (addr.sin_family != sisis_listener_addr.sin_family || addr.sin_addr.s_addr != sisis_listener_addr.sin_addr.s_addr || addr.sin_port != sisis_listener_addr.sin_port);
 	}
 	return rtn;
