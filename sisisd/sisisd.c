@@ -183,7 +183,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
  */
 int sisis_construct_message(char ** buf, unsigned short version, unsigned int request_id, unsigned short cmd, void * data, unsigned short data_len)
 {
-	unsigned int buf_len = data_len + 4;
+	unsigned int buf_len = data_len + 8;
 	*buf = malloc(sizeof(char) * buf_len);
 	version = htons(version);
 	request_id = htonl(request_id);
@@ -191,7 +191,7 @@ int sisis_construct_message(char ** buf, unsigned short version, unsigned int re
 	memcpy(*buf, &version, 2);
 	memcpy(*buf+2, &request_id, 4);
 	memcpy(*buf+6, &cmd, 2);
-	memcpy(*buf+4, data, data_len);
+	memcpy(*buf+8, data, data_len);
 	return buf_len;
 }
 
