@@ -183,6 +183,7 @@ int sisis_construct_message(char ** buf, unsigned short version, unsigned int re
 	unsigned int buf_len = data_len + 4;
 	*buf = malloc(sizeof(char) * buf_len);
 	version = htons(version);
+	request_id = htonl(request_id);
 	cmd = htons(cmd);
 	memcpy(*buf, &version, 2);
 	memcpy(*buf+2, &request_id, 4);
