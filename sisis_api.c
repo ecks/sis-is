@@ -122,7 +122,7 @@ void sisis_process_message(char * msg, int msg_len)
 				
 				// Free mutex
 				if (awaiting_ack.mutex)
-					thread_mutex_unlock(awaiting_ack.mutex);
+					pthread_mutex_unlock(awaiting_ack.mutex);
 				break;
 			case SISIS_NACK:
 				if (awaiting_ack.request_id == request_id)
@@ -130,7 +130,7 @@ void sisis_process_message(char * msg, int msg_len)
 				
 				// Free mutex
 				if (awaiting_ack.mutex)
-					thread_mutex_unlock(awaiting_ack.mutex);
+					pthread_mutex_unlock(awaiting_ack.mutex);
 				
 				break;
 		}
@@ -232,7 +232,7 @@ int sisis_do_register(char * sisis_addr)
 	struct timespec timeout;
   timeout.tv_sec = 5;
   timeout.tv_nsec = 0;
-  int status = pthread_mutex_timedlock_np(mutex, &timeout);
+  int status = pthread_mutex_timedlock(mutex, &timeout);
 	if (!status)
 		return 1;
 	
@@ -240,7 +240,7 @@ int sisis_do_register(char * sisis_addr)
 	pthread_mutex_destroy(mutex);
 	free(mutex);
 	
-	// TODO: Check if it was an ack of nack
+	// Check if it was an ack of nack
 	return (awaiting_ack.request_id == request_id && (awaiting_ack.flags & SISIS_REQUEST_ACK_INFO_ACKED)) ? 0 : 1;
 }
 
