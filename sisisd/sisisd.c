@@ -111,7 +111,7 @@ void sisis_terminate (void)
 void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * from, socklen_t from_len)
 {
 	// Get message version
-	unsigned short version = -1;
+	unsigned short version = 0;
 	if (msg_len >= 2)
 		version = ntohs(*(unsigned short *)msg);
 	printf("Message:\n");
