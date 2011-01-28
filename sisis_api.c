@@ -161,6 +161,7 @@ int sisis_recv(char * buf, unsigned int buf_len)
 		{
 			rtn = -1;
 			rtn = recvfrom(sisis_socket, buf, buf_len, 0, (struct sockaddr *) &addr, &addr_len);
+			printf("Message received[%d]\n", rtn);
 		}while (addr.sin_family != sisis_listener_addr.sin_family || addr.sin_addr.s_addr != sisis_listener_addr.sin_addr.s_addr || addr.sin_port != sisis_listener_addr.sin_port);
 	}
 	return rtn;
