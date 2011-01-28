@@ -202,6 +202,7 @@ int sisis_create_addr(unsigned int ptype, unsigned int host_num, unsigned int pi
 	
 	// Construct SIS-IS address
 	sprintf(sisis_addr, "26.%u.%u.%u", ptype, host_num, pid);
+	printf("Address: %s\n", sisis_addr);
 	
 	return 0;
 }
