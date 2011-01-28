@@ -117,7 +117,7 @@ void sisis_process_message(char * msg, int msg_len)
 			case SISIS_ACK:
 				if (awaiting_ack.request_id == request_id)
 					awaiting_ack.flags |= SISIS_REQUEST_ACK_INFO_ACKED;
-				
+				printf("Here1");
 				// Free mutex
 				if (awaiting_ack.mutex)
 					pthread_mutex_unlock(awaiting_ack.mutex);
@@ -226,6 +226,7 @@ int sisis_do_register(char * sisis_addr)
 	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, request_id, SISIS_CMD_REGISTER_ADDRESS, sisis_addr, strlen(sisis_addr));
 	sisis_send(buf, buf_len);
 	free(buf);
+	printf("Here0");
 	
 	// Wait for ack, nack, or timeout
 	struct timespec timeout;
@@ -234,11 +235,11 @@ int sisis_do_register(char * sisis_addr)
   int status = pthread_mutex_timedlock(mutex, &timeout);
 	if (!status)
 		return 1;
-	
+	printf("Here2");
 	// Remove mutex
 	pthread_mutex_destroy(mutex);
 	free(mutex);
-	
+	printf("Here1");
 	// Check if it was an ack of nack
 	return (awaiting_ack.request_id == request_id && (awaiting_ack.flags & SISIS_REQUEST_ACK_INFO_ACKED)) ? 0 : 1;
 }
