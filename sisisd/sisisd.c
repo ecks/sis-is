@@ -121,7 +121,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 		// Get request id
 		unsigned int request_id = 0;
 		if (msg_len >= 6)
-			request_id = ntohl(*(unsigned short *)(msg+2));
+			request_id = ntohl(*(unsigned int *)(msg+2));
 		printf("\tRequest Id: %u\n", request_id);
 		
 		// Get command
@@ -134,9 +134,9 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 			case SISIS_CMD_REGISTER_ADDRESS:
 			case SISIS_CMD_UNREGISTER_ADDRESS:
 				{
-					short len = ntohs(*(unsigned short *)(msg+4));
+					// TODO: This may be better: short len = ntohs(*(unsigned short *)(msg+8));
 					char ip_addr[INET_ADDRSTRLEN];
-					memcpy(ip_addr, msg+4, from_len-4);
+					memcpy(ip_addr, msg+8, from_len-8);
 					
 					// Set expiration
 					time_t expires = time(NULL) + SISIS_ADDRESS_TIMEOUT;
@@ -150,6 +150,11 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 					p.prefixlen = 32;
 					if (inet_pton(AF_INET, ip_addr, &p.prefix.s_addr) != 1)
 					{
+						// Construct reply
+						char * buf;
+						sisis_construct_message(&buf, SISIS_MESSAGE_VERSION, request_id, SISIS_NACK, NULL, 0);
+						sendto(sock, buf, strlen(buf), 0, from, from_len);
+						
 						zlog_err ("sisis_process_message: Invalid SIS-IS address: %s", ip_addr);
 						return;
 					}
