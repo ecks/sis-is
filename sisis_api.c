@@ -69,7 +69,6 @@ int sisis_socket_open()
 	sisis_listener_addr.sin_port = htons((in_port_t) sisis_listener_port);
 	
 	// Listen for messages
-	printf("Listening for messages from SISIS.\n");
 	pthread_create(&sisis_recv_from_thread, NULL, sisis_recv_loop, NULL);
 }
 
@@ -103,17 +102,19 @@ void * sisis_recv_loop(void * null)
 // Similar function in sisisd.c
 void sisis_process_message(char * msg, int msg_len)
 {
-	printf("Here1a\n");
 	// Get message version
-	unsigned short version = -1;
+	unsigned short version = 0;
 	if (msg_len >= 2)
 		version = ntohs(*(unsigned short *)msg);
+	printf("Message:\n");
+	printf("\tVersion: %u\n", version);
 	if (version == 1)
 	{
 		// Get request id
 		unsigned int request_id = 0;
 		if (msg_len >= 6)
 			request_id = ntohl(*(unsigned short *)(msg+2));
+		printf("\tRequest Id: %u\n", request_id);
 		
 		// Get command
 		unsigned short command = -1;
