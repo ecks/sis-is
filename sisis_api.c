@@ -69,6 +69,7 @@ int sisis_socket_open()
 	sisis_listener_addr.sin_port = htons((in_port_t) sisis_listener_port);
 	
 	// Listen for messages
+	printf("Listening for messages from SISIS.\n");
 	pthread_create(&sisis_recv_from_thread, NULL, sisis_recv_loop, NULL);
 }
 
@@ -118,7 +119,7 @@ void sisis_process_message(char * msg, int msg_len)
 		unsigned short command = -1;
 		if (msg_len >= 4)
 			command = ntohs(*(unsigned short *)(msg+2));
-		printf("Command: %s\n", command);
+		printf("Command: %u\n", command);
 		switch (command)
 		{
 			case SISIS_ACK:
