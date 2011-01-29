@@ -1883,6 +1883,39 @@ ALIAS (no_lsp_lifetime_l2,
        "Maximum LSP lifetime for Level 2 only\n"
        "LSP lifetime for Level 2 only in seconds\n")
 
+int
+isis_config_write_redistribute (struct vty *vty, struct isis_area *area, afi_t afi,
+			       safi_t safi, int *write)
+{
+  int i;
+	
+  /* Unicast redistribution only.  */
+  if (safi != SAFI_UNICAST)
+    return 0;
+	
+  for (i = 0; i < ZEBRA_ROUTE_MAX; i++)
+  {
+		/* Redistribute ISIS does not make sense.  */
+		if (area->redist[afi][i] && i != ZEBRA_ROUTE_ISIS)
+		{
+			/* "redistribute" configuration.  */
+			vty_out (vty, " redistribute %s", zebra_route_string(i));
+	
+			if (area->redist_metric_flag[afi][i])
+				vty_out (vty, " metric %d", area->redist_metric[afi][i]);
+			
+			/*
+			if (isis->rmap[afi][i].name)
+				vty_out (vty, " route-map %s", isis->rmap[afi][i].name);
+			*/
+			
+			vty_out (vty, "%s", VTY_NEWLINE);
+		}
+  }
+	
+  return *write;
+}
+
 /* IS-IS configuration write function */
 int
 isis_config_write (struct vty *vty)
@@ -1912,6 +1945,13 @@ isis_config_write (struct vty *vty)
 		write++;
 	      }
 	  }
+		
+	/* IS-IS static route configuration. */
+	//isis_config_write_network (vty, area, AFI_IP, SAFI_UNICAST, &write);
+
+	/* IS-IS redistribute configuration. */
+	isis_config_write_redistribute (vty, area, AFI_IP, SAFI_UNICAST, &write);
+		
 	/* ISIS - Dynamic hostname - Defaults to true so only display if
 	 * false. */
 	if (!area->dynhostname)

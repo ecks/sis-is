@@ -264,6 +264,10 @@ isis_zebra_route_add_ipv4 (struct prefix *prefix,
 #if 0
       SET_FLAG (message, ZAPI_MESSAGE_DISTANCE);
 #endif
+			/* Distance value. */
+      u_int32_t distance = isis_distance_apply (prefix, route_info);
+      if (distance)
+        SET_FLAG (message, ZAPI_MESSAGE_DISTANCE);
 
       stream = zclient->obuf;
       stream_reset (stream);
@@ -523,6 +527,93 @@ isis_zebra_route_update (struct prefix *prefix,
   return;
 }
 
+const char * isis_redist_string(u_int route_type)
+{
+  return (route_type == ZEBRA_ROUTE_MAX) ? "Default" : zebra_route_string(route_type);
+}
+
+/* Redistribute route treatment. Adapted from OSPF (ospf_external_info_add). */
+void isis_redistribute_add (struct prefix_ipv4 *p, struct in_addr *nexthop, u_int32_t metric, u_char type)
+{
+	struct isis_external_info *new_info;
+	struct route_node *rn;
+	
+	/* Initialize route table. */
+	if (ISIS_EXTERNAL_INFO (type) == NULL)
+		ISIS_EXTERNAL_INFO (type) = route_table_init ();
+	
+	rn = route_node_get (ISIS_EXTERNAL_INFO (type), (struct prefix *) p);
+	/* If old info exists, -- discard new one or overwrite with new one? */
+	if (rn && rn->info)
+	{
+		route_unlock_node (rn);
+		zlog_warn ("Redistribute[%s]: %s/%d already exists, discard.",
+			isis_redist_string(type),
+			inet_ntoa (p->prefix), p->prefixlen);
+		return rn->info;
+	}
+	
+	/* Create new External info instance. */
+	new_info = isis_external_info_new (type);
+	new_info->p = *p;
+	new_info->metric = metric;
+	new_info->nexthop = *nexthop;
+	
+	rn->info = new_info;
+	
+	// Debug info
+	if (isis->debugs & DEBUG_ZEBRA)
+		zlog_debug ("Redistribute[%s]: %s/%d external info created.",
+			isis_redist_string(type),
+			inet_ntoa (p->prefix), p->prefixlen);
+}
+
+/* Redistribute route treatment. Adapted from OSPF (ospf_external_info_delete). */
+void isis_redistribute_delete (struct prefix_ipv4 *p, u_char type)
+{
+  struct route_node *rn;
+  rn = route_node_lookup (ISIS_EXTERNAL_INFO (type), (struct prefix *) p);
+  if (rn)
+	{
+		isis_external_info_free (rn->info);
+		rn->info = NULL;
+		route_unlock_node (rn);
+		route_unlock_node (rn);
+		
+		// Debug info
+		if (isis->debugs & DEBUG_ZEBRA)
+			zlog_debug ("Redistribute[%s]: %s/%d external info removed.",
+				isis_redist_string(type),
+				inet_ntoa (p->prefix), p->prefixlen);
+	}
+	else
+	{
+		// Debug info
+		if (isis->debugs & DEBUG_ZEBRA)
+			zlog_debug ("Redistribute[%s]: %s/%d external info could not be found for removal.",
+				isis_redist_string(type),
+				inet_ntoa (p->prefix), p->prefixlen);
+	}
+}
+
+/* Add an External info. */
+struct isis_external_info * isis_external_info_new (u_char type)
+{
+  struct isis_external_info *new_info;
+
+  new_info = (struct isis_external_info *)
+    XCALLOC (MTYPE_ISIS_EXTERNAL_INFO, sizeof (struct isis_external_info));
+  new_info->type = type;
+	
+  return new_info;
+}
+
+/* Free external info. */
+static void isis_external_info_free (struct isis_external_info *ei)
+{
+  XFREE (MTYPE_ISIS_EXTERNAL_INFO, ei);
+}
+
 static int
 isis_zebra_read_ipv4 (int command, struct zclient *zclient,
 		      zebra_size_t length)
@@ -566,8 +657,34 @@ isis_zebra_read_ipv4 (int command, struct zclient *zclient,
     {
       if (isis->debugs & DEBUG_ZEBRA)
 	zlog_debug ("IPv4 Route add from Z");
+	
+			/*
+			if (api.type == ZEBRA_ROUTE_STATIC)
+			{
+				char tmp[INET_ADDRSTRLEN+1], tmp2[64];
+				inet_ntop(AF_INET, &(p.prefix.s_addr), tmp, INET_ADDRSTRLEN+1);
+				strcpy(tmp2, "Static Route: ");
+				strcat(tmp2, tmp);
+				zlog_debug (tmp2);
+			}
+			*/
+			
+			// SS: TODO: Should I use api.distance or api.metric as the metric?
+			isis_redistribute_add(&p, &nexthop, api.distance, api.type);
     }
-
+	else if (command == ZEBRA_IPV4_ROUTE_DELETE)
+	{
+		// Delete route
+		isis_redistribute_delete(&p, api.type);
+	}
+	
+	// Regenerate LSPs
+	struct isis_area *area;
+  struct listnode *node;
+  if (isis->area_list)
+		for (ALL_LIST_ELEMENTS_RO (isis->area_list, node, area))
+			lsp_regenerate_schedule(area);
+	
   return 0;
 }
 
@@ -598,6 +715,382 @@ isis_redistribute_default_set (int routetype, int metric_type,
 }
 #endif /* 0 */
 
+// SS: Adding isis redistribute connected
+// SS: Added for redistribute (Copy from bgp)
+/* Utility function to convert user input route type string to route
+   type.  */
+static int
+isis_str2route_type (int afi, const char *str)
+{
+  if (! str)
+    return 0;
+
+  if (afi == AFI_IP)
+		{
+      if (strncmp (str, "k", 1) == 0)
+	return ZEBRA_ROUTE_KERNEL;
+      else if (strncmp (str, "c", 1) == 0)
+	return ZEBRA_ROUTE_CONNECT;
+      else if (strncmp (str, "s", 1) == 0)
+	return ZEBRA_ROUTE_STATIC;
+      else if (strncmp (str, "r", 1) == 0)
+	return ZEBRA_ROUTE_RIP;
+      else if (strncmp (str, "o", 1) == 0)
+	return ZEBRA_ROUTE_OSPF;
+			else if (strncmp (str, "b", 1) == 0)
+	return ZEBRA_ROUTE_BGP;
+    }
+  if (afi == AFI_IP6)
+    {
+      if (strncmp (str, "k", 1) == 0)
+	return ZEBRA_ROUTE_KERNEL;
+      else if (strncmp (str, "c", 1) == 0)
+	return ZEBRA_ROUTE_CONNECT;
+      else if (strncmp (str, "s", 1) == 0)
+	return ZEBRA_ROUTE_STATIC;
+      else if (strncmp (str, "r", 1) == 0)
+	return ZEBRA_ROUTE_RIPNG;
+      else if (strncmp (str, "o", 1) == 0)
+	return ZEBRA_ROUTE_OSPF6;
+    }
+  return 0;
+}
+
+#if 0
+void
+isis_zebra_withdraw (struct prefix *p, struct isis_info *info)
+{
+  int flags;
+  struct peer *peer;
+
+  if (zclient->sock < 0)
+    return;
+
+  if (! zclient->redist[ZEBRA_ROUTE_ISIS])
+    return;
+
+  peer = info->peer;
+  flags = 0;
+
+  if (peer_sort (peer) == ISIS_PEER_IBGP)
+    {
+      SET_FLAG (flags, ZEBRA_FLAG_INTERNAL);
+      SET_FLAG (flags, ZEBRA_FLAG_IBGP);
+    }
+
+  if ((peer_sort (peer) == ISIS_PEER_EBGP && peer->ttl != 1)
+      || CHECK_FLAG (peer->flags, PEER_FLAG_DISABLE_CONNECTED_CHECK))
+    SET_FLAG (flags, ZEBRA_FLAG_INTERNAL);
+
+  if (p->family == AF_INET)
+    {
+      struct zapi_ipv4 api;
+      struct in_addr *nexthop;
+
+      api.flags = flags;
+      nexthop = &info->attr->nexthop;
+
+      api.type = ZEBRA_ROUTE_BGP;
+      api.message = 0;
+      SET_FLAG (api.message, ZAPI_MESSAGE_NEXTHOP);
+      api.nexthop_num = 1;
+      api.nexthop = &nexthop;
+      api.ifindex_num = 0;
+      SET_FLAG (api.message, ZAPI_MESSAGE_METRIC);
+      api.metric = info->attr->med;
+
+      if (isis->debugs & DEBUG_ZEBRA)
+	{
+	  char buf[2][INET_ADDRSTRLEN];
+	  zlog_debug("Zebra send: IPv4 route delete %s/%d nexthop %s metric %u",
+		     inet_ntop(AF_INET, &p->u.prefix4, buf[0], sizeof(buf[0])),
+		     p->prefixlen,
+		     inet_ntop(AF_INET, nexthop, buf[1], sizeof(buf[1])),
+		     api.metric);
+	}
+
+      zapi_ipv4_route (ZEBRA_IPV4_ROUTE_DELETE, zclient, 
+                       (struct prefix_ipv4 *) p, &api);
+    }
+#ifdef HAVE_IPV6
+  /* We have to think about a IPv6 link-local address curse. */
+  if (p->family == AF_INET6)
+    {
+      struct zapi_ipv6 api;
+      unsigned int ifindex;
+      struct in6_addr *nexthop;
+      
+      assert (info->attr->extra);
+      
+      ifindex = 0;
+      nexthop = NULL;
+
+      /* Only global address nexthop exists. */
+      if (info->attr->extra->mp_nexthop_len == 16)
+	nexthop = &info->attr->extra->mp_nexthop_global;
+
+      /* If both global and link-local address present. */
+      if (info->attr->extra->mp_nexthop_len == 32)
+	{
+	  nexthop = &info->attr->extra->mp_nexthop_local;
+	  if (info->peer->nexthop.ifp)
+	    ifindex = info->peer->nexthop.ifp->ifindex;
+	}
+
+      if (nexthop == NULL)
+	return;
+
+      if (IN6_IS_ADDR_LINKLOCAL (nexthop) && ! ifindex)
+	if (info->peer->ifname)
+	  ifindex = if_nametoindex (info->peer->ifname);
+
+      api.flags = flags;
+      api.type = ZEBRA_ROUTE_BGP;
+      api.message = 0;
+      SET_FLAG (api.message, ZAPI_MESSAGE_NEXTHOP);
+      api.nexthop_num = 1;
+      api.nexthop = &nexthop;
+      SET_FLAG (api.message, ZAPI_MESSAGE_IFINDEX);
+      api.ifindex_num = 1;
+      api.ifindex = &ifindex;
+      SET_FLAG (api.message, ZAPI_MESSAGE_METRIC);
+      api.metric = info->attr->med;
+
+      if (isis->debugs & DEBUG_ZEBRA)
+	{
+	  char buf[2][INET6_ADDRSTRLEN];
+	  zlog_debug("Zebra send: IPv6 route delete %s/%d nexthop %s metric %u",
+		     inet_ntop(AF_INET6, &p->u.prefix6, buf[0], sizeof(buf[0])),
+		     p->prefixlen,
+		     inet_ntop(AF_INET6, nexthop, buf[1], sizeof(buf[1])),
+		     api.metric);
+	}
+
+      zapi_ipv6_route (ZEBRA_IPV6_ROUTE_DELETE, zclient, 
+                       (struct prefix_ipv6 *) p, &api);
+    }
+#endif /* HAVE_IPV6 */
+}
+#endif
+
+
+/* Other routes redistribution into ISIS. (Copy from bgp) */
+int isis_redistribute_set (struct isis_area *area, afi_t afi, int type)
+{
+  /* Set flag to ISIS instance. */
+  area->redist[afi][type] = 1;
+
+  /* Return if already redistribute flag is set. */
+  if (zclient->redist[type])
+    return CMD_WARNING;
+
+  zclient->redist[type] = 1;
+
+  /* Return if zebra connection is not established. */
+  if (zclient->sock < 0)
+    return CMD_WARNING;
+	
+  if (isis->debugs & DEBUG_ZEBRA)
+    zlog_debug("Zebra send: redistribute add %s", zebra_route_string(type));
+	
+  /* Send distribute add message to zebra. */
+  zebra_redistribute_send (ZEBRA_REDISTRIBUTE_ADD, zclient, type);
+	
+	// Regenerate LSPs
+	lsp_regenerate_schedule(area);
+
+  return CMD_SUCCESS;
+}
+
+/* Redistribute with metric specification.  */
+int isis_redistribute_metric_set (struct isis_area *area, afi_t afi, int type, u_int32_t metric)
+{
+  if (area->redist_metric_flag[afi][type]
+      && area->redist_metric[afi][type] == metric)
+    return 0;
+
+  area->redist_metric_flag[afi][type] = 1;
+  area->redist_metric[afi][type] = metric;
+
+  return 1;
+}
+
+/* Unset redistribution.  */
+int isis_redistribute_unset (struct isis_area *area, afi_t afi, int type)
+{
+  /* Unset flag from ISIS instance. */
+  area->redist[afi][type] = 0;
+
+  /* Unset route-map. */
+	/*
+  if (area->rmap[afi][type].name)
+    free (area->rmap[afi][type].name);
+  area->rmap[afi][type].name = NULL;
+  area->rmap[afi][type].map = NULL;
+	*/
+  /* Unset metric. */
+  area->redist_metric_flag[afi][type] = 0;
+  area->redist_metric[afi][type] = 0;
+
+  /* Return if zebra connection is disabled. */
+  if (! zclient->redist[type])
+    return CMD_WARNING;
+  zclient->redist[type] = 0;
+
+  if (area->redist[AFI_IP][type] == 0 
+      && area->redist[AFI_IP6][type] == 0 
+      && zclient->sock >= 0)
+    {
+      /* Send distribute delete message to zebra. */
+			if (isis->debugs & DEBUG_ZEBRA)
+				zlog_debug("Zebra send: redistribute delete %s", zebra_route_string(type));
+      zebra_redistribute_send (ZEBRA_REDISTRIBUTE_DELETE, zclient, type);
+    }
+  
+  /* Withdraw redistributed routes from current ISIS's routing table. */
+  //isis_redistribute_withdraw (area, afi, type);
+	// Regenerate LSPs
+	lsp_regenerate_schedule(area);
+
+  return CMD_SUCCESS;
+}
+
+/* Unset redistribution metric configuration.  */
+int isis_redistribute_metric_unset (struct isis_area *area, afi_t afi, int type)
+{
+  if (! area->redist_metric_flag[afi][type])
+    return 0;
+
+  /* Unset metric. */
+  area->redist_metric_flag[afi][type] = 0;
+  area->redist_metric[afi][type] = 0;
+
+  return 1;
+}
+
+DEFUN (isis_redistribute_ipv4,
+       isis_redistribute_ipv4_cmd,
+       "redistribute (connected|kernel|ospf|rip|bgp|static)",
+       "Redistribute information from another routing protocol\n"
+       "Connected\n"
+       "Kernel routes\n"
+       "Open Shurtest Path First (OSPF)\n"
+       "Routing Information Protocol (RIP)\n"
+			 "Border Gateway Protocol (BGP)\n"
+       "Static routes\n")
+{
+  int type;
+
+  type = isis_str2route_type (AFI_IP, argv[0]);
+  if (! type)
+    {
+      vty_out (vty, "%% Invalid route type%s", VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+	
+  return isis_redistribute_set (vty->index, AFI_IP, type);
+}
+
+DEFUN (no_isis_redistribute_ipv4,
+       no_isis_redistribute_ipv4_cmd,
+       "no redistribute (connected|kernel|ospf|rip|bgp|static)",
+			 NO_STR
+       "Redistribute information from another routing protocol\n"
+       "Connected\n"
+       "Kernel routes\n"
+       "Open Shurtest Path First (OSPF)\n"
+       "Routing Information Protocol (RIP)\n"
+			 "Border Gateway Protocol (BGP)\n"
+       "Static routes\n"
+       "Metric for redistributed routes\n"
+       "Default metric\n")
+{
+  int type;
+
+  type = isis_str2route_type (AFI_IP, argv[0]);
+  if (! type)
+    {
+      vty_out (vty, "%% Invalid route type%s", VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+
+  return isis_redistribute_unset (vty->index, AFI_IP, type);
+}
+
+DEFUN (isis_redistribute_ipv4_metric,
+       isis_redistribute_ipv4_metric_cmd,
+       "redistribute (connected|kernel|ospf|rip|bgp|static) metric <0-4294967295>",
+       "Redistribute information from another routing protocol\n"
+       "Connected\n"
+       "Kernel routes\n"
+       "Open Shurtest Path First (OSPF)\n"
+       "Routing Information Protocol (RIP)\n"
+			 "Border Gateway Protocol (BGP)\n"
+       "Static routes\n"
+       "Metric for redistributed routes\n"
+       "Default metric\n")
+{
+  int type;
+  u_int32_t metric;
+	
+	// Determine what will be redistributed
+  type = isis_str2route_type (AFI_IP, argv[0]);
+  if (! type)
+    {
+      vty_out (vty, "%% Invalid route type%s", VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+	// Get metric
+  VTY_GET_INTEGER ("metric", metric, argv[1]);
+
+	isis_redistribute_metric_set (vty->index, AFI_IP, type, metric);
+  return isis_redistribute_set (vty->index, AFI_IP, type);
+}
+
+DEFUN (no_isis_redistribute_ipv4_metric,
+       no_isis_redistribute_ipv4_metric_cmd,
+       "no redistribute (connected|kernel|ospf|rip|static) metric <0-4294967295>",
+       NO_STR
+			 "Redistribute information from another routing protocol\n"
+       "Connected\n"
+       "Kernel routes\n"
+       "Open Shurtest Path First (OSPF)\n"
+       "Routing Information Protocol (RIP)\n"
+			 "Border Gateway Protocol (BGP)\n"
+       "Static routes\n"
+       "Metric for redistributed routes\n"
+       "Default metric\n")
+{
+  int type;
+
+  type = isis_str2route_type (AFI_IP, argv[0]);
+  if (! type)
+    {
+      vty_out (vty, "%% Invalid route type%s", VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+
+  isis_redistribute_metric_unset (vty->index, AFI_IP, type);
+  return CMD_SUCCESS;
+}
+
+u_char isis_distance_apply (struct prefix *p, struct isis_route_info* route_info)
+{
+  if (!isis)
+    return 0;
+	
+	if (p->family != AF_INET)
+    return 0;
+	
+	// SS: TODO: Don't know what goes in this function
+  return 0;
+}
+
+int isis_is_type_redistributed (struct isis_area *area, afi_t afi, int type)
+{
+  return area->redist[afi][type];
+}
+
 void
 isis_zebra_init ()
 {
@@ -616,6 +1109,18 @@ isis_zebra_init ()
   zclient->ipv6_route_add = isis_zebra_read_ipv6;
   zclient->ipv6_route_delete = isis_zebra_read_ipv6;
 #endif /* HAVE_IPV6 */
+
+	/* SS: "redistribute" commands.  */
+  install_element (ISIS_NODE, &isis_redistribute_ipv4_cmd);
+  install_element (ISIS_NODE, &no_isis_redistribute_ipv4_cmd);
+  //install_element (ISIS_NODE, &isis_redistribute_ipv4_rmap_cmd);
+  //install_element (ISIS_NODE, &no_isis_redistribute_ipv4_rmap_cmd);
+  install_element (ISIS_NODE, &isis_redistribute_ipv4_metric_cmd);
+  install_element (ISIS_NODE, &no_isis_redistribute_ipv4_metric_cmd);
+  //install_element (ISIS_NODE, &isis_redistribute_ipv4_rmap_metric_cmd);
+  //install_element (ISIS_NODE, &isis_redistribute_ipv4_metric_rmap_cmd);
+  //install_element (ISIS_NODE, &no_isis_redistribute_ipv4_rmap_metric_cmd);
+  //install_element (ISIS_NODE, &no_isis_redistribute_ipv4_metric_rmap_cmd);
 
   return;
 }

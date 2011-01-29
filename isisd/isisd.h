@@ -96,6 +96,13 @@ struct isis_area
   int lsp_regenerate_pending[ISIS_LEVELS];
   struct thread *t_lsp_refresh[ISIS_LEVELS];
 
+  /* ISIS redistribute configuration. */
+  u_char redist[AFI_MAX][ZEBRA_ROUTE_MAX];
+  
+  /* ISIS redistribute metric configuration. */
+  u_char redist_metric_flag[AFI_MAX][ZEBRA_ROUTE_MAX];
+  u_int32_t redist_metric[AFI_MAX][ZEBRA_ROUTE_MAX];
+  
   /*
    * Configurables 
    */
@@ -132,6 +139,22 @@ struct isis_area
   char *topology_basedynh;                /* Dynamic hostname base. */
   char top_params[200];                   /* FIXME: what is reasonable? */
 #endif /* TOPOLOGY_GENERATE */
+};
+
+/* Redistributed external information. */
+struct isis_external_info
+{
+  /* Type of source protocol. */
+  u_char type;
+
+  /* Prefix. */
+  struct prefix_ipv4 p;
+
+  /* Metric */
+  u_int32_t metric;
+
+  /* Nexthop address. */
+  struct in_addr nexthop;
 };
 
 void isis_init (void);

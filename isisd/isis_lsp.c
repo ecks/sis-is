@@ -1177,6 +1177,43 @@ lsp_build_nonpseudo (struct isis_lsp *lsp, struct isis_area *area)
 					    (ipv4->prefix.s_addr));
 		  listnode_add (tlv_data.ipv4_int_reachs, ipreach);
 		}
+			/* Update connected redistribute. */
+			struct route_node *rn;
+			struct isis_external_info *ei;
+			int type;
+			zlog_debug ("Starting Redistribution");
+			for (type = 0; type < ZEBRA_ROUTE_MAX; type++)
+			{
+				if (isis_is_type_redistributed (area, AFI_IP, type))
+				{
+					zlog_debug ("Redistributing[%d]", type);
+					if (ISIS_EXTERNAL_INFO (type))
+					{
+						for (rn = route_top (ISIS_EXTERNAL_INFO (type)); rn; rn = route_next (rn))
+						{
+							if ((ei = rn->info) != NULL)
+								//if (ospf_external_info_find_lsa (ospf, &ei->p))
+									//if (!ospf_distribute_check_connected (ospf, ei))
+									{
+										zlog_debug ("Redistribution metric: %d", ei->metric);
+										//ospf_external_lsa_flush (ospf, ei->type, &ei->p, ei->ifindex /*, ei->nexthop */);
+										ipreach = XMALLOC (MTYPE_ISIS_TLV, sizeof (struct ipv4_reachability));
+										ipreach->metrics.metric_default = ei->metric;
+										ipreach->metrics.metric_default = (ipreach->metrics.metric_default == 0) ? 1 : ipreach->metrics.metric_default; // SS: TODO: Remove
+										//ipreach->metrics.metric_error = 0;
+										//ipreach->metrics.metric_expense = 0;
+										//ipreach->metrics.metric_delay = 0;
+										masklen2ip (ei->p.prefixlen, &ipreach->mask);
+										ipreach->prefix.s_addr = ((ipreach->mask.s_addr) & (ei->p.prefix.s_addr));
+										listnode_add (tlv_data.ipv4_int_reachs, ipreach);
+									}
+						}
+					}
+				}
+				// If not redistributing
+				else
+					zlog_debug ("Not Redistributing[%d]", type);
+			}
 	      tlv_data.ipv4_int_reachs->del = free_tlv;
 	    }
 	  if (area->newmetric)
@@ -1202,6 +1239,41 @@ lsp_build_nonpseudo (struct isis_lsp *lsp, struct isis_area *area)
 		  memcpy (&te_ipreach->prefix_start, &ipv4->prefix.s_addr,
 			  (ipv4->prefixlen + 7)/8);
 		  listnode_add (tlv_data.te_ipv4_reachs, te_ipreach);
+		}
+		
+		/* Update connected redistribute. */
+		struct route_node *rn;
+		struct isis_external_info *ei;
+		int type;
+		zlog_debug ("Starting Redistribution");
+		for (type = 0; type < ZEBRA_ROUTE_MAX; type++)
+		{
+			if (isis_is_type_redistributed (area, AFI_IP, type))
+			{
+				zlog_debug ("Redistributing[%d]", type);
+				if (ISIS_EXTERNAL_INFO (type))
+				{
+					for (rn = route_top (ISIS_EXTERNAL_INFO (type)); rn; rn = route_next (rn))
+					{
+						if ((ei = rn->info) != NULL)
+							//if (ospf_external_info_find_lsa (ospf, &ei->p))
+								//if (!ospf_distribute_check_connected (ospf, ei))
+								{
+									zlog_debug ("Redistribution metric: %d", ei->metric);
+									
+									te_ipreach = XCALLOC (MTYPE_ISIS_TLV, sizeof (struct te_ipv4_reachability) + ((ei->p.prefixlen + 7)/8) - 1);
+									te_ipreach->te_metric = htonl (ei->metric);
+									te_ipreach->te_metric = htonl((ei->metric == 0) ? 1 : ei->metric); // SS: TODO: Remove
+									te_ipreach->control = (ei->p.prefixlen & 0x3F);
+									memcpy (&te_ipreach->prefix_start, &ei->p.prefix.s_addr, (ei->p.prefixlen + 7)/8);
+									listnode_add (tlv_data.te_ipv4_reachs, te_ipreach);
+								}
+					}
+				}
+			}
+			// If not redistributing
+			else
+				zlog_debug ("Not Redistributing[%d]", type);
 		}
 	    }
 	}
