@@ -29,6 +29,8 @@
 /* #define EXTREME_DEBUG  */
 /* #define EXTREME_TLV_DEBUG */
 
+#define ISIS_EXTERNAL_INFO(T)      isis->external_info[T]
+
 struct rmap
 {
   char *name;
