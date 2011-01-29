@@ -34,6 +34,7 @@
 #include "hash.h"
 #include "if.h"
 #include "checksum.h"
+#include "table.h"
 
 #include "isisd/dict.h"
 #include "isisd/isis_constants.h"
