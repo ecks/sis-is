@@ -32,6 +32,7 @@
 #include "zclient.h"
 #include "stream.h"
 #include "linklist.h"
+#include "table.h"
 
 #include "isisd/dict.h"
 #include "isisd/isis_constants.h"
