@@ -312,16 +312,14 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h)
 
   if (rtm->rtm_family == AF_INET)
     {
-			struct prefix_ipv4 p;
-      p.family = AF_INET;
-      memcpy (&p.prefix, dest, 4);
-      p.prefixlen = rtm->rtm_dst_len;
-			
 			// Construct route info
 			struct route_ipv4 * route = malloc(sizeof(struct route_ipv4));
 			route->type = 1;	// Means nothing right now
 			route->flags = flags;
-			route->p = &p;
+			route->p = malloc(sizeof(struct prefix_ipv4));
+			p->family = AF_INET;
+      memcpy (&p->prefix, dest, 4);
+      p->prefixlen = rtm->rtm_dst_len;
 			route->gate = gate;
 			route->src = src;
 			route->ifindex = index;
