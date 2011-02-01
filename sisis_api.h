@@ -23,7 +23,7 @@ extern int sisis_listener_port;
 extern char * sisis_listener_ip_addr;
 
 // IPv4 Rib
-struct list * ipv4_rib_routes = NULL;
+extern struct list * ipv4_rib_routes;
 
 void sisis_process_message(char * msg, int msg_len);
 

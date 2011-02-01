@@ -25,6 +25,9 @@ int sisis_listener_port = 54345;
 char * sisis_listener_ip_addr = "127.0.0.1";
 unsigned int next_request_id = 1;
 
+// IPv4 Rib
+struct list * ipv4_rib_routes = NULL;
+
 // TODO: Support multiple addresses at once.
 pthread_t sisis_reregistration_thread;
 
