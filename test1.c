@@ -61,6 +61,7 @@ int main (int argc, char ** argv)
 			if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
 				printf("%s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
 		}
+		exit(0);
 	}
 	struct addrinfo hints, *addr;
 	
