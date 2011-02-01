@@ -22,6 +22,7 @@
 
 #include "sisis_structs.h"
 #include "sisis_api.h"
+#include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/socket.h>
