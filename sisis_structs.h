@@ -20,17 +20,17 @@ struct list
 {
 	struct listnode * head;
 	struct listnode * tail;
-}
+};
 
 struct listnode
 {
 	struct listnode * prev;
 	struct listnode * next;
 	void * data;
-}
+};
 
 #define LIST_APPEND(list,node) { if(!list->head){list->head = list->tail = node;node->prev = node->next = NULL;}else{node->prev=list->tail;node->next=NULL;list->tail->next=node;list->tail=node;} }
-#define FREE_LINKED_LIST(list) { struct listnode * node = list->head, node; while (node != NULL) {tmp=node->next;free(node->data);free(node);node=tmp} free(list); }
+#define FREE_LINKED_LIST(list) { struct listnode * node = list->head, tmp; while (node != NULL) {tmp=node->next;free(node->data);free(node);node=tmp} free(list); }
 
 struct sisis_request_ack_info
 {
