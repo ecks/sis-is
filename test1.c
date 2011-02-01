@@ -47,8 +47,21 @@ void terminate(int signal)
 
 int main (int argc, char ** argv)
 {
-	//sisis_dump_kernel_routes();
-	
+	// Get kernel routes
+	if (argc == 2 && strcmp(argv[1], "--rib-dump") == 0)
+	{
+		sisis_dump_kernel_routes();
+		struct listnode * node;
+		LIST_FOREACH(list, node)
+		{
+			struct route_ipv4 * route = (struct route_ipv4 *)node;
+			
+			// Set up prefix
+			char prefix_str[INET_ADDRSTRLEN];
+			if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
+				printf("%s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
+		}
+	}
 	struct addrinfo hints, *addr;
 	
 	// Check if the IP address and port are set
