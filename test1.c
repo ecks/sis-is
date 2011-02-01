@@ -54,7 +54,7 @@ int main (int argc, char ** argv)
 		struct listnode * node;
 		LIST_FOREACH(ipv4_rib_routes, node)
 		{
-			struct route_ipv4 * route = (struct route_ipv4 *)node;
+			struct route_ipv4 * route = (struct route_ipv4 *)node->data;
 			
 			// Set up prefix
 			char prefix_str[INET_ADDRSTRLEN];

@@ -339,11 +339,12 @@ int sisis_rib_add_ipv4 (struct route_ipv4 * route)
 	node->data = (void *)route;
 	LIST_APPEND(ipv4_rib_routes,node);
 	
+	/*
 	// Set up prefix
 	char prefix_str[INET_ADDRSTRLEN];
 	if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
 		printf("%s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
-	
+	*/
 	
 	return 0;
 }
