@@ -317,9 +317,9 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h)
 			route->type = 1;	// Means nothing right now
 			route->flags = flags;
 			route->p = malloc(sizeof(struct prefix_ipv4));
-			p->family = AF_INET;
-      memcpy (&p->prefix, dest, 4);
-      p->prefixlen = rtm->rtm_dst_len;
+			route->p->family = AF_INET;
+      memcpy (&route->p->prefix, dest, 4);
+      route->p->prefixlen = rtm->rtm_dst_len;
 			route->gate = gate;
 			route->src = src;
 			route->ifindex = index;
