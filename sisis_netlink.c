@@ -317,16 +317,16 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h)
       p.prefixlen = rtm->rtm_dst_len;
 			
 			// Construct route info
-			struct route_ipv4 route;
-			route.type = 1;	// Means nothing right now
-			route.flags = flags;
-			route.p = &p;
-			route.gate = gate;
-			route.src = src;
-			route.ifindex = index;
-			route.vrf_id = table;
-			route.metric = metric;
-			route.distance = 0;
+			struct route_ipv4 * route = malloc(sizeof(struct route_ipv4));
+			route->type = 1;	// Means nothing right now
+			route->flags = flags;
+			route->p = &p;
+			route->gate = gate;
+			route->src = src;
+			route->ifindex = index;
+			route->vrf_id = table;
+			route->metric = metric;
+			route->distance = 0;
 
       sisis_rib_add_ipv4 (route);
     }
