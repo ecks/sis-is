@@ -52,7 +52,7 @@ int main (int argc, char ** argv)
 	{
 		sisis_dump_kernel_routes();
 		struct listnode * node;
-		LIST_FOREACH(list, node)
+		LIST_FOREACH(ipv4_rib_routes, node)
 		{
 			struct route_ipv4 * route = (struct route_ipv4 *)node;
 			

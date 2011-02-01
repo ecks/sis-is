@@ -335,14 +335,11 @@ int sisis_dump_kernel_routes()
 /* Add an IPv4 Address to RIB. */
 int sisis_rib_add_ipv4 (struct route_ipv4 route)
 {
-	/*
 	// Set up prefix
 	char prefix_str[INET_ADDRSTRLEN];
-	route.p->family = AF_INET;
-	route.p->prefixlen = 32;
 	if (inet_ntop(AF_INET, &(route.p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
 		printf("%s/%d [%u/%u]\n", prefix_str, route.p->prefixlen, route.distance, route.metric);
-	*/
+	
 	struct listnode * node = malloc(sizeof(struct listnode));
 	struct route_ipv4 * route_ptr = malloc(sizeof(struct route_ipv4));
 	memcpy(route_ptr, &route, sizeof route);
