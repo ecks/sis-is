@@ -73,6 +73,9 @@ int spawn_process(char * path, char ** argv)
 		
 		// TODO: Remove full path later and use execvp
 		execv(path, argv);
+		
+		// Exit
+		exit(0);
 	}
 	else if (fork_pid > 0)
 	{
