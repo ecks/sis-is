@@ -117,8 +117,8 @@ int main (int argc, char ** argv)
 		int resp = REMOTE_SPAWN_RESP_INVALID_REQUEST;
 		if (strlen(buf) == 8)
 		{
-			int request = ntohl(buf);
-			int ptype = ntohl(buf+4);
+			int request = ntohl(&buf);
+			int ptype = ntohl(&buf+4);
 			
 			// Check if this is a known process
 			switch (ptype)
@@ -153,7 +153,7 @@ int main (int argc, char ** argv)
 			}
 			
 			// Convert to network ordering
-			resp = htonl(resp);
+			resp = htonl(&resp);
 			
 			// Send response
 			if (sendto(sockfd, resp, sizeof(resp), 0, &remote_addr, addr_size) == -1)
