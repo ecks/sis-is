@@ -115,7 +115,8 @@ int main (int argc, char ** argv)
 	while ((len = recvfrom(sockfd, buf, 256, 0, &remote_addr, &addr_size)) != -1)
 	{
 		int resp = REMOTE_SPAWN_RESP_INVALID_REQUEST;
-		if (strlen(buf) == 8)
+		// TODO: Convert to binary later
+		//if (strlen(buf) == 8)
 		{
 			int request, ptype;
 			sscanf(buf, "%d %d", &request, &ptype);
@@ -157,22 +158,22 @@ int main (int argc, char ** argv)
 					resp = REMOTE_SPAWN_RESP_INVALID_PROCESS_TYPE;
 					break;
 			}
-			
-			// Send response
-			char out[16];
-			sprintf(out, "%d", resp);
-			if (sendto(sockfd, &out, sizeof(out), 0, &remote_addr, addr_size) == -1)
-				printf("Failed to send message.\n");
-			// TODO: Convert to binary later
-			/*
-			// Convert to network ordering
-			resp = htonl(resp);
-			
-			// Send response
-			if (sendto(sockfd, &resp, sizeof(resp), 0, &remote_addr, addr_size) == -1)
-				printf("Failed to send message.\n");
-			*/
 		}
+		
+		// Send response
+		char out[16];
+		sprintf(out, "%d", resp);
+		if (sendto(sockfd, &out, sizeof(out), 0, &remote_addr, addr_size) == -1)
+			printf("Failed to send message.\n");
+		// TODO: Convert to binary later
+		/*
+		// Convert to network ordering
+		resp = htonl(resp);
+		
+		// Send response
+		if (sendto(sockfd, &resp, sizeof(resp), 0, &remote_addr, addr_size) == -1)
+			printf("Failed to send message.\n");
+		*/
 	}
 	
 	// Close socket
