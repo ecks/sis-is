@@ -18,6 +18,7 @@
 
 #include "sisis_api.h"
 
+int socket_opened = 0;
 int sisis_socket = 0;
 struct sockaddr_in sisis_listener_addr;
 
@@ -44,6 +45,9 @@ struct sisis_request_ack_info awaiting_ack;
  */
 int sisis_socket_open()
 {
+	if (socket_opened)
+		return 0;
+	
 	// Open socket
 	if ((sisis_socket = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 		return 1;
@@ -74,6 +78,10 @@ int sisis_socket_open()
 	
 	// Listen for messages
 	pthread_create(&sisis_recv_from_thread, NULL, sisis_recv_loop, NULL);
+	
+	// Make that the socket was opened
+	socket_opened = 1;
+	return 0;
 }
 
 /**
@@ -281,7 +289,7 @@ int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, 
 	int rtn = sisis_do_register(sisis_addr);
 	
 	// TODO: Support multiple addresses at once.
-	char * thread_sisis_addr = malloc(sizeof(char) * strlen(sisis_addr));
+	char * thread_sisis_addr = malloc(sizeof(char) * (strlen(sisis_addr)+1));
 	strcpy(thread_sisis_addr, sisis_addr);
 	pthread_create(&sisis_reregistration_thread, NULL, sisis_reregister, (void *)thread_sisis_addr);
 	
