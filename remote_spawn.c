@@ -117,8 +117,14 @@ int main (int argc, char ** argv)
 		int resp = REMOTE_SPAWN_RESP_INVALID_REQUEST;
 		if (strlen(buf) == 8)
 		{
-			int request = ntohl(*(int *)buf);
-			int ptype = ntohl(*(int*)(buf+4));
+			int request, ptype;
+			sscanf(buf, "%d %d", &request, &ptype);
+			// TODO: Convert to binary later
+			//int request = ntohl(*(int *)buf);
+			//int ptype = ntohl(*(int*)(buf+4));
+			
+			printf("Request: %i\n", request);
+			printf("Process Type: %i\n", request);
 			
 			// Check if this is a known process
 			switch (ptype)
@@ -152,12 +158,20 @@ int main (int argc, char ** argv)
 					break;
 			}
 			
+			// Send response
+			char out[16];
+			sprintf(out, "%d", resp);
+			if (sendto(sockfd, &out, sizeof(out), 0, &remote_addr, addr_size) == -1)
+				printf("Failed to send message.\n");
+			// TODO: Convert to binary later
+			/*
 			// Convert to network ordering
 			resp = htonl(resp);
 			
 			// Send response
 			if (sendto(sockfd, &resp, sizeof(resp), 0, &remote_addr, addr_size) == -1)
 				printf("Failed to send message.\n");
+			*/
 		}
 	}
 	
