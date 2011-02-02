@@ -152,10 +152,11 @@ int main (int argc, char ** argv)
 					break;
 			}
 			
+			// Convert to network ordering
+			resp = lton(resp);
 			
 			// Send response
-			char * send_buf_cur = send_buf;
-			if (sendto(sockfd, send_buf_cur, len, 0, &remote_addr, addr_size) == -1)
+			if (sendto(sockfd, resp, sizeof(resp), 0, &remote_addr, addr_size) == -1)
 				printf("Failed to send message.\n");
 		}
 	}
