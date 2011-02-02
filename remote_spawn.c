@@ -124,6 +124,7 @@ int main (int argc, char ** argv)
 			//int request = ntohl(*(int *)buf);
 			//int ptype = ntohl(*(int*)(buf+4));
 			
+			printf("Message: %s\n", buf);
 			printf("Request: %i\n", request);
 			printf("Process Type: %i\n", request);
 			
@@ -162,7 +163,7 @@ int main (int argc, char ** argv)
 		
 		// Send response
 		char out[16];
-		sprintf(out, "%d", resp);
+		sprintf(out, "%d", &resp);
 		if (sendto(sockfd, &out, sizeof(out), 0, &remote_addr, addr_size) == -1)
 			printf("Failed to send message.\n");
 		// TODO: Convert to binary later
