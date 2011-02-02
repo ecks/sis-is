@@ -112,12 +112,13 @@ int main (int argc, char ** argv)
 	int len;
 	char buf[256];
 	socklen_t addr_size = sizeof remote_addr;
-	while ((len = recvfrom(sockfd, buf, 256, 0, &remote_addr, &addr_size)) != -1)
+	while ((len = recvfrom(sockfd, buf, 255, 0, &remote_addr, &addr_size)) != -1)
 	{
 		int resp = REMOTE_SPAWN_RESP_INVALID_REQUEST;
 		// TODO: Convert to binary later
 		//if (strlen(buf) == 8)
 		{
+			buf[len] = '\0';
 			int request, ptype;
 			sscanf(buf, "%d %d", &request, &ptype);
 			// TODO: Convert to binary later
@@ -163,7 +164,7 @@ int main (int argc, char ** argv)
 		
 		// Send response
 		char out[16];
-		sprintf(out, "%d", resp);
+		sprintf(out, "%d\n", resp);
 		if (sendto(sockfd, &out, strlen(out), 0, &remote_addr, addr_size) == -1)
 			printf("Failed to send message.\n");
 		// TODO: Convert to binary later
