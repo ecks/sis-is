@@ -186,12 +186,13 @@ int main (int argc, char ** argv)
 							// TODO: How do I check for errors?
 							
 							// Change STDIN, STDOUT, and STDERR to /dev/null
+							/*
 							close(STDIN_FILENO);
 							open("/dev/null", O_RDONLY);
 							close(STDOUT_FILENO);
 							open("/dev/null", O_WRONLY);
 							close(STDERR_FILENO);
-							open("/dev/null", O_WRONLY); 
+							open("/dev/null", O_WRONLY); */
 							
 							// Detach from parent
 							setsid();
