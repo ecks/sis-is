@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <signal.h>
 
+#include <errno.h>
 #include "remote_spawn.h"
 
 #include "../tests/sisis_api.h"
@@ -136,6 +137,7 @@ int main (int argc, char ** argv)
 				case SISIS_PTYPE_MEMORY_MONITOR:
 					if (request == REMOTE_SPAWN_REQ_START)
 					{
+						printf("Starting memory monitor: ");
 						pid_t pid;
 						if ((pid == fork()) == 0)
 						{
@@ -144,9 +146,15 @@ int main (int argc, char ** argv)
 							execl("/home/ssigwart/sis-is/memory_monitor/memory_monitor", "memory_monitor", argv[1], NULL);
 						}
 						else if (pid > 0)
+						{
+							printf("Started\n");
 							resp = REMOTE_SPAWN_RESP_OK;
+						}
 						else
+						{
+							printf("Failed[%d]\n", errno);
 							resp = REMOTE_SPAWN_RESP_SPAWN_FAILED;
+						}
 					}
 					else
 						resp = REMOTE_SPAWN_RESP_NOT_IMPLEMENTED;
