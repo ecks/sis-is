@@ -53,7 +53,7 @@ void terminate(int signal)
 }
 
 /** Spawns a process */
-int spawn_process(char * path, char ** argv)
+int spawn_process(char * path, void ** argv)
 {
 	pid_t fork_pid;
 	if ((fork_pid = fork()) == 0)
@@ -177,7 +177,7 @@ int main (int argc, char ** argv)
 				case SISIS_PTYPE_MEMORY_MONITOR:
 					if (request == REMOTE_SPAWN_REQ_START)
 					{
-						char * argv[] = {"memory_monitor", argv[1], NULL };
+						void * argv[] = { "memory_monitor", argv[1], NULL };
 						resp = spawn_process("/home/ssigwart/sis-is/memory_monitor/memory_monitor", argv);
 					}
 					else
