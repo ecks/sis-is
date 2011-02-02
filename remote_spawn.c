@@ -127,7 +127,7 @@ int main (int argc, char ** argv)
 			
 			printf("Message: %s\n", buf);
 			printf("Request: %i\n", request);
-			printf("Process Type: %i\n", request);
+			printf("Process Type: %i\n", ptype);
 			
 			// Check if this is a known process
 			switch (ptype)
