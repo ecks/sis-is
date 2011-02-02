@@ -177,7 +177,7 @@ int main (int argc, char ** argv)
 				case SISIS_PTYPE_MEMORY_MONITOR:
 					if (request == REMOTE_SPAWN_REQ_START)
 					{
-						char * argv[] = {"memory_monitor", argv[1]};
+						char * argv[] = {"memory_monitor", argv[1], NULL };
 						resp = spawn_process("/home/ssigwart/sis-is/memory_monitor/memory_monitor", argv);
 					}
 					else
