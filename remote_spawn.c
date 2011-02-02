@@ -52,6 +52,13 @@ void terminate(int signal)
 	exit(0);
 }
 
+// SIGCHLD handler
+void sigchld_handler(signo)
+{
+	int status;
+	wait(&status);
+}
+
 /** Spawns a process */
 int spawn_process(char * path, char ** argv)
 {
@@ -147,6 +154,7 @@ int main (int argc, char ** argv)
 	signal(SIGABRT, terminate);
 	signal(SIGTERM, terminate);
 	signal(SIGINT, terminate);
+	signal(SIGCHLD, sigchld_handler);
 	
 	// Wait for message
 	struct sockaddr remote_addr;
