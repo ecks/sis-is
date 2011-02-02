@@ -138,14 +138,18 @@ int main (int argc, char ** argv)
 					if (request == REMOTE_SPAWN_REQ_START)
 					{
 						printf("Starting memory monitor: ");
-						pid_t pid;
-						if ((pid == fork()) == 0)
+						pid_t fork_pid;
+						if ((fork_pid = fork()) == 0)
 						{
+							// TODO: How do I check for errors?
+							
+							// Detach from parent
+							setsid();
+							
 							// TODO: Remove full path later and use execlp
-							// TODO: How do I check for error
 							execl("/home/ssigwart/sis-is/memory_monitor/memory_monitor", "memory_monitor", argv[1], NULL);
 						}
-						else if (pid > 0)
+						else if (fork_pid > 0)
 						{
 							printf("Started\n");
 							resp = REMOTE_SPAWN_RESP_OK;
