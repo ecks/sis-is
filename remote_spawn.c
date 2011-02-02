@@ -163,8 +163,8 @@ int main (int argc, char ** argv)
 		
 		// Send response
 		char out[16];
-		sprintf(out, "%d", &resp);
-		if (sendto(sockfd, &out, sizeof(out), 0, &remote_addr, addr_size) == -1)
+		sprintf(out, "%d", resp);
+		if (sendto(sockfd, &out, strlen(out), 0, &remote_addr, addr_size) == -1)
 			printf("Failed to send message.\n");
 		// TODO: Convert to binary later
 		/*
