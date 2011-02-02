@@ -52,6 +52,40 @@ void terminate(int signal)
 	exit(0);
 }
 
+/** Spawns a process */
+int spawn_process(char * path, char ** argv)
+{
+	pid_t fork_pid;
+	if ((fork_pid = fork()) == 0)
+	{
+		// TODO: How do I check for errors?
+		
+		// Change STDIN, STDOUT, and STDERR to /dev/null
+		close(STDIN_FILENO);
+		open("/dev/null", O_RDONLY);
+		close(STDOUT_FILENO);
+		open("/dev/null", O_WRONLY);
+		close(STDERR_FILENO);
+		open("/dev/null", O_WRONLY); 
+		
+		// Detach from parent
+		setsid();
+		
+		// TODO: Remove full path later and use execvp
+		execv(path, argv);
+	}
+	else if (fork_pid > 0)
+	{
+		printf("Started\n");
+		return REMOTE_SPAWN_RESP_OK;
+	}
+	else
+	{
+		printf("Failed[%d]\n", errno);
+		return REMOTE_SPAWN_RESP_SPAWN_FAILED;
+	}
+}
+
 int main (int argc, char ** argv)
 {
 	// Check number of args
@@ -140,36 +174,8 @@ int main (int argc, char ** argv)
 				case SISIS_PTYPE_MEMORY_MONITOR:
 					if (request == REMOTE_SPAWN_REQ_START)
 					{
-						printf("Starting memory monitor: ");
-						pid_t fork_pid;
-						if ((fork_pid = fork()) == 0)
-						{
-							// TODO: How do I check for errors?
-							
-							// Change STDIN, STDOUT, and STDERR to /dev/null
-							close(STDIN_FILENO);
-							open("/dev/null", O_RDONLY);
-							close(STDOUT_FILENO);
-							open("/dev/null", O_WRONLY);
-							close(STDERR_FILENO);
-							open("/dev/null", O_WRONLY); 
-							
-							// Detach from parent
-							setsid();
-							
-							// TODO: Remove full path later and use execlp
-							execl("/home/ssigwart/sis-is/memory_monitor/memory_monitor", "memory_monitor", argv[1], NULL);
-						}
-						else if (fork_pid > 0)
-						{
-							printf("Started\n");
-							resp = REMOTE_SPAWN_RESP_OK;
-						}
-						else
-						{
-							printf("Failed[%d]\n", errno);
-							resp = REMOTE_SPAWN_RESP_SPAWN_FAILED;
-						}
+						char * argv[] = {"memory_monitor", argv[1]};
+						resp = spawn_process("/home/ssigwart/sis-is/memory_monitor/memory_monitor", argv);
 					}
 					else
 						resp = REMOTE_SPAWN_RESP_NOT_IMPLEMENTED;
