@@ -132,7 +132,7 @@ int main (int argc, char ** argv)
 						{
 							// TODO: Remove full path later and use execlp
 							// TODO: How do I check for error
-							execl("/home/ssigwart/sis-is/memory_monitor/memory_monitor", argv[1]);
+							execl("/home/ssigwart/sis-is/memory_monitor/memory_monitor", "memory_monitor", argv[1], NULL);
 						}
 						else if (pid > 0)
 							resp = REMOTE_SPAWN_RESP_OK;
