@@ -53,7 +53,7 @@ void terminate(int signal)
 }
 
 /** Spawns a process */
-int spawn_process(char * path, void ** argv)
+int spawn_process(char * path, char ** argv)
 {
 	pid_t fork_pid;
 	if ((fork_pid = fork()) == 0)
@@ -178,7 +178,40 @@ int main (int argc, char ** argv)
 					if (request == REMOTE_SPAWN_REQ_START)
 					{
 						void * argv[] = { "memory_monitor", argv[1], NULL };
-						resp = spawn_process("/home/ssigwart/sis-is/memory_monitor/memory_monitor", argv);
+						//resp = spawn_process("/home/ssigwart/sis-is/memory_monitor/memory_monitor", argv);
+						
+						pid_t fork_pid;
+						if ((fork_pid = fork()) == 0)
+						{
+							// TODO: How do I check for errors?
+							
+							// Change STDIN, STDOUT, and STDERR to /dev/null
+							close(STDIN_FILENO);
+							open("/dev/null", O_RDONLY);
+							close(STDOUT_FILENO);
+							open("/dev/null", O_WRONLY);
+							close(STDERR_FILENO);
+							open("/dev/null", O_WRONLY); 
+							
+							// Detach from parent
+							setsid();
+							
+							// TODO: Remove full path later and use execvp
+							execv("/home/ssigwart/sis-is/memory_monitor/memory_monitor", argv);
+							
+							// Exit
+							exit(0);
+						}
+						else if (fork_pid > 0)
+						{
+							printf("Started\n");
+							resp = REMOTE_SPAWN_RESP_OK;
+						}
+						else
+						{
+							printf("Failed[%d]\n", errno);
+							resp = REMOTE_SPAWN_RESP_SPAWN_FAILED;
+						}
 					}
 					else
 						resp = REMOTE_SPAWN_RESP_NOT_IMPLEMENTED;
