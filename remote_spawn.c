@@ -124,7 +124,7 @@ int main (int argc, char ** argv)
 			switch (ptype)
 			{
 				// Memory monitor
-				case :
+				case SISIS_PTYPE_MEMORY_MONITOR:
 					if (request == REMOTE_SPAWN_REQ_START)
 					{
 						pid_t pid;
@@ -132,7 +132,7 @@ int main (int argc, char ** argv)
 						{
 							// TODO: Remove full path later and use execlp
 							// TODO: How do I check for error
-							execl("/home/ssigwart/sis-is/memory_monitor/memory_monitor", "1");
+							execl("/home/ssigwart/sis-is/memory_monitor/memory_monitor", argv[1]);
 						}
 						else if (pid > 0)
 							resp = REMOTE_SPAWN_RESP_OK;
@@ -150,7 +150,6 @@ int main (int argc, char ** argv)
 				default:
 					resp = REMOTE_SPAWN_RESP_INVALID_PROCESS_TYPE;
 					break;
-				host_num
 			}
 			
 			
