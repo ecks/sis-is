@@ -1,0 +1,7 @@
+#ifndef _SISIS_PROCESS_TYPES_H
+#define _SISIS_PROCESS_TYPES_H
+
+#define SISIS_PTYPE_MEMORY_MONITOR					1
+#define SISIS_PTYPE_REMOTE_SPAWN						2
+
+#endif
