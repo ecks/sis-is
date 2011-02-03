@@ -141,13 +141,13 @@ int main (int argc, char ** argv)
 		
 		// Get memory stats
 		char req[1];
-		if (sendto(sockfd, &req, 1, 0, (struct sockaddr *) sockaddr, addr_size) == -1)
+		if (sendto(sockfd, &req, 1, 0, (struct sockaddr *)&sockaddr, addr_size) == -1)
 			printf("Failed to send message.\n");
 		else
 		{
 			char buf[65508];
 			int len;
-			if (len = recvfrom(sockfd, buf, 65507, 0, (struct sockaddr *) sockaddr, &addr_size))
+			if (len = recvfrom(sockfd, buf, 65507, 0, (struct sockaddr *)&sockaddr, &addr_size))
 			{
 				buf[len] = '\0';
 				printf("%s", buf);

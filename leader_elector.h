@@ -3,6 +3,4 @@
 
 #define LEADER_ELECTOR_PORT 50000
 
-
-
 #endif
