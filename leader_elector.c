@@ -142,7 +142,7 @@ int main (int argc, char ** argv)
 		
 		// Get memory stats
 		char * req = "data";
-		if (sendto(sockfd, &req, strlen(req), 0, (struct sockaddr *)&sockaddr, addr_size) == -1)
+		if (sendto(sockfd, req, strlen(req), 0, (struct sockaddr *)&sockaddr, addr_size) == -1)
 			printf("Failed to send message.  Error: %i\n", errno);
 		else
 		{
