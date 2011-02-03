@@ -214,6 +214,18 @@ int sisis_create_addr(unsigned int ptype, unsigned int host_num, unsigned int pi
 }
 
 /**
+ * Split an SIS-IS address into components.
+ *
+ * sisis_addr SIS-IS/IP address
+ */
+struct sisis_addr_components get_sisis_addr_components(char * sisis_addr)
+{
+	struct sisis_addr_components rtn;
+	sscanf(sisis_addr, "26.%u.%u.%u", rtn.ptype, rtn.host_num, rtn.pid);
+	return rtn;
+}
+
+/**
  * Does actual registration of SIS-IS address.
  *
  * sisis_addr String to store resulting SIS-IS/IP address in.

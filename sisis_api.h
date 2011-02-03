@@ -40,6 +40,13 @@ void sisis_process_message(char * msg, int msg_len);
 int sisis_create_addr(unsigned int ptype, unsigned int host_num, unsigned int pid, char * sisis_addr);
 
 /**
+ * Split an SIS-IS address into components.
+ *
+ * sisis_addr SIS-IS/IP address
+ */
+struct sisis_addr_components get_sisis_addr_components(char * sisis_addr);
+
+/**
  * Registers SIS-IS process.
  *
  * sisis_addr String to store resulting SIS-IS/IP address in.
