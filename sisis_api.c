@@ -382,13 +382,14 @@ struct list * get_sisis_addrs_for_process_type(unsigned int ptype)
 		return NULL;
 	struct in_addr prefix_addr;
 	inet_pton(AF_INET, prefix_addr_str, &prefix_addr);
-	unsigned long prefix_mask = 0;
+	unsigned long prefix_mask = 0xffffffff;
 	int i = 0;
-	for (; i < SISIS_ADD_PREFIX_LEN_PTYPE; i++)
+	for (; i < 32-SISIS_ADD_PREFIX_LEN_PTYPE; i++)
 	{
 		prefix_mask <<= 1;
-		prefix_mask |= 1;
+		prefix_mask |= 0;
 	}
+	prefix_mask = htonl(prefix_mask);
 	
 	// Create list of relevant SIS-IS addresses
 	struct list * rtn = malloc(sizeof(struct list));
