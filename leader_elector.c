@@ -197,8 +197,7 @@ int main (int argc, char ** argv)
 					// Check that the machine doesn't already have a leader elector process running
 					struct list * host_leader_elector_addrs = get_sisis_addrs_for_process_type_and_host(SISIS_PTYPE_LEADER_ELECTOR, sisis_comp.host_num);
 					if (host_leader_elector_addrs && host_leader_elector_addrs->size)
-					{
-					}
+						printf("Host is already running leader elector.\n");
 					else
 					{
 						// Check if the spawn process is running
