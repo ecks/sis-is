@@ -387,14 +387,14 @@ struct list * get_sisis_addrs_for_process_type(unsigned int ptype)
 		struct route_ipv4 * route = (struct route_ipv4 *)node->data;
 		
 		// Check if the route matches the prefix
-		char addr[INET_ADDRSTRLEN];
+		char * addr = malloc(sizeof(char) * (INET_ADDRSTRLEN+1));
 		if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), addr, INET_ADDRSTRLEN) != 1)
 		{
-			if (route->p->prefix_len == 32 && memcmp(addr, prefix_addr, SISIS_ADD_PREFIX_LEN_PTYPE) == 0)
+			if (route->p->prefixlen == 32 && memcmp(addr, prefix_addr, SISIS_ADD_PREFIX_LEN_PTYPE) == 0)
 			{
 				// Add to list
 				struct listnode * new_node = malloc(sizeof(struct listnode));
-				new_node->data = (void *)route->p->prefix;
+				new_node->data = (void *)addr;
 				LIST_APPEND(rtn,node);
 			}
 		}
