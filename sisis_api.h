@@ -62,13 +62,12 @@ int sisis_dump_kernel_routes();
 int sisis_rib_add_ipv4(struct route_ipv4 *);
 #ifdef HAVE_IPV6
 int sisis_rib_add_ipv6(struct route_ipv6);
+#endif /* HAVE_IPV6 */
 
 /**
  * Get SIS-IS addresses for a specific process type.  It is the receivers
  * responsibility to free the list when done with it.
  */
 struct list * get_sisis_addrs_for_process_type(unsigned int ptype);
-
-#endif /* HAVE_IPV6 */
 
 #endif // _SISIS_API_H
