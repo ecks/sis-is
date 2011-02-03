@@ -177,7 +177,7 @@ int main (int argc, char ** argv)
 					memset(&spawn_sockaddr, 0, spawn_sockaddr_size);
 					spawn_sockaddr.sin_family = AF_INET;
 					spawn_sockaddr.sin_port = htons(REMOTE_SPAWN_PORT);
-					spawn_sockaddr.sin_addr = *(struct in_addr *)spawn_addrs->data;
+					spawn_sockaddr.sin_addr = *(struct in_addr *)spawn_addrs->head->data;
 					
 					char req2[32];
 					//sprintf(req2, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_LEADER_ELECTOR);
