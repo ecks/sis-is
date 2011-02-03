@@ -124,7 +124,7 @@ int main (int argc, char ** argv)
 	
 	// Check how many leader_elector processes there are
 	int leader_elector_processes_needed = 0;
-	struct list * host_leader_elector_addrs = get_sisis_addrs_for_process_type_and_host(SISIS_PTYPE_LEADER_ELECTOR, sisis_comp.host_num);
+	struct list * host_leader_elector_addrs = get_sisis_addrs_for_process_type(SISIS_PTYPE_LEADER_ELECTOR);
 	if (!leader_elector_addrs)
 	{
 		printf("Error.\n");
