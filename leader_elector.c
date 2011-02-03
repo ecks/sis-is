@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <signal.h>
 
+#include <errno.h>
 #include "leader_elector.h"
 #include "../memory_monitor/memory_monitor.h"
 
@@ -140,9 +141,9 @@ int main (int argc, char ** argv)
     sockaddr.sin_addr = *addr;
 		
 		// Get memory stats
-		char req[1];
-		if (sendto(sockfd, &req, 1, 0, (struct sockaddr *)&sockaddr, addr_size) == -1)
-			printf("Failed to send message.\n");
+		char * req = "data";
+		if (sendto(sockfd, &req, strlen(req), 0, (struct sockaddr *)&sockaddr, addr_size) == -1)
+			printf("Failed to send message.  Error: %i\n", errno);
 		else
 		{
 			char buf[65508];
