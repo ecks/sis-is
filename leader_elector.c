@@ -66,14 +66,14 @@ int main (int argc, char ** argv)
 	pid = getpid();
 	
 	// Register address
-	if (sisis_register(SISIS_PTYPE_REMOTE_SPAWN, host_num, pid, sisis_addr) != 0)
+	if (sisis_register(SISIS_PTYPE_LEADER_ELECTOR, host_num, pid, sisis_addr) != 0)
 	{
 		printf("Failed to register SIS-IS address.\n");
 		exit(1);
 	}
 	
 	// Status
-	printf("Opening socket at %s on port %i.\n", sisis_addr, REMOTE_SPAWN_PORT);
+	printf("Opening socket at %s on port %i.\n", sisis_addr, LEADER_ELECTOR_PORT);
 	
 	// Set up socket address info
 	struct addrinfo hints, *addr;
@@ -81,7 +81,7 @@ int main (int argc, char ** argv)
 	hints.ai_family = AF_INET;	// IPv4
 	hints.ai_socktype = SOCK_DGRAM;
 	char port_str[8];
-	sprintf(port_str, "%u", REMOTE_SPAWN_PORT);
+	sprintf(port_str, "%u", LEADER_ELECTOR_PORT);
 	getaddrinfo(sisis_addr, port_str, &hints, &addr);
 	
 	// Create socket
@@ -125,7 +125,7 @@ int main (int argc, char ** argv)
 		num_hosts++;
 		
 		// Print address
-		struct in_addr * addr = (struct route_ipv4 *)node->data;
+		struct in_addr * addr = (struct in_addr *)node->data;
 		char addr_str[INET_ADDRSTRLEN+1];
 		if (inet_ntop(AF_INET, addr, addr_str, INET_ADDRSTRLEN+1) != 1)
 			printf("Host: %s\n", addr_str);
@@ -137,7 +137,7 @@ int main (int argc, char ** argv)
 			printf("Failed to send message.\n");
 		char buf[65508];
 		int len;
-		if (len = recvfrom(sockfd, buf, 65507, 0, &remote_addr, &addr_size)
+		if (len = recvfrom(sockfd, buf, 65507, 0, (struct addrinfo *) addr, sizeof(addr)))
 		{
 			buf[len] = '\0';
 			printf("%s", buf);
