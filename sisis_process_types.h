@@ -3,5 +3,6 @@
 
 #define SISIS_PTYPE_MEMORY_MONITOR					1
 #define SISIS_PTYPE_REMOTE_SPAWN						2
+#define SISIS_PTYPE_LEADER_ELECTOR					3
 
 #endif

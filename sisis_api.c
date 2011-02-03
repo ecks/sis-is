@@ -364,3 +364,41 @@ int sisis_rib_add_ipv6 (struct route_ipv6 route)
 	return 0;
 }
 #endif /* HAVE_IPV6 */
+
+/**
+ * Get SIS-IS addresses for a specific process type.  It is the receivers
+ * responsibility to free the list when done with it.
+ */
+struct list * get_sisis_addrs_for_process_type(unsigned int ptype)
+{
+	// Update kernel routes
+	sisis_dump_kernel_routes();
+	
+	// Create prefix
+	char prefix_addr[INET_ADDRSTRLEN+1];
+	if (sisis_create_addr(ptype, 0, 0, prefix_addr))
+		return NULL;
+	
+	// Create list of relevant SIS-IS addresses
+	struct list * rtn = malloc(sizeof(struct list));
+	struct listnode * node;
+	LIST_FOREACH(ipv4_rib_routes, node)
+	{
+		struct route_ipv4 * route = (struct route_ipv4 *)node->data;
+		
+		// Check if the route matches the prefix
+		char addr[INET_ADDRSTRLEN];
+		if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), addr, INET_ADDRSTRLEN) != 1)
+		{
+			if (route->p->prefix_len == 32 && memcmp(addr, prefix_addr, SISIS_ADD_PREFIX_LEN_PTYPE) == 0)
+			{
+				// Add to list
+				struct listnode * new_node = malloc(sizeof(struct listnode));
+				new_node->data = (void *)route->p->prefix;
+				LIST_APPEND(rtn,node);
+			}
+		}
+	}
+	
+	return rtn;
+}
