@@ -19,8 +19,9 @@
 #define SISIS_ACK							            3
 #define SISIS_NACK							     			4
 
-// Prefix length
+// Prefix lengths
 #define SISIS_ADD_PREFIX_LEN_PTYPE				16
+#define SISIS_ADD_PREFIX_LEN_HOST_NUM			24
 
 extern int sisis_listener_port;
 extern char * sisis_listener_ip_addr;
@@ -76,5 +77,11 @@ int sisis_rib_add_ipv6(struct route_ipv6);
  * responsibility to free the list when done with it.
  */
 struct list * get_sisis_addrs_for_process_type(unsigned int ptype);
+
+/**
+ * Get SIS-IS addresses for a specific process type and host.  It is the receivers
+ * responsibility to free the list when done with it.
+ */
+struct list * get_sisis_addrs_for_process_type_and_host(unsigned int ptype, unsigned int host_num);
 
 #endif // _SISIS_API_H
