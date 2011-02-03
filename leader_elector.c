@@ -171,7 +171,7 @@ int main (int argc, char ** argv)
 			sockaddr.sin_addr = *remote_addr;
 			
 			// Get memory stats
-			char * req = "data";
+			char * req = "data\n";
 			if (sendto(sockfd, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
 				printf("Failed to send message.  Error: %i\n", errno);
 			else
