@@ -177,10 +177,11 @@ int main (int argc, char ** argv)
 					memset(&spawn_sockaddr, 0, spawn_sockaddr_size);
 					spawn_sockaddr.sin_family = AF_INET;
 					spawn_sockaddr.sin_port = htons(REMOTE_SPAWN_PORT);
-					spawn_sockaddr.sin_addr = *remote_addr;
+					spawn_sockaddr.sin_addr = *(struct in_addr *)spawn_addrs->data;
 					
 					char req2[32];
-					sprintf(req2, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_LEADER_ELECTOR);
+					//sprintf(req2, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_LEADER_ELECTOR);
+					sprintf(req2, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_MEMORY_MONITOR);	// TODO: For testing, start SISIS_PTYPE_MEMORY_MONITOR so we don't infinitely start SISIS_PTYPE_LEADER_ELECTOR
 					if (sendto(sockfd, req2, strlen(req2), 0, (struct sockaddr *)&spawn_sockaddr, spawn_sockaddr_size) == -1)
 						printf("Failed to send message.  Error: %i\n", errno);
 					
