@@ -170,7 +170,7 @@ int main (int argc, char ** argv)
 				if (spawn_addrs && spawn_addrs->size)
 				{
 					char req2[32];
-					sptrinf(req2, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_LEADER_ELECTOR);
+					sprintf(req2, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_LEADER_ELECTOR);
 					if (sendto(sockfd, req2, strlen(req2), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
 						printf("Failed to send message.  Error: %i\n", errno);
 					
