@@ -169,13 +169,24 @@ int main (int argc, char ** argv)
 				struct list * spawn_addrs = get_sisis_addrs_for_process_type_and_host(SISIS_PTYPE_REMOTE_SPAWN, sisis_comp.host_num);
 				if (spawn_addrs && spawn_addrs->size)
 				{
+					print("Starting leader elector on host %u.", sisis_comp.host_num);
+					
+					// Set up socket info
+					struct sockaddr_in spawn_sockaddr;
+					int spawn_sockaddr_size = sizeof(spawn_sockaddr);
+					memset(&spawn_sockaddr, 0, spawn_sockaddr_size);
+					spawn_sockaddr.sin_family = AF_INET;
+					spawn_sockaddr.sin_port = htons(REMOTE_SPAWN_PORT);
+					spawn_sockaddr.sin_addr = *remote_addr;
+					
 					char req2[32];
 					sprintf(req2, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_LEADER_ELECTOR);
-					if (sendto(sockfd, req2, strlen(req2), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
+					if (sendto(sockfd, req2, strlen(req2), 0, (struct sockaddr *)&spawn_sockaddr, spawn_sockaddr_size) == -1)
 						printf("Failed to send message.  Error: %i\n", errno);
 					
 					// TODO: Check for response
 				}
+				FREE_LINKED_LIST(spawn_addrs);
 			}
 			
 			printf("\n\n");
