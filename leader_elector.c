@@ -138,7 +138,7 @@ int main (int argc, char ** argv)
 		int sockaddr_size = sizeof(sockaddr);
 		memset(&sockaddr, 0, sockaddr_size);
 		sockaddr.sin_family = AF_INET;
-		sockaddr.sin_port = SISIS_PTYPE_MEMORY_MONITOR;
+		sockaddr.sin_port = MEMORY_MONITOR_PORT;
     sockaddr.sin_addr = *remote_addr;
 		
 		// Get memory stats
@@ -147,9 +147,11 @@ int main (int argc, char ** argv)
 			printf("Failed to send message.  Error: %i\n", errno);
 		else
 		{
+			struct sockaddr_in fromaddr;
+			int fromaddr_size = sizeof(fromaddr);
 			char buf[65508];
 			int len;
-			if (len = recvfrom(sockfd, buf, 65507, 0, (struct sockaddr *)&sockaddr, &sockaddr_size))
+			if (len = recvfrom(sockfd, buf, 65507, 0, (struct sockaddr *)&fromaddr, &fromaddr_size))
 			{
 				buf[len] = '\0';
 				printf("%s", buf);
