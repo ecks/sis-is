@@ -15,6 +15,7 @@
 #include <signal.h>
 
 #include "leader_elector.h"
+#include "../memory_monitor/memory_monitor.h"
 
 #include "../tests/sisis_api.h"
 #include "../tests/sisis_structs.h"
@@ -132,16 +133,25 @@ int main (int argc, char ** argv)
 			printf("Host: %s\n", addr_str);
 		printf("--------------------------------------------------------------------------------\n");
 		
+		// Set up socket info
+		struct sockaddr_in sockaddr;
+		sockaddr.sin_family = AF_INET;
+		sockaddr.sin_port = SISIS_PTYPE_MEMORY_MONITOR;
+    sockaddr.sin_addr = *addr;
+		
 		// Get memory stats
 		char req[1];
-		if (sendto(sockfd, &req, 1, 0, (struct sockaddr *) addr, addr_size) == -1)
+		if (sendto(sockfd, &req, 1, 0, (struct sockaddr *) sockaddr, addr_size) == -1)
 			printf("Failed to send message.\n");
-		char buf[65508];
-		int len;
-		if (len = recvfrom(sockfd, buf, 65507, 0, (struct sockaddr *) addr, &addr_size))
+		else
 		{
-			buf[len] = '\0';
-			printf("%s", buf);
+			char buf[65508];
+			int len;
+			if (len = recvfrom(sockfd, buf, 65507, 0, (struct sockaddr *) sockaddr, &addr_size))
+			{
+				buf[len] = '\0';
+				printf("%s", buf);
+			}
 		}
 		
 		printf("\n\n");
