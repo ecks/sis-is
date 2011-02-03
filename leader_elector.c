@@ -138,7 +138,7 @@ int main (int argc, char ** argv)
 		int sockaddr_size = sizeof(sockaddr);
 		memset(&sockaddr, 0, sockaddr_size);
 		sockaddr.sin_family = AF_INET;
-		sockaddr.sin_port = MEMORY_MONITOR_PORT;
+		sockaddr.sin_port = htons(MEMORY_MONITOR_PORT);
     sockaddr.sin_addr = *remote_addr;
 		
 		// Get memory stats
