@@ -169,7 +169,7 @@ int main (int argc, char ** argv)
 				struct list * spawn_addrs = get_sisis_addrs_for_process_type_and_host(SISIS_PTYPE_REMOTE_SPAWN, sisis_comp.host_num);
 				if (spawn_addrs && spawn_addrs->size)
 				{
-					print("Starting leader elector on host %u.", sisis_comp.host_num);
+					printf("Starting leader elector on host %u.", sisis_comp.host_num);
 					
 					// Set up socket info
 					struct sockaddr_in spawn_sockaddr;
