@@ -398,16 +398,13 @@ struct list * get_sisis_addrs_for_process_type(unsigned int ptype)
 		struct route_ipv4 * route = (struct route_ipv4 *)node->data;
 		
 		// Check if the route matches the prefix
-		char * addr = malloc(sizeof(char) * (INET_ADDRSTRLEN+1));
-		if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), addr, INET_ADDRSTRLEN) != 1)
+		if (route->p->prefixlen == 32 && (route->p->prefix.s_addr & prefix_mask) == (prefix_addr.s_addr & prefix_mask))
 		{
-			if (route->p->prefixlen == 32 && (route->p->prefix.s_addr & prefix_mask) == (prefix_addr.s_addr & prefix_mask))
-			{
-				// Add to list
-				struct listnode * new_node = malloc(sizeof(struct listnode));
-				new_node->data = (void *)route->p->prefix;
-				LIST_APPEND(rtn,new_node);
-			}
+			// Add to list
+			struct listnode * new_node = malloc(sizeof(struct listnode));
+			new_node->data = malloc(sizeof(route->p->prefix));
+			memcpy(new_node->data, &route->p->prefix, sizeof(route->p->prefix));
+			LIST_APPEND(rtn,new_node);
 		}
 	}
 	
