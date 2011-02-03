@@ -130,35 +130,43 @@ int main (int argc, char ** argv)
 		struct in_addr * remote_addr = (struct in_addr *)node->data;
 		char addr_str[INET_ADDRSTRLEN+1];
 		if (inet_ntop(AF_INET, remote_addr, addr_str, INET_ADDRSTRLEN+1) != 1)
-			printf("Host: %s\n", addr_str);
-		printf("--------------------------------------------------------------------------------\n");
-		
-		// Set up socket info
-		struct sockaddr_in sockaddr;
-		int sockaddr_size = sizeof(sockaddr);
-		memset(&sockaddr, 0, sockaddr_size);
-		sockaddr.sin_family = AF_INET;
-		sockaddr.sin_port = htons(MEMORY_MONITOR_PORT);
-    sockaddr.sin_addr = *remote_addr;
-		
-		// Get memory stats
-		char * req = "data";
-		if (sendto(sockfd, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
-			printf("Failed to send message.  Error: %i\n", errno);
-		else
 		{
-			struct sockaddr_in fromaddr;
-			int fromaddr_size = sizeof(fromaddr);
-			char buf[65508];
-			int len;
-			if (len = recvfrom(sockfd, buf, 65507, 0, (struct sockaddr *)&fromaddr, &fromaddr_size))
+			// Get SIS-IS address info
+			struct sisis_addr_components sisis_comp = get_sisis_addr_components(remote_addr);
+			
+			printf("Host[%u]: %s\n", sisis_comp.host_num, addr_str);
+			printf("--------------------------------------------------------------------------------\n");
+			
+			// Set up socket info
+			struct sockaddr_in sockaddr;
+			int sockaddr_size = sizeof(sockaddr);
+			memset(&sockaddr, 0, sockaddr_size);
+			sockaddr.sin_family = AF_INET;
+			sockaddr.sin_port = htons(MEMORY_MONITOR_PORT);
+			sockaddr.sin_addr = *remote_addr;
+			
+			// Get memory stats
+			char * req = "data";
+			if (sendto(sockfd, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
+				printf("Failed to send message.  Error: %i\n", errno);
+			else
 			{
+				struct sockaddr_in fromaddr;
+				int fromaddr_size = sizeof(fromaddr);
+				char buf[65508];
+				int len;
+				do
+				{
+					// TODO: Handle error/timeout
+					len = recvfrom(sockfd, buf, 65507, 0, (struct sockaddr *)&fromaddr, &fromaddr_size) &&
+				} while (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0);
+				
 				buf[len] = '\0';
 				printf("%s", buf);
 			}
+			
+			printf("\n\n");
 		}
-		
-		printf("\n\n");
 	}
 	
 	FREE_LINKED_LIST(monitor_addrs);
