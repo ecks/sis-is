@@ -181,6 +181,7 @@ int main (int argc, char ** argv)
 				memset(&fromaddr, 0, fromaddr_size);
 				char buf[65508];
 				int len;
+				printf("Waiting for response.\n");
 				do
 				{
 					// TODO: Handle error/timeout
