@@ -23,7 +23,7 @@
 #include "../tests/sisis_structs.h"
 #include "../tests/sisis_process_types.h"
 
-#define MAX(a,b) ((a) < (b) ? (a) : (b));
+#define MAX(a,b) ((a) > (b) ? (a) : (b));
 
 int sockfd = -1, con = -1;
 int host_num, pid;
@@ -135,9 +135,9 @@ int main (int argc, char ** argv)
 	{
 		leader_elector_processes_needed = MAX(3, monitor_addrs->size*.2) - leader_elector_addrs->size;
 		if (leader_elector_processes_needed)
-			printf("Need to start %d process%s.", leader_elector_processes_needed, leader_elector_processes_needed == 1 ? "" : "es");
+			printf("Need to start %d process%s.\n", leader_elector_processes_needed, leader_elector_processes_needed == 1 ? "" : "es");
 		else
-			printf("Enought processes already running.");
+			printf("Enought processes already running.\n");
 		
 		// Free memory
 		if (leader_elector_addrs)
