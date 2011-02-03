@@ -381,6 +381,7 @@ struct list * get_sisis_addrs_for_process_type(unsigned int ptype)
 		return NULL;
 	struct in_addr prefix_addr;
 	inet_pton(AF_INET, prefix_addr_str, &prefix_addr);
+	printf("Searching for: %lx\n", prefix_addr.s_addr);
 	
 	// Create list of relevant SIS-IS addresses
 	struct list * rtn = malloc(sizeof(struct list));
@@ -393,7 +394,7 @@ struct list * get_sisis_addrs_for_process_type(unsigned int ptype)
 		char * addr = malloc(sizeof(char) * (INET_ADDRSTRLEN+1));
 		if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), addr, INET_ADDRSTRLEN) != 1)
 		{
-			printf("Checking addr \"%s\"\n", addr); 
+			printf("Checking addr \"%s\" (%lx)\n", addr, route->p->prefix.s_addr); 
 			if (route->p->prefixlen == 32 && memcmp(&route->p->prefix.s_addr, &prefix_addr.s_addr, SISIS_ADD_PREFIX_LEN_PTYPE) == 0)
 			{
 				printf("Adding...\n");
