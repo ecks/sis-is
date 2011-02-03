@@ -430,8 +430,8 @@ struct list * get_sisis_addrs_for_process_type(unsigned int ptype)
 	if (sisis_create_addr(ptype, 0, 0, prefix_addr_str))
 		return NULL;
 	struct prefix_ipv4 p;
-	p->prefixlen = SISIS_ADD_PREFIX_LEN_PTYPE;
-	inet_pton(AF_INET, prefix_addr_str, &p->prefix);
+	p.prefixlen = SISIS_ADD_PREFIX_LEN_PTYPE;
+	inet_pton(AF_INET, prefix_addr_str, &p.prefix);
 	
 	return get_sisis_addrs_for_prefix(&p);
 }
@@ -448,8 +448,8 @@ struct list * get_sisis_addrs_for_process_type_and_host(unsigned int ptype, unsi
 	if (sisis_create_addr(ptype, host_num, 0, prefix_addr_str))
 		return NULL;
 	struct prefix_ipv4 p;
-	p->prefixlen = SISIS_ADD_PREFIX_LEN_HOST_NUM;
-	inet_pton(AF_INET, prefix_addr_str, &p->prefix);
+	p.prefixlen = SISIS_ADD_PREFIX_LEN_HOST_NUM;
+	inet_pton(AF_INET, prefix_addr_str, &p.prefix);
 	
 	return get_sisis_addrs_for_prefix(&p);
 }
