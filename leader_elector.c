@@ -127,28 +127,29 @@ int main (int argc, char ** argv)
 		num_hosts++;
 		
 		// Print address
-		struct in_addr * addr = (struct in_addr *)node->data;
-		int addr_size = sizeof(addr);
+		struct in_addr * remote_addr = (struct in_addr *)node->data;
 		char addr_str[INET_ADDRSTRLEN+1];
-		if (inet_ntop(AF_INET, addr, addr_str, INET_ADDRSTRLEN+1) != 1)
+		if (inet_ntop(AF_INET, remote_addr, addr_str, INET_ADDRSTRLEN+1) != 1)
 			printf("Host: %s\n", addr_str);
 		printf("--------------------------------------------------------------------------------\n");
 		
 		// Set up socket info
 		struct sockaddr_in sockaddr;
+		int sockaddr_size = sizeof(sockaddr);
+		memset(&sockaddr, 0, sockaddr_size);
 		sockaddr.sin_family = AF_INET;
 		sockaddr.sin_port = SISIS_PTYPE_MEMORY_MONITOR;
-    sockaddr.sin_addr = *addr;
+    sockaddr.sin_addr = *remote_addr;
 		
 		// Get memory stats
 		char * req = "data";
-		if (sendto(sockfd, req, strlen(req), 0, (struct sockaddr *)&sockaddr, addr_size) == -1)
+		if (sendto(sockfd, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
 			printf("Failed to send message.  Error: %i\n", errno);
 		else
 		{
 			char buf[65508];
 			int len;
-			if (len = recvfrom(sockfd, buf, 65507, 0, (struct sockaddr *)&sockaddr, &addr_size))
+			if (len = recvfrom(sockfd, buf, 65507, 0, (struct sockaddr *)&sockaddr, &sockaddr_size))
 			{
 				buf[len] = '\0';
 				printf("%s", buf);
