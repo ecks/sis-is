@@ -221,7 +221,7 @@ int sisis_create_addr(unsigned int ptype, unsigned int host_num, unsigned int pi
 struct sisis_addr_components get_sisis_addr_components(char * sisis_addr)
 {
 	struct sisis_addr_components rtn;
-	sscanf(sisis_addr, "26.%u.%u.%u", rtn.ptype, rtn.host_num, rtn.pid);
+	sscanf(sisis_addr, "26.%u.%u.%u", &rtn.ptype, &rtn.host_num, &rtn.pid);
 	return rtn;
 }
 

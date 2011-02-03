@@ -48,7 +48,7 @@ struct sisis_addr_components
 	unsigned int ptype;
 	unsigned int host_num;
 	unsigned int pid;
-}
+};
 
 /* IPv4 prefix structure. */
 struct prefix_ipv4
