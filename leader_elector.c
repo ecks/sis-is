@@ -23,6 +23,8 @@
 #include "../tests/sisis_structs.h"
 #include "../tests/sisis_process_types.h"
 
+#define MAX(a,b) ((a) < (b) ? (a) : (b));
+
 int sockfd = -1, con = -1;
 int host_num, pid;
 
@@ -113,13 +115,35 @@ int main (int argc, char ** argv)
 	
 	// Check how many other processes there are
 	struct list * monitor_addrs = get_sisis_addrs_for_process_type(SISIS_PTYPE_MEMORY_MONITOR);
-	if (monitor_addrs == NULL)
+	if (monitor_addrs == NULL || monitor_addrs->size == 0)
 	{
 		printf("No other SIS-IS hosts found.\n");
 		close_listener();
 		exit(2);
 	}
 	
+	// Check how many leader_elector processes there are
+	int leader_elector_processes_needed = 0;
+	struct list * host_leader_elector_addrs = get_sisis_addrs_for_process_type_and_host(SISIS_PTYPE_LEADER_ELECTOR, sisis_comp.host_num);
+	if (!leader_elector_addrs)
+	{
+		printf("Error.\n");
+		close_listener();
+		exit(2);
+	}
+	else
+	{
+		leader_elector_processes_needed = MAX(3, monitor_addrs->size*.2) - leader_elector_addrs->size;
+		if (leader_elector_processes_needed)
+			printf("Need to start %d process%s.", leader_elector_processes_needed, leader_elector_processes_needed == 1 ? "" : "es");
+		else
+			printf("Enought processes already running.");
+		
+		// Free memory
+		if (leader_elector_addrs)
+			FREE_LINKED_LIST(leader_elector_addrs);
+	}
+
 	// List other hosts
 	int num_hosts = 0;
 	struct listnode * node;
@@ -165,29 +189,50 @@ int main (int argc, char ** argv)
 				buf[len] = '\0';
 				printf("%s", buf);
 				
-				// Check if the spawn process is running
-				struct list * spawn_addrs = get_sisis_addrs_for_process_type_and_host(SISIS_PTYPE_REMOTE_SPAWN, sisis_comp.host_num);
-				if (spawn_addrs && spawn_addrs->size)
+				// Do we need to start another process
+				if (leader_elector_processes_needed)
 				{
-					printf("Starting leader elector on host %u.", sisis_comp.host_num);
+					// Check that the machine doesn't already have a leader elector process running
+					struct list * host_leader_elector_addrs = get_sisis_addrs_for_process_type_and_host(SISIS_PTYPE_LEADER_ELECTOR, sisis_comp.host_num);
+					if (host_leader_elector_addrs && host_leader_elector_addrs->size)
+					{
+					}
+					else
+					{
+						// Check if the spawn process is running
+						struct list * spawn_addrs = get_sisis_addrs_for_process_type_and_host(SISIS_PTYPE_REMOTE_SPAWN, sisis_comp.host_num);
+						if (spawn_addrs && spawn_addrs->size)
+						{
+							printf("Starting leader elector on host %u.", sisis_comp.host_num);
+							
+							// Set up socket info
+							struct sockaddr_in spawn_sockaddr;
+							int spawn_sockaddr_size = sizeof(spawn_sockaddr);
+							memset(&spawn_sockaddr, 0, spawn_sockaddr_size);
+							spawn_sockaddr.sin_family = AF_INET;
+							spawn_sockaddr.sin_port = htons(REMOTE_SPAWN_PORT);
+							spawn_sockaddr.sin_addr = *(struct in_addr *)spawn_addrs->head->data;
+							
+							char req2[32];
+							sprintf(req2, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_LEADER_ELECTOR);
+							if (sendto(sockfd, req2, strlen(req2), 0, (struct sockaddr *)&spawn_sockaddr, spawn_sockaddr_size) == -1)
+								printf("Failed to send message.  Error: %i\n", errno);
+							
+							// TODO: Check for response
+							
+							// Decrement # of processes to start
+							leader_elector_processes_needed--;
+						}
+						
+						// Free memory
+						if (spawn_addrs)
+							FREE_LINKED_LIST(spawn_addrs);
+					}
 					
-					// Set up socket info
-					struct sockaddr_in spawn_sockaddr;
-					int spawn_sockaddr_size = sizeof(spawn_sockaddr);
-					memset(&spawn_sockaddr, 0, spawn_sockaddr_size);
-					spawn_sockaddr.sin_family = AF_INET;
-					spawn_sockaddr.sin_port = htons(REMOTE_SPAWN_PORT);
-					spawn_sockaddr.sin_addr = *(struct in_addr *)spawn_addrs->head->data;
-					
-					char req2[32];
-					//sprintf(req2, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_LEADER_ELECTOR);
-					sprintf(req2, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_MEMORY_MONITOR);	// TODO: For testing, start SISIS_PTYPE_MEMORY_MONITOR so we don't infinitely start SISIS_PTYPE_LEADER_ELECTOR
-					if (sendto(sockfd, req2, strlen(req2), 0, (struct sockaddr *)&spawn_sockaddr, spawn_sockaddr_size) == -1)
-						printf("Failed to send message.  Error: %i\n", errno);
-					
-					// TODO: Check for response
+					// Free memory
+					if (host_leader_elector_addrs)
+						FREE_LINKED_LIST(host_leader_elector_addrs);
 				}
-				FREE_LINKED_LIST(spawn_addrs);
 			}
 			
 			printf("\n\n");
