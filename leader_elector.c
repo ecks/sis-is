@@ -132,7 +132,7 @@ int main (int argc, char ** argv)
 		if (inet_ntop(AF_INET, remote_addr, addr_str, INET_ADDRSTRLEN+1) != 1)
 		{
 			// Get SIS-IS address info
-			struct sisis_addr_components sisis_comp = get_sisis_addr_components(remote_addr);
+			struct sisis_addr_components sisis_comp = get_sisis_addr_components(addr_str);
 			
 			printf("Host[%u]: %s\n", sisis_comp.host_num, addr_str);
 			printf("--------------------------------------------------------------------------------\n");
@@ -158,8 +158,8 @@ int main (int argc, char ** argv)
 				do
 				{
 					// TODO: Handle error/timeout
-					len = recvfrom(sockfd, buf, 65507, 0, (struct sockaddr *)&fromaddr, &fromaddr_size) &&
-				} while (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0);
+					len = recvfrom(sockfd, buf, 65507, 0, (struct sockaddr *)&fromaddr, &fromaddr_size);
+				}while (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0);
 				
 				buf[len] = '\0';
 				printf("%s", buf);
