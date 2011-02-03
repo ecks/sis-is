@@ -386,7 +386,7 @@ struct list * get_sisis_addrs_for_process_type(unsigned int ptype)
 	int i = 0;
 	for (; i < SISIS_ADD_PREFIX_LEN_PTYPE; i++)
 	{
-		prefix_mask << 1;
+		prefix_mask <<= 1;
 		prefix_mask |= 1;
 	}
 	printf("Prefix: %lx\tMask: %lx\n", ((unsigned long)prefix_addr.s_addr & prefix_mask), prefix_mask);
