@@ -17,6 +17,7 @@
 #include <errno.h>
 #include "leader_elector.h"
 #include "../memory_monitor/memory_monitor.h"
+#include "../remote_spawn/remote_spawn.h"
 
 #include "../tests/sisis_api.h"
 #include "../tests/sisis_structs.h"
@@ -163,6 +164,18 @@ int main (int argc, char ** argv)
 				
 				buf[len] = '\0';
 				printf("%s", buf);
+				
+				// Check if the spawn process is running
+				struct list * spawn_addrs = get_sisis_addrs_for_process_type_and_host(SISIS_PTYPE_REMOTE_SPAWN, sisis_comp.host_num);
+				if (spawn_addrs && spawn_addrs->size)
+				{
+					char req2[32];
+					sptrinf(req2, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_LEADER_ELECTOR);
+					if (sendto(sockfd, req2, strlen(req2), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
+						printf("Failed to send message.  Error: %i\n", errno);
+					
+					// TODO: Check for response
+				}
 			}
 			
 			printf("\n\n");
