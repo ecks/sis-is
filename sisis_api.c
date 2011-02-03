@@ -391,8 +391,11 @@ struct list * get_sisis_addrs_for_process_type(unsigned int ptype)
 		char * addr = malloc(sizeof(char) * (INET_ADDRSTRLEN+1));
 		if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), addr, INET_ADDRSTRLEN) != 1)
 		{
+			printf("Checking addr \"%s\"\n", addr); 
 			if (route->p->prefixlen == 32 && memcmp(addr, prefix_addr, SISIS_ADD_PREFIX_LEN_PTYPE) == 0)
 			{
+				printf("Adding...\n");
+				
 				// Add to list
 				struct listnode * new_node = malloc(sizeof(struct listnode));
 				new_node->data = (void *)addr;
