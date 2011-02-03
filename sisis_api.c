@@ -389,7 +389,6 @@ struct list * get_sisis_addrs_for_process_type(unsigned int ptype)
 		prefix_mask <<= 1;
 		prefix_mask |= 1;
 	}
-	printf("Prefix: %lx\tMask: %lx\n", ((unsigned long)prefix_addr.s_addr & prefix_mask), prefix_mask);
 	
 	// Create list of relevant SIS-IS addresses
 	struct list * rtn = malloc(sizeof(struct list));
@@ -402,15 +401,11 @@ struct list * get_sisis_addrs_for_process_type(unsigned int ptype)
 		char * addr = malloc(sizeof(char) * (INET_ADDRSTRLEN+1));
 		if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), addr, INET_ADDRSTRLEN) != 1)
 		{
-			printf("Checking addr \"%s\"\n", addr);
-			printf("Masked: %lx\n", ((unsigned long)route->p->prefix.s_addr & prefix_mask));
 			if (route->p->prefixlen == 32 && (route->p->prefix.s_addr & prefix_mask) == (prefix_addr.s_addr & prefix_mask))
 			{
-				printf("Adding...\n");
-				
 				// Add to list
 				struct listnode * new_node = malloc(sizeof(struct listnode));
-				new_node->data = (void *)addr;
+				new_node->data = (void *)route->p->prefix;
 				LIST_APPEND(rtn,new_node);
 			}
 		}
