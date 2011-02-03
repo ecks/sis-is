@@ -191,9 +191,29 @@ int main (int argc, char ** argv)
 					else
 						resp = REMOTE_SPAWN_RESP_NOT_IMPLEMENTED;
 					break;
+				// Leader elector
+				case SISIS_PTYPE_LEADER_ELECTOR:
+					if (request == REMOTE_SPAWN_REQ_START)
+					{
+						char * spawn_argv[] = { "memory_monitor", argv[1], NULL };
+						resp = spawn_process("/home/ssigwart/sis-is/memory_monitor/memory_monitor", spawn_argv);
+					}
+					else
+						resp = REMOTE_SPAWN_RESP_NOT_IMPLEMENTED;
+					break;
 				// Don't spawn yourself
 				case SISIS_PTYPE_REMOTE_SPAWN:
 					resp = REMOTE_SPAWN_RESP_NOT_SPAWNABLE;
+					break;
+				// Leader elector
+				case SISIS_PTYPE_LEADER_ELECTOR:
+					if (request == REMOTE_SPAWN_REQ_START)
+					{
+						char * spawn_argv[] = { "leader_elector", argv[1], NULL };
+						resp = spawn_process("/home/ssigwart/sis-is/leader_elector/leader_elector", spawn_argv);
+					}
+					else
+						resp = REMOTE_SPAWN_RESP_NOT_IMPLEMENTED;
 					break;
 				// Unknown process
 				default:
