@@ -395,7 +395,7 @@ struct list * get_sisis_addrs_for_process_type(unsigned int ptype)
 		if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), addr, INET_ADDRSTRLEN) != 1)
 		{
 			printf("Checking addr \"%s\"\n", addr); 
-			if (route->p->prefixlen == 32 && memcmp(route->p->prefix.s_addr, prefix_addr, SISIS_ADD_PREFIX_LEN_PTYPE) == 0)
+			if (route->p->prefixlen == 32 && memcmp(&route->p->prefix.s_addr, &prefix_addr.sin_addr, SISIS_ADD_PREFIX_LEN_PTYPE) == 0)
 			{
 				printf("Adding...\n");
 				
