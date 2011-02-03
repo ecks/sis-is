@@ -109,7 +109,8 @@ int main (int argc, char ** argv)
 	signal(SIGINT, terminate);
 	
 	// Check how many other processes there are
-	struct list * monitor_addrs = get_sisis_addrs_for_process_type(SISIS_PTYPE_MEMORY_MONITOR);
+	struct list * monitor_addrs;
+	monitor_addrs = get_sisis_addrs_for_process_type(SISIS_PTYPE_MEMORY_MONITOR);
 	if (!monitor_addrs)
 	{
 		printf("No other SIS-IS hosts found.\n");
@@ -126,6 +127,7 @@ int main (int argc, char ** argv)
 		
 		// Print address
 		struct in_addr * addr = (struct in_addr *)node->data;
+		int addr_size = sizeof(addr);
 		char addr_str[INET_ADDRSTRLEN+1];
 		if (inet_ntop(AF_INET, addr, addr_str, INET_ADDRSTRLEN+1) != 1)
 			printf("Host: %s\n", addr_str);
@@ -133,11 +135,11 @@ int main (int argc, char ** argv)
 		
 		// Get memory stats
 		char req[1];
-		if (sendto(sockfd, &req, 1, 0, (struct addrinfo *) addr, sizeof(addr)) == -1)
+		if (sendto(sockfd, &req, 1, 0, (struct sockaddr *) addr, addr_size) == -1)
 			printf("Failed to send message.\n");
 		char buf[65508];
 		int len;
-		if (len = recvfrom(sockfd, buf, 65507, 0, (struct addrinfo *) addr, sizeof(addr)))
+		if (len = recvfrom(sockfd, buf, 65507, 0, (struct sockaddr *) addr, &addr_size))
 		{
 			buf[len] = '\0';
 			printf("%s", buf);
