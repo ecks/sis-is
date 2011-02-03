@@ -109,8 +109,7 @@ int main (int argc, char ** argv)
 	signal(SIGINT, terminate);
 	
 	// Check how many other processes there are
-	struct list * monitor_addrs;
-	monitor_addrs = get_sisis_addrs_for_process_type(SISIS_PTYPE_MEMORY_MONITOR);
+	struct list * monitor_addrs = get_sisis_addrs_for_process_type(SISIS_PTYPE_MEMORY_MONITOR);
 	if (!monitor_addrs)
 	{
 		printf("No other SIS-IS hosts found.\n");
@@ -147,6 +146,8 @@ int main (int argc, char ** argv)
 		
 		printf("\n\n");
 	}
+	
+	FREE_LINKED_LIST(monitor_addrs);
 	
 	/*
 	// Wait for message
