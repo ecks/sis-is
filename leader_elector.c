@@ -178,12 +178,14 @@ int main (int argc, char ** argv)
 			{
 				struct sockaddr_in fromaddr;
 				int fromaddr_size = sizeof(fromaddr);
+				memset(&fromaddr, 0, fromaddr_size);
 				char buf[65508];
 				int len;
 				do
 				{
 					// TODO: Handle error/timeout
 					len = recvfrom(sockfd, buf, 65507, 0, (struct sockaddr *)&fromaddr, &fromaddr_size);
+					printf("Received packet of length %d.\n", len);
 				}while (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0);
 				
 				buf[len] = '\0';
