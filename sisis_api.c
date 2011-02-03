@@ -17,6 +17,7 @@
 #include <sys/time.h>
 
 #include "sisis_api.h"
+#include "sisis_structs.h"
 
 int socket_opened = 0;
 int sisis_socket = 0;
