@@ -217,7 +217,7 @@ int main (int argc, char ** argv)
 							else if (line[i] == ' ' || line[i] == '\t')
 							{
 								sscanf(tmp, "%d", &line_ptype);
-								tmp = '\0';
+								tmp[0] = '\0';
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_FOUND_PTYPE;
 							}
 							else
