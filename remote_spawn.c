@@ -192,7 +192,7 @@ int main (int argc, char ** argv)
 #define PROCS_DAT_PARSE_FOUND_PROCESS						0x00000001
 #define PROCS_DAT_PARSE_LINE_FOUND_PTYPE				0x00000002
 #define PROCS_DAT_PARSE_LINE_FOUND_PATH					0x00000004
-#define PROCS_DAT_PARSE_LINE_FOUND_ARG1					0x00000008
+#define PROCS_DAT_PARSE_LINE_FOUND_ARG0					0x00000008
 #define PROCS_DAT_PARSE_LINE_ESCAPE_SEQ_STARTED	0x00000010
 #define PROCS_DAT_PARSE_LINE_STRING_STARTED			0x00000020
 #define PROCS_DAT_PARSE_LINE_DONE								0x00000040
@@ -206,8 +206,8 @@ int main (int argc, char ** argv)
 					int i = 0, linelen = strlen(line);
 					proc_dat_parse_flags &= ~PROCS_DAT_PARSE_LINE_ALL;
 					unsigned int line_ptype = 0;
-					char line_path[1024], line_arg1[128], tmp[32];
-					line_path[0] = line_arg1[0] = tmp[0] = '\0';
+					char line_path[1024], line_arg0[128], tmp[32];
+					line_path[0] = line_arg0[0] = tmp[0] = '\0';
 					for (; i < linelen && !(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_ERROR); i++)
 					{
 						// What string are we working on
@@ -216,7 +216,7 @@ int main (int argc, char ** argv)
 						// Put in inverse order
 						if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PATH)
 						{
-							str = line_arg1;
+							str = line_arg0;
 							max_strlen = 128;
 						}
 						else if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PTYPE)
@@ -245,8 +245,8 @@ int main (int argc, char ** argv)
 							else
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
 						}
-						// Parsing path and arg1
-						else if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PATH) || !(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_ARG1))
+						// Parsing path and arg0
+						else if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PATH) || !(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_ARG0))
 						{
 							// We need starting quote
 							if (str[0] == '\0' && line[i] != '"' && !(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_STRING_STARTED))
@@ -278,7 +278,7 @@ int main (int argc, char ** argv)
 								if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PATH))
 									proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_FOUND_PATH;
 								else
-									proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_FOUND_ARG1 | PROCS_DAT_PARSE_LINE_DONE;
+									proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_FOUND_ARG0 | PROCS_DAT_PARSE_LINE_DONE;
 								
 								// String terminated
 								proc_dat_parse_flags &= ~PROCS_DAT_PARSE_LINE_STRING_STARTED;
@@ -289,7 +289,7 @@ int main (int argc, char ** argv)
 					}
 					
 					// Did we finish parsing correctly?
-					if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_ARG1))
+					if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_ARG0))
 						proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
 					
 					// Check for error
@@ -297,9 +297,22 @@ int main (int argc, char ** argv)
 						printf("Error processing line %d.\n", linenum);
 					else
 					{
-						printf("Line: %d %s %s\n", line_ptype, line_path, line_arg1);
+						printf("Line: %d %s %s\n", line_ptype, line_path, line_arg0);
+						// Check if this is the right process
+						if (ptype == line_ptype)
+						{
+							if (request == REMOTE_SPAWN_REQ_START)
+							{
+								char * spawn_argv[] = { line_arg0, argv[1], NULL };
+								resp = spawn_process(line_path, spawn_argv);
+							}
+							else
+								resp = REMOTE_SPAWN_RESP_NOT_IMPLEMENTED;
+							
+							// We found it
+							proc_dat_parse_flags |= PROCS_DAT_PARSE_FOUND_PROCESS;
+						}
 					}
-					printf("Line: %d %s %s\n", line_ptype, line_path, line_arg1);
 					
 					// Next line
 					linenum++;
@@ -308,40 +321,9 @@ int main (int argc, char ** argv)
 				// Close file
 				fclose(procs_file);
 				
-				/*
-				// Check if this is a known process
-				switch (ptype)
-				{
-					// Memory monitor
-					case SISIS_PTYPE_MEMORY_MONITOR:
-						if (request == REMOTE_SPAWN_REQ_START)
-						{
-							char * spawn_argv[] = { "memory_monitor", argv[1], NULL };
-							resp = spawn_process("/home/ssigwart/sis-is/memory_monitor/memory_monitor", spawn_argv);
-						}
-						else
-							resp = REMOTE_SPAWN_RESP_NOT_IMPLEMENTED;
-						break;
-					// Don't spawn yourself
-					case SISIS_PTYPE_REMOTE_SPAWN:
-						resp = REMOTE_SPAWN_RESP_NOT_SPAWNABLE;
-						break;
-					// Leader elector
-					case SISIS_PTYPE_LEADER_ELECTOR:
-						if (request == REMOTE_SPAWN_REQ_START)
-						{
-							char * spawn_argv[] = { "leader_elector", argv[1], NULL };
-							resp = spawn_process("/home/ssigwart/sis-is/leader_elector/leader_elector", spawn_argv);
-						}
-						else
-							resp = REMOTE_SPAWN_RESP_NOT_IMPLEMENTED;
-						break;
-					// Unknown process
-					default:
-						resp = REMOTE_SPAWN_RESP_INVALID_PROCESS_TYPE;
-						break;
-				}
-				*/
+				// Was the process found
+				if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_FOUND_PROCESS))
+					resp = REMOTE_SPAWN_RESP_NOT_SPAWNABLE;
 			}
 		}
 		
