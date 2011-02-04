@@ -278,7 +278,7 @@ int main (int argc, char ** argv)
 								if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PATH))
 									proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_FOUND_PATH;
 								else
-									proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_FOUND_ARG1;
+									proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_FOUND_ARG1 | PROCS_DAT_PARSE_LINE_DONE;
 								
 								// String terminated
 								proc_dat_parse_flags &= ~PROCS_DAT_PARSE_LINE_STRING_STARTED;
