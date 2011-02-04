@@ -270,12 +270,10 @@ int main (int argc, char ** argv)
 							else if (line[i] == '\\')
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ESCAPE_SEQ_STARTED;
 							else if (line[i] != '"')
-							{
 								sprintf(str, "%s%c", str, line[i]);
-								printf("%s\n", str);
-							}
 							else
 							{
+								printf("Here");
 								// What did we just finish
 								if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PATH))
 									proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_FOUND_PATH;
@@ -292,10 +290,7 @@ int main (int argc, char ** argv)
 					
 					// Did we finish parsing correctly?
 					if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_ARG1))
-					{
-						printf("7\n");printf("Line: %d %s %s\n", line_ptype, line_path, line_arg1);
 						proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
-					}
 					
 					// Check for error
 					if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_ERROR)
@@ -304,6 +299,7 @@ int main (int argc, char ** argv)
 					{
 						printf("Line: %d %s %s\n", line_ptype, line_path, line_arg1);
 					}
+					printf("Line: %d %s %s\n", line_ptype, line_path, line_arg1);
 					
 					// Next line
 					linenum++;
