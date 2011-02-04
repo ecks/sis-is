@@ -219,11 +219,10 @@ int main (int argc, char ** argv)
 						
 						// Ignore extra whitespace
 						if (str[0] == '\0' && (line[i] == ' ' || line[i] == '\t'))
-						{ printf("a\n");/* Do nothing. */ }
+						{ /* Do nothing. */ }
 						// Parsing process type
 						else if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PTYPE))
 						{
-							printf("b\n");
 							// Check max string len
 							if (strlen(str) + 1 == sizeof(str))
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
@@ -241,12 +240,11 @@ int main (int argc, char ** argv)
 						// Parsing path and arg1
 						else if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PATH) || !(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_ARG1))
 						{
-							printf("c\n");
 							// We need starting quote
 							if (str[0] == '\0' && line[i] != '"' && !(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_STRING_STARTED))
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
 							// Starting string
-							else if (str[0] == '\0')
+							else if (str[0] == '\0' && line[i] == '"')
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_STRING_STARTED;
 							// Check max string len
 							else if (strlen(str) + 1 == sizeof(str))
@@ -282,7 +280,7 @@ int main (int argc, char ** argv)
 							}
 						}
 						else
-							printf("d\n");//proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
+							proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
 					}
 					
 					// Did we finish parsing correctly?
