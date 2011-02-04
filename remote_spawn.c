@@ -209,24 +209,31 @@ int main (int argc, char ** argv)
 					line_path[0] = line_arg1[0] = tmp[0] = '\0';
 					for (; i < linelen && !(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_ERROR); i++)
 					{
+						// What string are we working on
+						char * str = tmp;
+						if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PTYPE)
+							str = line_path;
+						else if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PATH)
+							str = line_arg1;
+						
 						// Ignore extra whitespace
-						if (tmp[0] == '\0' && (line[i] == ' ' || line[i] == '\t'))
+						if (str[0] == '\0' && (line[i] == ' ' || line[i] == '\t'))
 						{ /* Do nothing. */ }
 						// Parsing process type
 						else if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PTYPE))
 						{
 							// Check max string len
-							if (strlen(tmp) + 1 == sizeof(tmp))
+							if (strlen(str) + 1 == sizeof(str))
 							{
 								printf("1\n");
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
 							}
 							else if (line[i] >= '0' && line[i] <= '9')
-								sprintf(tmp, "%s%c", tmp, line[i]);
+								sprintf(str, "%s%c", str, line[i]);
 							else if (line[i] == ' ' || line[i] == '\t')
 							{
-								sscanf(tmp, "%d", &line_ptype);
-								tmp[0] = '\0';
+								sscanf(str, "%d", &line_ptype);
+								str[0] = '\0';
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_FOUND_PTYPE;
 							}
 							else
@@ -238,11 +245,6 @@ int main (int argc, char ** argv)
 						// Parsing path
 						else if (!(proc_dat_parse_flags & (PROCS_DAT_PARSE_LINE_FOUND_PATH | PROCS_DAT_PARSE_LINE_FOUND_ARG1)))
 						{
-							// What string are we working on
-							char * str = line_path;
-							if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PATH)
-								str = line_arg1;
-							
 							// We need starting quote
 							if (str[0] == '\0' && line[i] != '"')
 							{
