@@ -212,10 +212,17 @@ int main (int argc, char ** argv)
 					{
 						// What string are we working on
 						char * str = tmp;
+						int max_strlen = 32;
 						if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PTYPE)
+						{
 							str = line_path;
+							max_strlen = 1024;
+						}
 						else if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PATH)
+						{
 							str = line_arg1;
+							max_strlen = 128;
+						}
 						
 						// Ignore extra whitespace
 						if (str[0] == '\0' && (line[i] == ' ' || line[i] == '\t'))
@@ -224,7 +231,7 @@ int main (int argc, char ** argv)
 						else if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PTYPE))
 						{
 							// Check max string len
-							if (strlen(str) + 1 == sizeof(str))
+							if (strlen(str) + 1 == max_strlen)
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
 							else if (line[i] >= '0' && line[i] <= '9')
 								sprintf(str, "%s%c", str, line[i]);
@@ -247,7 +254,7 @@ int main (int argc, char ** argv)
 							else if (str[0] == '\0' && line[i] == '"')
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_STRING_STARTED;
 							// Check max string len
-							else if (strlen(str) + 1 == sizeof(str))
+							else if (strlen(str) + 1 == max_strlen)
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
 							// Check for escape sequence
 							else if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_ESCAPE_SEQ_STARTED)
