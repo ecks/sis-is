@@ -248,30 +248,27 @@ int main (int argc, char ** argv)
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_STRING_STARTED;
 							// Check max string len
 							else if (strlen(str) + 1 == sizeof(str))
-							{
-								printf("4\n");
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
-							}
 							// Check for escape sequence
 							else if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_ESCAPE_SEQ_STARTED)
 							{
 								if (line[i] == '\\' || line[i] == '"')
 									sprintf(str, "%s%c", str, line[i]);
 								else
-								{
-									printf("5\n");
 									proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
-								}
+								
 								proc_dat_parse_flags &= ~PROCS_DAT_PARSE_LINE_ESCAPE_SEQ_STARTED;
 							}
 							// Check for escape sequence starter
 							else if (line[i] == '\\')
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ESCAPE_SEQ_STARTED;
 							else if (line[i] != '"')
+							{
 								sprintf(str, "%s%c", str, line[i]);
+								printf("%s\n", str);
+							}
 							else
 							{
-								printf("6\n");
 								// What did we just finish
 								if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PATH))
 									proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_FOUND_PATH;
@@ -282,12 +279,14 @@ int main (int argc, char ** argv)
 								proc_dat_parse_flags &= ~PROCS_DAT_PARSE_LINE_STRING_STARTED;
 							}
 						}
+						else
+							proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
 					}
 					
 					// Did we finish parsing correctly?
 					if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_ARG1))
 					{
-						printf("7\n");
+						printf("7\n");printf("Line: %d %s %s\n", line_ptype, line_path, line_arg1);
 						proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
 					}
 					
