@@ -1,6 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
+
+#include <sys/socket.h>
+#include <sys/types.h>
+
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include <cairo.h>
 #include <cairo-xlib.h>
@@ -13,6 +20,8 @@
 #include "vis_window.h"
 #include "vis_main.h"
 
+#define BUFLEN 16384
+
 struct modal_stack
 {
     GtkWindowGroup * group;
@@ -22,6 +31,47 @@ struct modal_stack
 
 //the global pixmap that will serve as our buffer
 static GdkPixmap *pixmap = NULL;
+
+
+void get_machine_info(char * prefix_str, char * memory_usage)
+{
+  char buf_send[] = "ls\n";
+  char buf_recv[BUFLEN];
+
+  int sock_client; 
+  struct sockaddr_in client_addr;
+  int client_addr_len = sizeof(client_addr);
+  int client_port = 50000;
+
+  if ((sock_client = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+      perror("Client: can't open datagram socket\n");
+      exit(1);
+  }
+
+  memset((char *) &client_addr, 0, sizeof(client_addr));
+  client_addr.sin_family = AF_INET;
+  client_addr.sin_port = htons((in_port_t) client_port);
+
+  if (inet_aton(prefix_str, &client_addr.sin_addr)==0) {
+        fprintf(stderr, "inet_aton() failed\n");
+        exit(1);
+  }
+
+  if (sendto(sock_client, buf_send, sizeof(buf_send), 0, (struct sockaddr *)&client_addr, client_addr_len) < 0)
+    perror("sendto()"); 
+  
+  if (recvfrom(sock_client, buf_recv, sizeof(buf_recv), 0, (struct sockaddr *)&client_addr, &client_addr_len) < 0)
+    perror("recvfrom()");
+
+  close(sock_client);
+
+  char * m_ptr = strstr(buf_recv, "FreeMemory");
+  m_ptr  = m_ptr + 12;
+  strncpy(memory_usage, m_ptr, 5);
+  memory_usage[5] = '\0';
+
+  printf("Memory usage: %s\n", memory_usage);
+}
 
 static int currently_drawing = 0;
 //do_draw will be executed in a separate thread whenever we would like to update
@@ -41,6 +91,9 @@ void *do_draw(void *ptr)
       while (sigwaitinfo(&sigset, &info) > 0) {
         currently_drawing = 1;
 
+    char * memory_usage = calloc(5, sizeof(char));
+    get_machine_info(addr_to_draw->prefix_str, memory_usage);
+
     int width, height;
     gdk_threads_enter();
     gdk_drawable_get_size(pixmap, &width, &height);
@@ -50,27 +103,16 @@ void *do_draw(void *ptr)
     cairo_surface_t *cst = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
     cairo_t *cr = cairo_create(cst);
 
-    //do some time-consuming drawing
-//    static int i = 0;
-//    ++i; i = i % 300;   //give a little movement to our animation
-//    cairo_paint(cr);
-//    int j,k;
-//    for(k=0; k<100; ++k){   //lets just redraw lots of times to use a lot of proc power
-//        for(j=0; j < 1000; ++j){
-//            cairo_set_source_rgb (cr, (double)j/1000.0, (double)j/1000.0, 1.0 - (double)j/1000.0);
-//            cairo_move_to(cr, i,j/2); 
-//            cairo_line_to(cr, i+100,j/2);
-//            cairo_stroke(cr);
-//        }
-//    }
     cairo_paint(cr);
     cairo_set_source_rgb (cr, 1, 1, 1);
     cairo_save(cr);
     cairo_set_font_size (cr, 20);
-    cairo_move_to (cr, 10, 10);
+    cairo_move_to (cr, 10, 20);
     cairo_show_text (cr, addr_to_draw->host);
-    cairo_move_to (cr, 10, 30);
+    cairo_move_to (cr, 10, 40);
     cairo_show_text (cr, addr_to_draw->pid);
+    cairo_move_to (cr, 50, 20);
+    cairo_show_text (cr, memory_usage);
     cairo_restore(cr);
 
     cairo_destroy(cr);
@@ -108,6 +150,7 @@ gboolean timer_exe(gpointer s)
 
     //if this is the first time, create the drawing thread
     static pthread_t thread_info;
+
     if(first_time == 1){
         int  iret;
         iret = pthread_create( &thread_info, NULL, do_draw, wnd->cur_addr);
@@ -125,6 +168,7 @@ gboolean timer_exe(gpointer s)
     gtk_widget_queue_draw_area(wnd->window, 0, 0, width, height);
 
     first_time = 0;
+
 
     return TRUE;
 
@@ -195,7 +239,7 @@ void create_window(struct modal_stack s)
     gtk_widget_set_app_paintable(s.window, TRUE);
     gtk_widget_set_double_buffered(s.window, FALSE);
 
-    (void)g_timeout_add(333, (GSourceFunc)timer_exe, &s);
+    (void)g_timeout_add(3333, (GSourceFunc)timer_exe, &s);
 }
 
 void * 
