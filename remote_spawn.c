@@ -226,7 +226,7 @@ int main (int argc, char ** argv)
 						}
 						
 						// Ignore extra whitespace
-						if (str[0] == '\0' && (line[i] == ' ' || line[i] == '\t'))
+						if (str[0] == '\0' && (line[i] == ' ' || line[i] == '\t' || line[i] == '\r' || line[i] == '\n'))
 						{ /* Do nothing. */ }
 						// Parsing process type
 						else if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PTYPE))
