@@ -226,7 +226,7 @@ int main (int argc, char ** argv)
 						}
 						
 						// Ignore extra whitespace
-						if (str[0] == '\0' && (line[i] == ' ' || line[i] == '\t' || line[i] == '\r' || line[i] == '\n'))
+						if (((proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_DONE) || str[0] == '\0') && (line[i] == ' ' || line[i] == '\t' || line[i] == '\r' || line[i] == '\n'))
 						{ /* Do nothing. */ }
 						// Parsing process type
 						else if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PTYPE))
@@ -250,20 +250,20 @@ int main (int argc, char ** argv)
 						{
 							// We need starting quote
 							if (str[0] == '\0' && line[i] != '"' && !(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_STRING_STARTED))
-								printf("4\n");//proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
+								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
 							// Starting string
 							else if (str[0] == '\0' && line[i] == '"')
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_STRING_STARTED;
 							// Check max string len
 							else if (strlen(str) + 1 == max_strlen)
-								printf("3\n");//proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
+								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
 							// Check for escape sequence
 							else if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_ESCAPE_SEQ_STARTED)
 							{
 								if (line[i] == '\\' || line[i] == '"')
 									sprintf(str, "%s%c", str, line[i]);
 								else
-									printf("2\n");//proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
+									proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
 								
 								proc_dat_parse_flags &= ~PROCS_DAT_PARSE_LINE_ESCAPE_SEQ_STARTED;
 							}
@@ -285,15 +285,12 @@ int main (int argc, char ** argv)
 							}
 						}
 						else
-						{
-							printf("1\n");
 							proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
-						}
 					}
 					
 					// Did we finish parsing correctly?
 					if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_ARG1))
-						printf("5\n");proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
+						proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
 					
 					// Check for error
 					if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_ERROR)
