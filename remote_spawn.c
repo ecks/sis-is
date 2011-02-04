@@ -183,7 +183,10 @@ int main (int argc, char ** argv)
 			// Read in processes
 			FILE * procs_file = fopen(PROCS_DAT_FILE, "r");
 			if (procs_file == NULL)
+			{
+				printf("Failed to open \"%s\".\n", PROCS_DAT_FILE);
 				resp = REMOTE_SPAWN_RESP_SPAWN_FAILED;
+			}
 			else
 			{
 #define PROCS_DAT_PARSE_FOUND_PROCESS						0x00000001
@@ -212,7 +215,10 @@ int main (int argc, char ** argv)
 						// Parsing process type
 						else if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PTYPE))
 						{
-							if (line[i] >= '0' && line[i] <= '9')
+							// Check max string len
+							if (strlen(tmp) + 1 == sizeof(tmp))
+								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
+							else if (line[i] >= '0' && line[i] <= '9')
 								sprintf(tmp, "%s%c", tmp, line[i]);
 							else if (line[i] == ' ' || line[i] == '\t')
 							{
@@ -237,6 +243,9 @@ int main (int argc, char ** argv)
 							// Starting string
 							else if (str[0] == '\0')
 							{}
+							// Check max string len
+							else if (strlen(str) + 1 == sizeof(str))
+								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
 							// Check for escape sequence
 							else if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_ESCAPE_SEQ_STARTED)
 							{
@@ -277,6 +286,9 @@ int main (int argc, char ** argv)
 					// Next line
 					linenum++;
 				}
+				
+				// Close file
+				fclose(procs_file);
 				
 				/*
 				// Check if this is a known process
