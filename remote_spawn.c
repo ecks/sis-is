@@ -243,7 +243,7 @@ int main (int argc, char ** argv)
 							}
 						}
 						// Parsing path and arg1
-						else if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PATH) || !(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_ARG1)))
+						else if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PATH) || !(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_ARG1))
 						{
 							// We need starting quote
 							if (str[0] == '\0' && line[i] != '"')
