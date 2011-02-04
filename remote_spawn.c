@@ -213,17 +213,16 @@ int main (int argc, char ** argv)
 						// What string are we working on
 						char * str = tmp;
 						int max_strlen = 32;
-						if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PTYPE)
-						{
-							str = line_path;
-							max_strlen = 1024;
-							printf("h1\n");
-						}
-						else if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PATH)
+						// Put in inverse order
+						if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PATH)
 						{
 							str = line_arg1;
 							max_strlen = 128;
-							printf("h2\n");
+						}
+						else if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PTYPE)
+						{
+							str = line_path;
+							max_strlen = 1024;
 						}
 						
 						// Ignore extra whitespace
@@ -277,15 +276,9 @@ int main (int argc, char ** argv)
 							{
 								// What did we just finish
 								if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PATH))
-								{
-									printf("here1\n");
 									proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_FOUND_PATH;
-								}
 								else
-								{
-									printf("here2\n");
 									proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_FOUND_ARG1;
-								}
 								
 								// String terminated
 								proc_dat_parse_flags &= ~PROCS_DAT_PARSE_LINE_STRING_STARTED;
