@@ -194,9 +194,10 @@ int main (int argc, char ** argv)
 #define PROCS_DAT_PARSE_LINE_FOUND_PATH					0x00000004
 #define PROCS_DAT_PARSE_LINE_FOUND_ARG1					0x00000008
 #define PROCS_DAT_PARSE_LINE_ESCAPE_SEQ_STARTED	0x00000010
-#define PROCS_DAT_PARSE_LINE_DONE								0x00000020
-#define PROCS_DAT_PARSE_LINE_ERROR							0x00000040
-#define PROCS_DAT_PARSE_LINE_ALL								0x0000007e
+#define PROCS_DAT_PARSE_LINE_STRING_STARTED			0x00000020
+#define PROCS_DAT_PARSE_LINE_DONE								0x00000040
+#define PROCS_DAT_PARSE_LINE_ERROR							0x00000080
+#define PROCS_DAT_PARSE_LINE_ALL								0x000000fe
 				// Read in line from file
 				char line[1024];
 				int proc_dat_parse_flags = 0, linenum = 1;
@@ -224,10 +225,7 @@ int main (int argc, char ** argv)
 						{
 							// Check max string len
 							if (strlen(str) + 1 == sizeof(str))
-							{
-								printf("1\n");
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
-							}
 							else if (line[i] >= '0' && line[i] <= '9')
 								sprintf(str, "%s%c", str, line[i]);
 							else if (line[i] == ' ' || line[i] == '\t')
@@ -237,23 +235,17 @@ int main (int argc, char ** argv)
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_FOUND_PTYPE;
 							}
 							else
-							{
-								printf("2\n");
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
-							}
 						}
 						// Parsing path and arg1
 						else if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PATH) || !(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_ARG1))
 						{
 							// We need starting quote
-							if (str[0] == '\0' && line[i] != '"')
-							{
-								printf("3 %d\n", i);
+							if (str[0] == '\0' && line[i] != '"' && !(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_STRING_STARTED))
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
-							}
 							// Starting string
 							else if (str[0] == '\0')
-							{}
+								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_STRING_STARTED;
 							// Check max string len
 							else if (strlen(str) + 1 == sizeof(str))
 							{
@@ -285,6 +277,9 @@ int main (int argc, char ** argv)
 									proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_FOUND_PATH;
 								else
 									proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_FOUND_ARG1;
+								
+								// String terminated
+								proc_dat_parse_flags &= ~PROCS_DAT_PARSE_LINE_STRING_STARTED;
 							}
 						}
 					}
