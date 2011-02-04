@@ -3,12 +3,13 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <gtk/gtk.h>
 #include "vis_window.h"
 #include "vis_main.h"
 
 #define MAXLINE 30
 
-void send_addr(struct list * addr_list, int pfds[])
+void display_windows(struct list * addr_list, int argc, char * argv[])
 {
   struct listnode * addr_node;
   LIST_FOREACH(addr_list, addr_node)
@@ -16,10 +17,24 @@ void send_addr(struct list * addr_list, int pfds[])
     struct addr * cur_addr = (struct addr *)addr_node->data;
     if(strcmp(cur_addr->type, "1") == 0)
     {
-      // strlen(str)+1 so that we may send the null-terminating char as well
-      write(pfds[1], cur_addr->prefix_str, strlen(cur_addr->prefix_str)+1);
       printf("%s\n", cur_addr->prefix_str);
 
+      // create new child for each window
+      pid_t pid = fork();
+
+      if(pid == 0)
+      {
+
+        if (!g_thread_supported ()){ g_thread_init(NULL); }
+        gdk_threads_init();
+        gdk_threads_enter();
+
+        gtk_init(&argc, &argv);
+        display_window((void *)cur_addr);
+        gdk_threads_leave();
+        // make sure child doesn't fork again
+        _exit(0);
+      }
     }
   }
 }
@@ -67,16 +82,12 @@ struct addr * parse_ip_address(char prefix_str[])
 int main(int argc, char * argv[])
 {
   int pfds[2];
-  char buf[MAXLINE];
+  char buf[INET_ADDRSTRLEN];
   ssize_t n;
   struct addr * cur_addr;
 
   pipe(pfds);
 
-  pid_t pid = fork();
-
-  if(pid > 0)
-  {
   sisis_dump_kernel_routes();
   struct listnode * node;
   struct listnode * appnd_node;
@@ -103,20 +114,7 @@ int main(int argc, char * argv[])
     }
   }
 
-  send_addr(addr_list, pfds);
-  }
-
-  if(pid == 0)
-  {
-    int i = 0;
-    while(n = read(pfds[0], buf, MAXLINE) > 0)
-    {
-      // since memory is shared need to allocate new string before sending it
-      struct addr * addr_to_send = parse_ip_address(buf);
-//      char * str_to_send = malloc(sizeof(char) * MAXLINE);
-//      printf("Outside thread: %s\n", buf);
-//      strcpy(str_to_send, buf);
-      pthread_create(&window_registration_thread, NULL, display_window, (void *)addr_to_send);
-    }
-  }
+  display_windows(addr_list, argc, argv);
+  wait(NULL);
+  exit(0);
 }

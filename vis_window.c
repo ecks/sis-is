@@ -6,350 +6,204 @@
 #include <cairo-xlib.h>
 #include <unistd.h>
 
+#include <gtk/gtk.h>
+
 #define PI 3.1415926535
 
 #include "vis_window.h"
 #include "vis_main.h"
 
-typedef struct win {
-    Display *dpy;
-    int scr;
+struct modal_stack
+{
+    GtkWindowGroup * group;
+    GtkWidget * window;
+    struct addr * cur_addr;
+};
 
-    Window win;
-    GC gc;
+//the global pixmap that will serve as our buffer
+static GdkPixmap *pixmap = NULL;
+
+static int currently_drawing = 0;
+//do_draw will be executed in a separate thread whenever we would like to update
+//our animation
+void *do_draw(void *ptr)
+{
+  struct addr * addr_to_draw = (struct addr *)ptr;
+ //prepare to trap our SIGALRM so we can draw when we recieve it!
+  siginfo_t info;
+  sigset_t sigset;
+
+  sigemptyset(&sigset);
+  sigaddset(&sigset, SIGALRM);
+
+  while(1){
+      //wait for our SIGALRM.  Upon receipt, draw our stuff.  Then, do it again!
+      while (sigwaitinfo(&sigset, &info) > 0) {
+        currently_drawing = 1;
 
     int width, height;
-    KeyCode quit_code;
-    struct addr * display_addr;
-} win_t;
+    gdk_threads_enter();
+    gdk_drawable_get_size(pixmap, &width, &height);
+    gdk_threads_leave();
 
-static void triangle(cairo_t *cr);
-static void square(cairo_t *cr);
-static void bowtie(cairo_t *cr);
-static void win_init(win_t *win);
-static void win_deinit(win_t *win);
-static void win_draw(win_t *win);
-static void win_handle_events(win_t *win);
+    //create a gtk-independant surface to draw on
+    cairo_surface_t *cst = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+    cairo_t *cr = cairo_create(cst);
+
+    //do some time-consuming drawing
+//    static int i = 0;
+//    ++i; i = i % 300;   //give a little movement to our animation
+//    cairo_paint(cr);
+//    int j,k;
+//    for(k=0; k<100; ++k){   //lets just redraw lots of times to use a lot of proc power
+//        for(j=0; j < 1000; ++j){
+//            cairo_set_source_rgb (cr, (double)j/1000.0, (double)j/1000.0, 1.0 - (double)j/1000.0);
+//            cairo_move_to(cr, i,j/2); 
+//            cairo_line_to(cr, i+100,j/2);
+//            cairo_stroke(cr);
+//        }
+//    }
+    cairo_paint(cr);
+    cairo_set_source_rgb (cr, 1, 1, 1);
+    cairo_save(cr);
+    cairo_set_font_size (cr, 20);
+    cairo_move_to (cr, 10, 10);
+    cairo_show_text (cr, addr_to_draw->host);
+    cairo_move_to (cr, 10, 30);
+    cairo_show_text (cr, addr_to_draw->pid);
+    cairo_restore(cr);
+
+    cairo_destroy(cr);
+
+
+    //When dealing with gdkPixmap's, we need to make sure not to
+    //access them from outside gtk_main().
+    gdk_threads_enter();
+
+    cairo_t *cr_pixmap = gdk_cairo_create(pixmap);
+    cairo_set_source_surface (cr_pixmap, cst, 0, 0);
+    cairo_paint(cr_pixmap);
+    cairo_destroy(cr_pixmap);
+
+    gdk_threads_leave();
+
+    cairo_surface_destroy(cst);
+
+    currently_drawing = 0;
+    }
+
+  }
+    return NULL;
+}
+
+gboolean timer_exe(gpointer s)
+{
+    struct modal_stack * wnd = (struct modal_stack *)s;
+
+    static int first_time = 1;
+
+    //use a safe function to get the value of currently_drawing so
+    //we don't run into the usual multithreading issues
+    int drawing_status = g_atomic_int_get(&currently_drawing);
+
+    //if this is the first time, create the drawing thread
+    static pthread_t thread_info;
+    if(first_time == 1){
+        int  iret;
+        iret = pthread_create( &thread_info, NULL, do_draw, wnd->cur_addr);
+    }
+
+    //if we are not currently drawing anything, send a SIGALRM signal
+    //to our thread and tell it to update our pixmap
+    if(drawing_status == 0){
+        pthread_kill(thread_info, SIGALRM);
+    }
+
+    //tell our window it is time to draw our animation.
+    int width, height;
+    gdk_drawable_get_size(pixmap, &width, &height);
+    gtk_widget_queue_draw_area(wnd->window, 0, 0, width, height);
+
+    first_time = 0;
+
+    return TRUE;
+
+}
+
+gboolean on_window_configure_event(GtkWidget * da, GdkEventConfigure * event, gpointer user_data)
+{
+    static int oldw = 0;
+    static int oldh = 0;
+    //make our selves a properly sized pixmap if our window has been resized
+    if (oldw != event->width || oldh != event->height){
+        //create our new pixmap with the correct size.
+        GdkPixmap *tmppixmap = gdk_pixmap_new(da->window, event->width,  event->height, -1);
+        //copy the contents of the old pixmap to the new pixmap.  This keeps ugly uninitialized
+        //pixmaps from being painted upon resize
+        int minw = oldw, minh = oldh;
+        if( event->width < minw ){ minw =  event->width; }
+        if( event->height < minh ){ minh =  event->height; }
+        gdk_draw_drawable(tmppixmap, da->style->fg_gc[GTK_WIDGET_STATE(da)], pixmap, 0, 0, 0, 0, minw, minh);
+        //we're done with our old pixmap, so we can get rid of it and replace it with our properly-sized one.
+        g_object_unref(pixmap); 
+        pixmap = tmppixmap;
+    }
+    oldw = event->width;
+    oldh = event->height;
+    return TRUE;
+}
+
+gboolean on_window_expose_event(GtkWidget * da, GdkEventExpose * event, gpointer user_data)
+{
+    gdk_draw_drawable(da->window,
+        da->style->fg_gc[GTK_WIDGET_STATE(da)], pixmap,
+        // Only copy the area that was exposed.
+        event->area.x, event->area.y,
+        event->area.x, event->area.y,
+        event->area.width, event->area.height);
+    return TRUE;
+}
+
+void create_window(struct modal_stack s)
+{
+    //Block SIGALRM in the main thread
+    sigset_t sigset;
+    sigemptyset(&sigset);
+    sigaddset(&sigset, SIGALRM);
+    pthread_sigmask(SIG_BLOCK, &sigset, NULL);
+
+    s.group = gtk_window_group_new();
+    s.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+
+    gtk_widget_set_usize(s.window, 200, 200);
+    g_signal_connect(G_OBJECT (s.window), "destroy",
+        G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(G_OBJECT (s.window), "delete_event",
+        G_CALLBACK(gtk_main_quit), NULL);
+
+    g_signal_connect(G_OBJECT(s.window), "expose_event", G_CALLBACK(on_window_expose_event), NULL);
+    g_signal_connect(G_OBJECT(s.window), "configure_event", G_CALLBACK(on_window_configure_event), NULL);
+
+    gtk_widget_show(s.window);
+
+    gtk_window_group_add_window(s.group, GTK_WINDOW(s.window));
+
+    //set up our pixmap so it is ready for drawing
+    pixmap = gdk_pixmap_new(s.window->window,500,500,-1);
+    //because we will be painting our pixmap manually during expose events
+    //we can turn off gtk's automatic painting and double buffering routines.
+    gtk_widget_set_app_paintable(s.window, TRUE);
+    gtk_widget_set_double_buffered(s.window, FALSE);
+
+    (void)g_timeout_add(333, (GSourceFunc)timer_exe, &s);
+}
 
 void * 
 display_window(void * addr)
 {
-    struct addr * display_addr = (struct addr *)addr;
-    
-    printf("Inside thread: %s\n", display_addr->host);
-
-    win_t win;
-
-    win.dpy = XOpenDisplay(0);
-
-    win.display_addr = (struct addr *)addr;
-
-    if (win.dpy == NULL) {
-	fprintf(stderr, "Failed to open display\n");
-    }
-
-    win_init(&win);
-
-    win_draw(&win);
-
-    win_handle_events(&win);
-
-    win_deinit(&win);
-
-    XCloseDisplay(win.dpy);
-//    }
-}
-
-#define SIZE 20
-static void
-triangle(cairo_t *cr)
-{
-    cairo_move_to(cr, SIZE, 0);
-    cairo_rel_line_to(cr, SIZE,  2*SIZE);
-    cairo_rel_line_to(cr, -2*SIZE, 0);
-    cairo_close_path(cr);
-}
-
-static void
-square(cairo_t *cr)
-{
-    cairo_move_to(cr, 0, 0);
-    cairo_rel_line_to(cr,  2*SIZE,   0);
-    cairo_rel_line_to(cr,   0,  2*SIZE);
-    cairo_rel_line_to(cr, -2*SIZE,   0); 
-    cairo_close_path(cr);
-}
-
-static void
-bowtie(cairo_t *cr)
-{
-    cairo_move_to(cr, 0, 0);
-    cairo_rel_line_to(cr,  2*SIZE,  2*SIZE);
-    cairo_rel_line_to(cr, -2*SIZE,   0); 
-    cairo_rel_line_to(cr,  2*SIZE, -2*SIZE);
-    cairo_close_path(cr);
-}
-
-static void
-inf(cairo_t *cr)
-{
-    cairo_move_to(cr, 0, SIZE);
-    cairo_rel_curve_to(cr,
-		 0, SIZE,
-		 SIZE, SIZE,
-		 2*SIZE, 0);
-    cairo_rel_curve_to(cr,
-		 SIZE, -SIZE,
-		 2*SIZE, -SIZE,
-		 2*SIZE, 0);
-    cairo_rel_curve_to(cr,
-		 0, SIZE,
-		 -SIZE, SIZE,
-		 -2*SIZE, 0);
-    cairo_rel_curve_to(cr,
-		 -SIZE, -SIZE,
-		 -2*SIZE, -SIZE,
-		 -2*SIZE, 0);
-    cairo_close_path(cr);
-}
-
-static void
-draw_shapes(cairo_t *cr, int x, int y, int fill)
-{
-    cairo_save(cr);
-
-    cairo_new_path(cr);
-    cairo_translate(cr, x+SIZE, y+SIZE);
-    bowtie(cr);
-    if (fill)
-	cairo_fill(cr);
-    else
-	cairo_stroke(cr);
-
-    cairo_new_path(cr);
-    cairo_translate(cr, 4*SIZE, 0);
-    square(cr);
-    if (fill)
-	cairo_fill(cr);
-    else
-	cairo_stroke(cr);
-
-    cairo_new_path(cr);
-    cairo_translate(cr, 4*SIZE, 0);
-    triangle(cr);
-    if (fill)
-	cairo_fill(cr);
-    else
-	cairo_stroke(cr);
-
-    cairo_new_path(cr);
-    cairo_translate(cr, 4*SIZE, 0);
-    inf(cr);
-    if (fill)
-	cairo_fill(cr);
-    else
-	cairo_stroke(cr);
-
-    cairo_restore(cr);
-}
-
-static void
-fill_shapes(cairo_t *cr, int x, int y)
-{
-    draw_shapes(cr, x, y, 1);
-}
-
-static void
-stroke_shapes(cairo_t *cr, int x, int y)
-{
-    draw_shapes(cr, x, y, 0);
-}
-
-/*
-static void
-draw_broken_shapes(cairo_t *cr)
-{
-    cairo_save(cr);
-
-    cairo_set_line_width(cr, 1);
-    cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
-    cairo_set_source_rgb(cr, 1, 1, 1);
-
-    cairo_move_to(cr, 19.153717041015625, 144.93951416015625);
-    cairo_line_to(cr, 412.987396240234375, 99.407318115234375);
-    cairo_line_to(cr, 412.99383544921875, 99.4071807861328125);
-    cairo_line_to(cr, 413.15008544921875, 99.5634307861328125);
-    cairo_line_to(cr, 413.082489013671875, 99.6920928955078125);
-    cairo_line_to(cr, 413.000274658203125, 99.71954345703125);
-    cairo_line_to(cr, 273.852630615234375, 138.1925201416015625);
-    cairo_line_to(cr, 273.934844970703125, 138.165069580078125);
-    cairo_line_to(cr, 16.463653564453125, 274.753662109375);
-    cairo_line_to(cr, 16.286346435546875, 274.496337890625);
-    cairo_line_to(cr, 273.757537841796875, 137.907745361328125);
-    cairo_line_to(cr, 273.839752197265625, 137.8802947998046875);
-    cairo_line_to(cr, 412.987396240234375, 99.407318115234375);
-    cairo_line_to(cr, 412.99383544921875, 99.4071807861328125);
-    cairo_line_to(cr, 413.15008544921875, 99.5634307861328125);
-    cairo_line_to(cr, 413.082489013671875, 99.6920928955078125);
-    cairo_line_to(cr, 413.000274658203125, 99.71954345703125);
-    cairo_line_to(cr, 19.166595458984375, 145.251739501953125);
-
-    cairo_fill(cr);
-
-    cairo_restore(cr);
-}
-*/
-
-static void
-win_draw(win_t *win)
-{
-#define NUM_DASH 2
-    static double dash[NUM_DASH] = {SIZE/4.0, SIZE/4.0};
-    cairo_surface_t *surface;
-    cairo_t *cr;
-    Visual *visual = DefaultVisual(win->dpy, DefaultScreen (win->dpy));
-
-    XClearWindow(win->dpy, win->win);
-
-    surface = cairo_xlib_surface_create (win->dpy, win->win, visual,
-					 win->width, win->height);
-    cr = cairo_create(surface);
-
-    cairo_set_source_rgb(cr, 1, 1, 1);
-
-    cairo_save(cr);
-    cairo_set_font_size (cr, 20);
-    cairo_move_to (cr, 20, 20);
-//    cairo_rotate(cr, PI / 2);
-    cairo_show_text (cr, win->display_addr->host);
-
-    cairo_move_to(cr, 20, 40);
-    cairo_show_text(cr, win->display_addr->pid);
-    cairo_restore(cr);
-
-/*
-    cairo_scale(cr, 5, 5);
-    inf(cr);
-    cairo_translate(cr, 0, 2 * SIZE);
-    inf(cr);
-    cairo_translate(cr, 0, - 2 * SIZE);
-    cairo_clip(cr);
-    cairo_scale(cr, 1/5.0, 1/5.0);
-*/
-
-    /* This is handy for examining problems more closely */
-    /*    cairo_scale(cr, 4, 4);  */
-/*
-    cairo_set_line_width(cr, SIZE / 4);
-
-    cairo_set_tolerance(cr, .1);
-
-    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
-    cairo_set_dash(cr, dash, NUM_DASH, 0);
-    stroke_shapes(cr, 0, 0);
-
-    cairo_translate(cr, 0, 4*SIZE);
-
-    cairo_set_dash(cr, NULL, 0, 0);
-    stroke_shapes(cr, 0, 0);
-
-    cairo_translate(cr, 0, 4*SIZE);
-
-    cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
-    stroke_shapes(cr, 0, 0);
-
-    cairo_translate(cr, 0, 4*SIZE);
-
-    cairo_set_line_join(cr, CAIRO_LINE_JOIN_MITER);
-    stroke_shapes(cr, 0, 0);
-
-    cairo_translate(cr, 0, 4*SIZE);
-
-    fill_shapes(cr, 0, 0);
-
-    cairo_translate(cr, 0, 4*SIZE);
-
-    cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
-    fill_shapes(cr, 0, 0);
-    cairo_set_source_rgb(cr, 1, 0, 0);
-    stroke_shapes(cr, 0, 0); */
-/*
-    draw_broken_shapes(cr);
-*/
-    if (cairo_status (cr)) {
-	printf("Cairo is unhappy: %s\n",
-	       cairo_status_to_string (cairo_status (cr)));
-	exit(0);
-    }
-
-    cairo_destroy(cr);
-    cairo_surface_destroy (surface);
-}
-
-static void
-win_init(win_t *win)
-{
-    Window root;
-
-    win->width = 400;
-    win->height = 400;
-
-    root = DefaultRootWindow(win->dpy);
-    win->scr = DefaultScreen(win->dpy);
-
-    win->win = XCreateSimpleWindow(win->dpy, root, 0, 0,
-				   win->width, win->height, 0,
-				   BlackPixel(win->dpy, win->scr), BlackPixel(win->dpy, win->scr));
-
-    win->quit_code = XKeysymToKeycode(win->dpy, XStringToKeysym("Q"));
-
-    XSelectInput(win->dpy, win->win,
-		 KeyPressMask
-		 |StructureNotifyMask
-		 |ExposureMask);
-
-    XMapWindow(win->dpy, win->win);
-}
-
-static void
-win_deinit(win_t *win)
-{
-    XDestroyWindow(win->dpy, win->win);
-}
-
-static void
-win_handle_events(win_t *win)
-{
-    XEvent xev;
-
-    while (1) {
-	XNextEvent(win->dpy, &xev);
-	switch(xev.type) {
-	case KeyPress:
-	{
-	    XKeyEvent *kev = &xev.xkey;
-	    
-	    if (kev->keycode == win->quit_code) {
-		return;
-	    }
-	}
-	break;
-	case ConfigureNotify:
-	{
-	    XConfigureEvent *cev = &xev.xconfigure;
-
-	    win->width = cev->width;
-	    win->height = cev->height;
-	}
-	break;
-	case Expose:
-	{
-	    XExposeEvent *eev = &xev.xexpose;
-
-	    if (eev->count == 0)
-		win_draw(win);
-	}
-	break;
-	}
-    }
+    struct addr * local_addr_list = (struct addr *) addr;
+    struct modal_stack wnd;
+    wnd.cur_addr = addr;
+    create_window(wnd);
+    gtk_main();
 }
