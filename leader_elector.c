@@ -15,6 +15,7 @@
 #include <signal.h>
 
 #include <errno.h>
+#include <pthread.h>
 #include "leader_elector.h"
 #include "../memory_monitor/memory_monitor.h"
 #include "../remote_spawn/remote_spawn.h"
@@ -52,6 +53,21 @@ void terminate(int signal)
 		close(con);
 	}
 	exit(0);
+}
+
+void * recv_thread(void *)
+{
+	struct sockaddr_in fromaddr;
+	int fromaddr_size = sizeof(fromaddr);
+	memset(&fromaddr, 0, fromaddr_size);
+	char buf[65508];
+	int len;
+	while(1)
+	{
+		len = recvfrom(sockfd, buf, 65507, 0, (struct sockaddr *)&fromaddr, &fromaddr_size);
+		buf[len] = '\0';
+		printf("%s", buf);
+	}
 }
 
 int main (int argc, char ** argv)
@@ -112,6 +128,10 @@ int main (int argc, char ** argv)
 	signal(SIGABRT, terminate);
 	signal(SIGTERM, terminate);
 	signal(SIGINT, terminate);
+	
+	// Set up receive thread
+	pthread_t recv_thread_t;
+	pthread_create(&recv_thread_t, NULL, recv_thread, NULL);
 	
 	// Check how many other processes there are
 	struct list * monitor_addrs = get_sisis_addrs_for_process_type(SISIS_PTYPE_MEMORY_MONITOR);
@@ -176,6 +196,7 @@ int main (int argc, char ** argv)
 				printf("Failed to send message.  Error: %i\n", errno);
 			else
 			{
+				/*
 				struct sockaddr_in fromaddr;
 				int fromaddr_size = sizeof(fromaddr);
 				memset(&fromaddr, 0, fromaddr_size);
@@ -191,6 +212,7 @@ int main (int argc, char ** argv)
 				
 				buf[len] = '\0';
 				printf("%s", buf);
+				*/
 				
 				// Do we need to start another process
 				if (leader_elector_processes_needed)
