@@ -15,8 +15,6 @@
 
 #include <gtk/gtk.h>
 
-#define PI 3.1415926535
-
 #include "vis_window.h"
 #include "vis_main.h"
 
@@ -26,8 +24,15 @@ struct modal_stack
 {
     GtkWindowGroup * group;
     GtkWidget * window;
-    struct addr * cur_addr;
 };
+
+struct addrs
+{
+    struct addr * mm_addr;
+    struct list * other_procs;
+} all_addrs;
+
+pthread_mutex_t mutex;
 
 //the global pixmap that will serve as our buffer
 static GdkPixmap *pixmap = NULL;
@@ -69,8 +74,6 @@ void get_machine_info(char * prefix_str, char * memory_usage)
   m_ptr  = m_ptr + 12;
   strncpy(memory_usage, m_ptr, 5);
   memory_usage[5] = '\0';
-
-  printf("Memory usage: %s\n", memory_usage);
 }
 
 static int currently_drawing = 0;
@@ -78,7 +81,9 @@ static int currently_drawing = 0;
 //our animation
 void *do_draw(void *ptr)
 {
-  struct addr * addr_to_draw = (struct addr *)ptr;
+  struct addr * addr_to_draw = calloc(1, sizeof(struct addr));
+  struct listnode * other_addr_node;
+
  //prepare to trap our SIGALRM so we can draw when we recieve it!
   siginfo_t info;
   sigset_t sigset;
@@ -91,31 +96,51 @@ void *do_draw(void *ptr)
       while (sigwaitinfo(&sigset, &info) > 0) {
         currently_drawing = 1;
 
-    char * memory_usage = calloc(5, sizeof(char));
-    get_machine_info(addr_to_draw->prefix_str, memory_usage);
+        gdk_threads_enter();
+        pthread_mutex_lock(&mutex);
+        memcpy(addr_to_draw, all_addrs.mm_addr, sizeof(struct addr));
 
-    int width, height;
-    gdk_threads_enter();
-    gdk_drawable_get_size(pixmap, &width, &height);
-    gdk_threads_leave();
+        LIST_FOREACH(all_addrs.other_procs, other_addr_node)
+        {
+          struct addr * display_addr = (struct addr *)other_addr_node->data;
+        }
 
-    //create a gtk-independant surface to draw on
-    cairo_surface_t *cst = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
-    cairo_t *cr = cairo_create(cst);
+        pthread_mutex_unlock(&mutex);
+        gdk_threads_leave();
 
-    cairo_paint(cr);
-    cairo_set_source_rgb (cr, 1, 1, 1);
-    cairo_save(cr);
-    cairo_set_font_size (cr, 20);
-    cairo_move_to (cr, 10, 20);
-    cairo_show_text (cr, addr_to_draw->host);
-    cairo_move_to (cr, 10, 40);
-    cairo_show_text (cr, addr_to_draw->pid);
-    cairo_move_to (cr, 50, 20);
-    cairo_show_text (cr, memory_usage);
-    cairo_restore(cr);
+        char * memory_usage = calloc(5, sizeof(char));
+        get_machine_info(addr_to_draw->prefix_str, memory_usage);
 
-    cairo_destroy(cr);
+        int width, height;
+        gdk_threads_enter();
+        gdk_drawable_get_size(pixmap, &width, &height);
+        gdk_threads_leave();
+
+        //create a gtk-independant surface to draw on
+        cairo_surface_t *cst = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+        cairo_t *cr = cairo_create(cst);
+
+       cairo_set_source_rgb (cr, 1, 1, 1);
+       cairo_paint(cr);
+//       cairo_set_source_rgb (cr, 1, 1, 1);
+//       cairo_save(cr);
+//       cairo_set_font_size (cr, 20);
+//       cairo_move_to (cr, 10, 20);
+//       cairo_show_text (cr, addr_to_draw->host);
+//       cairo_move_to (cr, 10, 40);
+//       cairo_show_text (cr, addr_to_draw->pid);
+//       cairo_move_to (cr, 50, 20);
+//       cairo_show_text (cr, memory_usage);
+//       cairo_restore(cr);
+
+       // square 
+       cairo_set_source_rgb (cr, 0, 0, 0);
+       cairo_move_to (cr, 10, 60);
+       cairo_set_line_width (cr, 0.1);
+       cairo_rectangle (cr, 0.25, 0.25, 0.5, 0.5);   
+       cairo_stroke (cr);
+
+       cairo_destroy(cr);
 
 
     //When dealing with gdkPixmap's, we need to make sure not to
@@ -153,7 +178,7 @@ gboolean timer_exe(gpointer s)
 
     if(first_time == 1){
         int  iret;
-        iret = pthread_create( &thread_info, NULL, do_draw, wnd->cur_addr);
+        iret = pthread_create( &thread_info, NULL, do_draw, NULL);
     }
 
     //if we are not currently drawing anything, send a SIGALRM signal
@@ -243,11 +268,16 @@ void create_window(struct modal_stack s)
 }
 
 void * 
-display_window(void * addr)
+display_window(struct addr * addr, struct list * addr_list_procs)
 {
-    struct addr * local_addr_list = (struct addr *) addr;
     struct modal_stack wnd;
-    wnd.cur_addr = addr;
+    pthread_mutex_init(&mutex, NULL);
+    pthread_mutex_lock(&mutex);
+    all_addrs.mm_addr = addr;
+    all_addrs.other_procs = addr_list_procs;
+
+    pthread_mutex_unlock(&mutex);
     create_window(wnd);
     gtk_main();
+    pthread_mutex_destroy(&mutex);
 }
