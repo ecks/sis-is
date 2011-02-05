@@ -55,7 +55,7 @@ void terminate(int signal)
 	exit(0);
 }
 
-void * recv_thread(void *)
+void * recv_thread(void * nil)
 {
 	struct sockaddr_in fromaddr;
 	int fromaddr_size = sizeof(fromaddr);
