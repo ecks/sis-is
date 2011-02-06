@@ -83,7 +83,9 @@ void *do_draw(void *ptr)
 {
   struct addr * addr_to_draw = calloc(1, sizeof(struct addr));
   struct listnode * other_addr_node;
+  int proc_type[6];
 
+  memset(&proc_type, 0, sizeof(proc_type));
  //prepare to trap our SIGALRM so we can draw when we recieve it!
   siginfo_t info;
   sigset_t sigset;
@@ -103,6 +105,8 @@ void *do_draw(void *ptr)
         LIST_FOREACH(all_addrs.other_procs, other_addr_node)
         {
           struct addr * display_addr = (struct addr *)other_addr_node->data;
+          int type = atoi(display_addr->type);
+          proc_type[type] = 1;
         }
 
         pthread_mutex_unlock(&mutex);
@@ -120,25 +124,38 @@ void *do_draw(void *ptr)
         cairo_surface_t *cst = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
         cairo_t *cr = cairo_create(cst);
 
-       cairo_set_source_rgb (cr, 1, 1, 1);
-       cairo_paint(cr);
-//       cairo_set_source_rgb (cr, 1, 1, 1);
-//       cairo_save(cr);
-//       cairo_set_font_size (cr, 20);
-//       cairo_move_to (cr, 10, 20);
-//       cairo_show_text (cr, addr_to_draw->host);
-//       cairo_move_to (cr, 10, 40);
-//       cairo_show_text (cr, addr_to_draw->pid);
-//       cairo_move_to (cr, 50, 20);
-//       cairo_show_text (cr, memory_usage);
-//       cairo_restore(cr);
+        cairo_set_source_rgb (cr, 0, 0, 0);
+        cairo_paint(cr);
+        cairo_set_source_rgb (cr, 1, 1, 1);
+        cairo_save(cr);
+        cairo_set_font_size (cr, 20);
+        cairo_move_to (cr, 10, 20);
+        cairo_show_text (cr, addr_to_draw->host);
+        cairo_move_to (cr, 10, 40);
+        cairo_show_text (cr, addr_to_draw->pid);
+        cairo_move_to (cr, 50, 20);
+        cairo_show_text (cr, memory_usage);
+        cairo_restore(cr);
 
        // square 
-       cairo_set_source_rgb (cr, 0, 0, 0);
-       cairo_move_to (cr, 10, 60);
-       cairo_set_line_width (cr, 0.1);
-       cairo_rectangle (cr, 0.25, 0.25, 0.5, 0.5);   
-       cairo_stroke (cr);
+       int i;
+       int x = 10;
+       int y = 60;
+       for(i = 0; i < 6; i++)
+       {
+         if(proc_type[i] == 1)
+         {
+           if(i == 2)
+             cairo_set_source_rgb (cr, 0, 0, 1);
+           else if(i == 3)
+             cairo_set_source_rgb (cr, 1, 0, 0);
+           else if(i == 4)
+             cairo_set_source_rgb (cr, 0, 1, 0);
+           cairo_rectangle (cr, x, y, 10, 10);   
+           cairo_fill (cr);
+           x = x+20;
+         }
+       }
 
        cairo_destroy(cr);
 
