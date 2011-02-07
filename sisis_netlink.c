@@ -327,7 +327,7 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h, void *
 				
 				// Note: Receivers responsibilty to free memory for route
 				
-				h->nlmsg_type == RTM_NEWROUTE ? real_info->rib_add_ipv4_route (route) : real_info->rib_remove_ipv4_route;
+				(h->nlmsg_type == RTM_NEWROUTE) ? real_info->rib_add_ipv4_route (route) : real_info->rib_remove_ipv4_route;
 			}
     }
 #ifdef HAVE_IPV6
@@ -354,7 +354,7 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h, void *
 				
 				// Note: Receivers responsibilty to free memory for prefix and route
 				
-				h->nlmsg_type == RTM_NEWROUTE ? real_info->rib_add_ipv6_route (route) : real_info->rib_remove_ipv6_route;
+				(h->nlmsg_type == RTM_NEWROUTE) ? real_info->rib_add_ipv6_route (route) : real_info->rib_remove_ipv6_route;
 			}
     }
 #endif /* HAVE_IPV6 */
