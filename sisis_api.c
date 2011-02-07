@@ -346,7 +346,7 @@ int sisis_dump_kernel_routes()
 	if (ipv4_rib_routes)
 		FREE_LINKED_LIST(ipv4_rib_routes);
 	ipv4_rib_routes = malloc(sizeof(struct list));
-	memset(ipv4_rib_routes, 0, sizeof(*ipv4_rib_routes));
+	memset(&ipv4_rib_routes, 0, sizeof(*ipv4_rib_routes));
 	
 	// Set up callbacks
 	struct sisis_netlink_routing_table_info info;

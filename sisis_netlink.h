@@ -69,7 +69,7 @@ void sisis_kernel_init (void);
 static int sisis_netlink_request (int family, int type, struct nlsock *nl);
 
 /* Receive message from netlink interface and pass those information to the given function. */
-static int sisis_netlink_parse_info (int (*filter) (struct sockaddr_nl *, struct nlmsghdr *), struct nlsock *nl, void * info);
+static int sisis_netlink_parse_info (int (*filter) (struct sockaddr_nl *, struct nlmsghdr *, void *), struct nlsock *nl, void * info);
 
 /* Utility function for parse rtattr. */
 static void sisis_netlink_parse_rtattr (struct rtattr **tb, int max, struct rtattr *rta, int len);

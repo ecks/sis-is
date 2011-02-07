@@ -126,7 +126,7 @@ sisis_netlink_request (int family, int type, struct nlsock *nl)
 /* Receive message from netlink interface and pass those information
    to the given function. */
 static int
-sisis_netlink_parse_info (int (*filter) (struct sockaddr_nl *, struct nlmsghdr *),
+sisis_netlink_parse_info (int (*filter) (struct sockaddr_nl *, struct nlmsghdr *, void *),
                     struct nlsock *nl, void * info)
 {
   int status;
@@ -307,7 +307,7 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h, void *
   if (rtm->rtm_family == AF_INET)
     {
 			// Check for callback
-			if (real_info->rib_add_ipv4)
+			if (real_info->rib_add_ipv4_route)
 			{
 				// Construct route info
 				struct route_ipv4 * route = malloc(sizeof(struct route_ipv4));
@@ -326,14 +326,14 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h, void *
 				
 				// Note: Receivers responsibilty to free memory for route
 				
-				real_info->rib_add_ipv4 (route);
+				real_info->rib_add_ipv4_route (route);
 			}
     }
 #ifdef HAVE_IPV6
   if (rtm->rtm_family == AF_INET6)
     {
 			// Check for callback
-			if (real_info->rib_add_ipv6)
+			if (real_info->rib_add_ipv6_route)
 			{
 				struct prefix_ipv6 * p = malloc(sizeof(struct prefix_ipv6));
 				p->family = AF_INET6;
@@ -353,7 +353,7 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h, void *
 				
 				// Note: Receivers responsibilty to free memory for prefix and route
 				
-				real_info->rib_add_ipv6 (route);
+				real_info->rib_add_ipv6_route (route);
 			}
     }
 #endif /* HAVE_IPV6 */
