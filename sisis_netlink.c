@@ -30,11 +30,6 @@
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 
-/* Hack for GNU libc version 2. */
-#ifndef MSG_TRUNC
-#define MSG_TRUNC      0x20
-#endif /* MSG_TRUNC */
-
 /* Socket interface to kernel */
 struct nlsock sisis_netlink_cmd  = { -1, 0, {0}, "netlink-cmd"};        /* command channel */
 

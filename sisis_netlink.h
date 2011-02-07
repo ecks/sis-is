@@ -29,6 +29,7 @@
  * 02111-1307, USA.  
  */
 
+#include "sisis_structs.h"
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 
