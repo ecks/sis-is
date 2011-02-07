@@ -20,6 +20,7 @@
  * 02111-1307, USA.  
  */
 
+#include "sisis_netlink.h"
 #include "sisis_structs.h"
 #include "sisis_api.h"
 #include <stdlib.h>
@@ -35,13 +36,7 @@
 #endif /* MSG_TRUNC */
 
 /* Socket interface to kernel */
-struct nlsock
-{
-  int sock;
-  int seq;
-  struct sockaddr_nl snl;
-  const char *name;
-} sisis_netlink_cmd  = { -1, 0, {0}, "netlink-cmd"};        /* command channel */
+struct nlsock sisis_netlink_cmd  = { -1, 0, {0}, "netlink-cmd"};        /* command channel */
 
 /* Make socket for Linux netlink interface. */
 static int
@@ -137,7 +132,7 @@ sisis_netlink_request (int family, int type, struct nlsock *nl)
    to the given function. */
 static int
 sisis_netlink_parse_info (int (*filter) (struct sockaddr_nl *, struct nlmsghdr *),
-                    struct nlsock *nl)
+                    struct nlsock *nl, void * info)
 {
   int status;
   int ret = 0;
@@ -214,7 +209,7 @@ sisis_netlink_parse_info (int (*filter) (struct sockaddr_nl *, struct nlmsghdr *
               continue;
             }
 
-          error = (*filter) (&snl, h);
+          error = (*filter) (&snl, h, info);
           if (error < 0)
               ret = error;
         }
@@ -243,8 +238,11 @@ sisis_netlink_parse_rtattr (struct rtattr **tb, int max, struct rtattr *rta,
 
 /* Looking up routing table by netlink interface. */
 static int
-sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h)
+sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h, void * info)
 {
+	// Convert info
+	struct sisis_netlink_routing_table_info * real_info = (struct sisis_netlink_routing_table_info *)info;
+	
   int len;
   struct rtmsg *rtm;
   struct rtattr *tb[RTA_MAX + 1];
@@ -261,7 +259,8 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h)
   void *src;
 
   rtm = NLMSG_DATA (h);
-
+	
+	// TODO: Also handle deleted routes
   if (h->nlmsg_type != RTM_NEWROUTE)
     return 0;
   //if (rtm->rtm_type != RTN_UNICAST)
@@ -312,63 +311,74 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h)
 
   if (rtm->rtm_family == AF_INET)
     {
-			// Construct route info
-			struct route_ipv4 * route = malloc(sizeof(struct route_ipv4));
-			route->type = 1;	// Means nothing right now
-			route->flags = flags;
-			route->p = malloc(sizeof(struct prefix_ipv4));
-			route->p->family = AF_INET;
-      memcpy (&route->p->prefix, dest, 4);
-      route->p->prefixlen = rtm->rtm_dst_len;
-			route->gate = gate;
-			route->src = src;
-			route->ifindex = index;
-			route->vrf_id = table;
-			route->metric = metric;
-			route->distance = 0;
-
-      sisis_rib_add_ipv4 (route);
+			// Check for callback
+			if (real_info->rib_add_ipv4)
+			{
+				// Construct route info
+				struct route_ipv4 * route = malloc(sizeof(struct route_ipv4));
+				route->type = 1;	// Means nothing right now
+				route->flags = flags;
+				route->p = malloc(sizeof(struct prefix_ipv4));
+				route->p->family = AF_INET;
+				memcpy (&route->p->prefix, dest, 4);
+				route->p->prefixlen = rtm->rtm_dst_len;
+				route->gate = gate;
+				route->src = src;
+				route->ifindex = index;
+				route->vrf_id = table;
+				route->metric = metric;
+				route->distance = 0;
+				
+				// Note: Receivers responsibilty to free memory for route
+				
+				real_info->rib_add_ipv4 (route);
+			}
     }
 #ifdef HAVE_IPV6
   if (rtm->rtm_family == AF_INET6)
     {
-      struct prefix_ipv6 p;
-      p.family = AF_INET6;
-      memcpy (&p.prefix, dest, 16);
-      p.prefixlen = rtm->rtm_dst_len;
-			
-			// Construct route info
-			struct route_ipv6 route;
-			route.type = 1;	// Means nothing right now
-			route.flags = flags;
-			route.p = &p;
-			route.gate = gate;
-			route.ifindex = index;
-			route.vrf_id = table;
-			route.metric = metric;
-			route.distance = 0;
-
-      sisis_rib_add_ipv6 (route);
+			// Check for callback
+			if (real_info->rib_add_ipv6)
+			{
+				struct prefix_ipv6 * p = malloc(sizeof(struct prefix_ipv6));
+				p->family = AF_INET6;
+				memcpy (&p->prefix, dest, 16);
+				p->prefixlen = rtm->rtm_dst_len;
+				
+				// Construct route info
+				struct route_ipv6 * route = malloc(sizeof(struct route_ipv6));
+				route->type = 1;	// Means nothing right now
+				route->flags = flags;
+				route->p = &p;
+				route->gate = gate;
+				route->ifindex = index;
+				route->vrf_id = table;
+				route->metric = metric;
+				route->distance = 0;
+				
+				// Note: Receivers responsibilty to free memory for prefix and route
+				
+				real_info->rib_add_ipv6 (route);
+			}
     }
 #endif /* HAVE_IPV6 */
 
   return 0;
 }
 
-/* Routing table read function using netlink interface.  Only called
-   bootstrap time. */
-int sisis_netlink_route_read (void)
+/* Routing table read function using netlink interface. */
+int sisis_netlink_route_read (struct sisis_netlink_routing_table_info * info)
 {
 	// Initialize kernel socket
 	sisis_kernel_init();
 	
   int ret;
-
-  /* Get IPv4 routing table. */
+	
+	/* Get IPv4 routing table. */
   ret = sisis_netlink_request (AF_INET, RTM_GETROUTE, &sisis_netlink_cmd);
   if (ret < 0)
     return ret;
-  ret = sisis_netlink_parse_info (sisis_netlink_routing_table, &sisis_netlink_cmd);
+  ret = sisis_netlink_parse_info (sisis_netlink_routing_table, &sisis_netlink_cmd, (void*)info);
   if (ret < 0)
     return ret;
 
@@ -377,7 +387,7 @@ int sisis_netlink_route_read (void)
   ret = sisis_netlink_request (AF_INET6, RTM_GETROUTE, &sisis_netlink_cmd);
   if (ret < 0)
     return ret;
-  ret = sisis_netlink_parse_info (sisis_netlink_routing_table, &sisis_netlink_cmd);
+  ret = sisis_netlink_parse_info (sisis_netlink_routing_table, &sisis_netlink_cmd, (void*)info);
   if (ret < 0)
     return ret;
 #endif /* HAVE_IPV6 */

@@ -18,6 +18,7 @@
 
 #include "sisis_api.h"
 #include "sisis_structs.h"
+#include "sisis_netlink.h"
 
 int socket_opened = 0;
 int sisis_socket = 0;
@@ -335,8 +336,6 @@ int sisis_unregister(unsigned int ptype, unsigned int host_num, unsigned int pid
 	return 0;
 }
 
-extern int sisis_netlink_route_read (void);
-
 /**
  * Dump kernel routing table.
  * Returns zero on success.
@@ -349,7 +348,14 @@ int sisis_dump_kernel_routes()
 	ipv4_rib_routes = malloc(sizeof(struct list));
 	memset(ipv4_rib_routes, 0, sizeof(*ipv4_rib_routes));
 	
-	sisis_netlink_route_read();
+	// Set up callbacks
+	sisis_netlink_routing_table_info info;
+	memset(info, 0, sizeof(info));
+	info.rib_add_ipv4_route = sisis_rib_add_ipv4;
+	info.rib_add_ipv6_route = sisis_rib_add_ipv6;
+	
+	// Get routes
+	sisis_netlink_route_read(&info);
 	
 	return 0;
 }
@@ -373,11 +379,23 @@ int sisis_rib_add_ipv4 (struct route_ipv4 * route)
 
 #ifdef HAVE_IPV6
 // TODO
-int sisis_rib_add_ipv6 (struct route_ipv6 route)
+int sisis_rib_add_ipv6 (struct route_ipv6 * route)
 {
 	return 0;
 }
 #endif /* HAVE_IPV6 */
+
+extern int sisis_netlink_subscribe_to_rib_changes(void);
+
+/** Subscribe to route add/remove messages */
+int subscript_to_rib_changes(int (*rib_changed) (struct route_ipv4 *))
+{
+	int rtn = 0;
+	
+	// struct nlsock netlink = { -1, 0, {0}, "netlink-listen"},     /* kernel messages */
+	
+	return rtn;
+}
 
 /**
  * Get SIS-IS addresses that match a given ipv4 prefix.  It is the receivers
