@@ -80,4 +80,17 @@ static int sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr
 /* Routing table read function using netlink interface. */
 int sisis_netlink_route_read (struct sisis_netlink_routing_table_info * info);
 
+/* Info for sisis_netlink_wait_for_rib_changes */
+struct sisis_netlink_wait_for_rib_changes_info
+{
+	struct nlsock * netlink_rib;
+	struct sisis_netlink_routing_table_info * info;
+};
+
+/* Thread to wait for and process rib changes on a socket. */
+void * sisis_netlink_wait_for_rib_changes(void *);
+
+/* Subscribe to routing table using netlink interface. */
+int sisis_netlink_subscribe_to_rib_changes(struct sisis_netlink_routing_table_info * info);
+
 #endif

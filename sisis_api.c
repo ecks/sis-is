@@ -390,11 +390,22 @@ int sisis_rib_add_ipv6 (struct route_ipv6 * route)
 extern int sisis_netlink_subscribe_to_rib_changes(void);
 
 /** Subscribe to route add/remove messages */
-int subscript_to_rib_changes(int (*rib_changed) (struct route_ipv4 *))
+int subscribe_to_rib_changes(int (*rib_changed) (struct route_ipv4 *))
 {
 	int rtn = 0;
 	
-	// struct nlsock netlink = { -1, 0, {0}, "netlink-listen"},     /* kernel messages */
+	// Set up callbacks
+	struct sisis_netlink_routing_table_info * info = malloc(sizeof(struct sisis_netlink_routing_table_info));
+	memset(info, 0, sizeof(*info));
+	info->rib_add_ipv4_route = sisis_rib_change_add_ipv4;
+	info->rib_remove_ipv4_route = sisis_rib_change_remove_ipv4;
+	#ifdef HAVE_IPV6
+	info->rib_add_ipv6_route = sisis_rib_change_add_ipv6;
+	info->rib_remove_ipv6_route = sisis_rib_change_remove_ipv6;
+	#endif /* HAVE_IPV6 */
+	
+	// Subscribe to changes
+	sisis_netlink_subscript_to_rib_changes(info)
 	
 	return rtn;
 }

@@ -73,7 +73,7 @@ int sisis_rib_add_ipv6(struct route_ipv6 *);
 #endif /* HAVE_IPV6 */
 
 /** Subscribe to route add/remove messages */
-int subscript_to_rib_changes(int (*rib_changed) (struct route_ipv4 *));
+int subscribe_to_rib_changes(int (*rib_changed) (struct route_ipv4 *))
 
 /**
  * Get SIS-IS addresses for a specific process type.  It is the receivers
