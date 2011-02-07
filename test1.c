@@ -45,6 +45,26 @@ void terminate(int signal)
 	exit(0);
 }
 
+int rib_monitor_add_ipv4_route(struct route_ipv4 * route)
+{
+	char prefix_str[INET_ADDRSTRLEN];
+	if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
+		printf("Added route: %s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
+	
+	// Free memory
+	free(route);
+}
+
+int rib_monitor_delete_ipv4_route(struct route_ipv4 * route)
+{
+	char prefix_str[INET_ADDRSTRLEN];
+	if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
+		printf("Deleted route: %s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
+	
+	// Free memory
+	free(route);
+}
+
 int main (int argc, char ** argv)
 {
 	// Get kernel routes
@@ -63,6 +83,20 @@ int main (int argc, char ** argv)
 		}
 		exit(0);
 	}
+	
+	// Monitor rib changes
+	if (argc == 2 && strcmp(argv[1], "--rib-monitor") == 0)
+	{
+		struct subscribe_to_rib_changes_info info;
+		info.rib_add_ipv4_route = rib_monitor_add_ipv4_route;
+		info.rib_delete_ipv4_route = rib_monitor_delete_ipv4_route;
+		subscribe_to_rib_changes(&info);
+		
+		// Do nothing
+		while (1)
+			sleep(600);
+	}
+	
 	struct addrinfo hints, *addr;
 	
 	// Check if the IP address and port are set

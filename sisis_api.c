@@ -403,7 +403,7 @@ int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
 	#endif /* HAVE_IPV6 */
 	
 	// Subscribe to changes
-	sisis_netlink_subscript_to_rib_changes(subscribe_info);
+	sisis_netlink_subscribe_to_rib_changes(subscribe_info);
 	
 	return rtn;
 }
