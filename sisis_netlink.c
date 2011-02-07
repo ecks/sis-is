@@ -423,4 +423,6 @@ int sisis_netlink_subscribe_to_rib_changes(struct sisis_netlink_routing_table_in
 	thread_info->netlink_rib = netlink_rib;
 	thread_info->info = info;
 	pthread_create(thread, NULL, sisis_netlink_wait_for_rib_changes, thread_info);
+	
+	return 0;
 }
