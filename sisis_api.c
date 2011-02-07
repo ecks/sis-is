@@ -352,7 +352,9 @@ int sisis_dump_kernel_routes()
 	struct sisis_netlink_routing_table_info info;
 	memset(info, 0, sizeof(info));
 	info.rib_add_ipv4_route = sisis_rib_add_ipv4;
+	#ifdef HAVE_IPV6
 	info.rib_add_ipv6_route = sisis_rib_add_ipv6;
+	#endif /* HAVE_IPV6 */
 	
 	// Get routes
 	sisis_netlink_route_read(&info);
