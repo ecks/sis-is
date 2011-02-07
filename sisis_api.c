@@ -387,25 +387,23 @@ int sisis_rib_add_ipv6 (struct route_ipv6 * route)
 }
 #endif /* HAVE_IPV6 */
 
-extern int sisis_netlink_subscribe_to_rib_changes(void);
-
 /** Subscribe to route add/remove messages */
-int subscribe_to_rib_changes(int (*rib_changed) (struct route_ipv4 *))
+int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info);
 {
 	int rtn = 0;
 	
 	// Set up callbacks
-	struct sisis_netlink_routing_table_info * info = malloc(sizeof(struct sisis_netlink_routing_table_info));
-	memset(info, 0, sizeof(*info));
-	info->rib_add_ipv4_route = sisis_rib_change_add_ipv4;
-	info->rib_remove_ipv4_route = sisis_rib_change_remove_ipv4;
+	struct sisis_netlink_routing_table_info * subscribe_info = malloc(sizeof(struct sisis_netlink_routing_table_info));
+	memset(subscribe_info, 0, sizeof(*subscribe_info));
+	subscribe_info->rib_add_ipv4_route = info->rib_add_ipv4_route;
+	subscribe_info->rib_remove_ipv4_route = info->rib_remove_ipv4_route;
 	#ifdef HAVE_IPV6
-	info->rib_add_ipv6_route = sisis_rib_change_add_ipv6;
-	info->rib_remove_ipv6_route = sisis_rib_change_remove_ipv6;
+	subscribe_info->rib_add_ipv6_route = info->rib_add_ipv6_route;
+	subscribe_info->rib_remove_ipv6_route = info->rib_remove_ipv6_route;
 	#endif /* HAVE_IPV6 */
 	
 	// Subscribe to changes
-	sisis_netlink_subscript_to_rib_changes(info)
+	sisis_netlink_subscript_to_rib_changes(subscribe_info)
 	
 	return rtn;
 }
