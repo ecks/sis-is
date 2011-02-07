@@ -16,7 +16,6 @@
 #include <gtk/gtk.h>
 
 #include "vis_window.h"
-#include "vis_main.h"
 
 #define BUFLEN 16384
 
@@ -76,6 +75,40 @@ void get_machine_info(char * prefix_str, char * memory_usage)
   memory_usage[5] = '\0';
 }
 
+static int currently_checking_rib = 0;
+
+void *rib_mon(void *ptr)
+{
+  struct listnode * node_to_check;
+  siginfo_t info;
+  sigset_t sigset;
+
+  sigemptyset(&sigset);
+  sigaddset(&sigset, SIGALRM);
+
+  while(1)
+  {
+    while (sigwaitinfo(&sigset, &info) > 0)
+    {
+      currently_checking_rib = 1;
+      struct list * addr_list_to_check = get_rib_routes();
+      // addr_list_to_check gets freed
+      struct list * filt_addr_list;
+      filt_addr_list = extract_host_from_rib(addr_list_to_check, all_addrs.mm_addr);
+      gdk_threads_enter();
+      pthread_mutex_lock(&mutex);
+      FREE_LINKED_LIST(all_addrs.other_procs);
+      all_addrs.other_procs = filt_addr_list;
+      pthread_mutex_unlock(&mutex);
+      gdk_threads_leave();
+      currently_checking_rib = 0;
+    }
+  }
+
+  return NULL;
+}
+
+
 static int currently_drawing = 0;
 //do_draw will be executed in a separate thread whenever we would like to update
 //our animation
@@ -85,7 +118,6 @@ void *do_draw(void *ptr)
   struct listnode * other_addr_node;
   int proc_type[6];
 
-  memset(&proc_type, 0, sizeof(proc_type));
  //prepare to trap our SIGALRM so we can draw when we recieve it!
   siginfo_t info;
   sigset_t sigset;
@@ -96,6 +128,7 @@ void *do_draw(void *ptr)
   while(1){
       //wait for our SIGALRM.  Upon receipt, draw our stuff.  Then, do it again!
       while (sigwaitinfo(&sigset, &info) > 0) {
+        memset(&proc_type, 0, sizeof(proc_type));
         currently_drawing = 1;
 
         gdk_threads_enter();
@@ -112,7 +145,7 @@ void *do_draw(void *ptr)
         pthread_mutex_unlock(&mutex);
         gdk_threads_leave();
 
-        char * memory_usage = calloc(5, sizeof(char));
+        char * memory_usage = calloc(6, sizeof(char));
         get_machine_info(addr_to_draw->prefix_str, memory_usage);
 
         int width, height;
@@ -190,18 +223,29 @@ gboolean timer_exe(gpointer s)
     //we don't run into the usual multithreading issues
     int drawing_status = g_atomic_int_get(&currently_drawing);
 
+    int rib_check_status = g_atomic_int_get(&currently_checking_rib);
     //if this is the first time, create the drawing thread
-    static pthread_t thread_info;
-
-    if(first_time == 1){
+    static pthread_t draw_thread;
+    static pthread_t rib_thread;
+    
+    //if this is the first time, create the drawing and rib monitoring thread
+    if(first_time == 1)
+    {
         int  iret;
-        iret = pthread_create( &thread_info, NULL, do_draw, NULL);
+        iret = pthread_create( &draw_thread, NULL, do_draw, NULL);
+        iret = pthread_create( &rib_thread, NULL, rib_mon, NULL );
     }
 
     //if we are not currently drawing anything, send a SIGALRM signal
     //to our thread and tell it to update our pixmap
-    if(drawing_status == 0){
-        pthread_kill(thread_info, SIGALRM);
+    if(drawing_status == 0)
+    {
+        pthread_kill(draw_thread, SIGALRM);
+    }
+
+    if(rib_check_status == 0)
+    {
+        pthread_kill(rib_thread, SIGALRM);
     }
 
     //tell our window it is time to draw our animation.
