@@ -388,7 +388,7 @@ int sisis_rib_add_ipv6 (struct route_ipv6 * route)
 #endif /* HAVE_IPV6 */
 
 /** Subscribe to route add/remove messages */
-int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info);
+int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
 {
 	int rtn = 0;
 	
@@ -403,7 +403,7 @@ int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info);
 	#endif /* HAVE_IPV6 */
 	
 	// Subscribe to changes
-	sisis_netlink_subscript_to_rib_changes(subscribe_info)
+	sisis_netlink_subscript_to_rib_changes(subscribe_info);
 	
 	return rtn;
 }
