@@ -327,7 +327,7 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h, void *
 				
 				// Note: Receivers responsibilty to free memory for route
 				
-				(h->nlmsg_type == RTM_NEWROUTE) ? real_info->rib_add_ipv4_route (route) : real_info->rib_remove_ipv4_route;
+				(h->nlmsg_type == RTM_NEWROUTE) ? real_info->rib_add_ipv4_route(route) : real_info->rib_remove_ipv4_route(route);
 			}
     }
 #ifdef HAVE_IPV6
@@ -354,7 +354,7 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h, void *
 				
 				// Note: Receivers responsibilty to free memory for prefix and route
 				
-				(h->nlmsg_type == RTM_NEWROUTE) ? real_info->rib_add_ipv6_route (route) : real_info->rib_remove_ipv6_route;
+				(h->nlmsg_type == RTM_NEWROUTE) ? real_info->rib_add_ipv6_route(route) : real_info->rib_remove_ipv6_route(route);
 			}
     }
 #endif /* HAVE_IPV6 */
@@ -405,7 +405,7 @@ int sisis_netlink_subscribe_to_rib_changes(struct sisis_netlink_routing_table_in
 	struct nlsock * netlink_rib  = malloc(sizeof(struct nlsock));
 	netlink_rib->sock = -1;
   netlink_rib->seq = 0;
-  netlink_rib->snl = {0};
+  memset(&netlink_rib->snl, 0, sizeof(netlink_rib->snl));
   netlink_rib->name = "netlink";
 	
 	// Set up groups to listen for
