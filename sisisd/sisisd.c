@@ -134,46 +134,63 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 			case SISIS_CMD_REGISTER_ADDRESS:
 			case SISIS_CMD_UNREGISTER_ADDRESS:
 				{
-					// Set up prefix
-					struct prefix p;
-					p.family = ntohs(*(unsigned short *)(msg+8));
-					p.prefixlen = 32;
-					
-					// Get address
-					short len = ntohs(*(unsigned short *)(msg+10));
-					char ip_addr[64];
-					memset(ip_addr, 0, 64);
-					memcpy(ip_addr, msg+12, len);
-					printf("\tIP Address: %s\n", ip_addr);
-					
-					// Set expiration
-					time_t expires = time(NULL) + SISIS_ADDRESS_TIMEOUT;
-					
-					// Get loopback ifindex
-					int ifindex = if_nametoindex("lo");
-					
-					// Set up prefix
-					if (inet_pton(p.family, ip_addr, &p.u.prefix) != 1)
+					if (msg_len >= 12)
 					{
-						// Construct reply
-						char * buf;
-						int buf_len = sisis_construct_message(&buf, SISIS_MESSAGE_VERSION, request_id, SISIS_NACK, NULL, 0);
-						sendto(sock, buf, buf_len, 0, from, from_len);
-						free(buf);
+						int i;
+						for (i = 0; i < msg_len; i++)
+						{
+							printf("%x\t", msg[i]);
+							if ((i+1)% 10 == 0)
+								printf("\n");
+						}
+						printf("\n");
 						
-						zlog_err ("sisis_process_message: Invalid SIS-IS address: %s", ip_addr);
-						return;
+						// Set up prefix
+						struct prefix p;
+						p.family = ntohs(*(unsigned short *)(msg+8));
+						p.prefixlen = 32;
+						
+						// Get address
+						short len = ntohs(*(unsigned short *)(msg+10));
+						char ip_addr[64];
+						memset(ip_addr, 0, 64);
+						if (len >= 64 || msg_len > msg-12)
+							printf("Invalid IP address length: %hd\n", len);
+						else
+						{
+							memcpy(ip_addr, msg+12, len);
+							printf("\tIP Address: %s\n", ip_addr);
+							
+							// Set expiration
+							time_t expires = time(NULL) + SISIS_ADDRESS_TIMEOUT;
+							
+							// Get loopback ifindex
+							int ifindex = if_nametoindex("lo");
+							
+							// Set up prefix
+							if (inet_pton(p.family, ip_addr, &p.u.prefix) != 1)
+							{
+								// Construct reply
+								char * buf;
+								int buf_len = sisis_construct_message(&buf, SISIS_MESSAGE_VERSION, request_id, SISIS_NACK, NULL, 0);
+								sendto(sock, buf, buf_len, 0, from, from_len);
+								free(buf);
+								
+								zlog_err ("sisis_process_message: Invalid SIS-IS address: %s", ip_addr);
+								return;
+							}
+							
+							int zcmd = (command == SISIS_CMD_REGISTER_ADDRESS) ? ZEBRA_INTERFACE_ADDRESS_ADD : ZEBRA_INTERFACE_ADDRESS_DELETE;
+							int status = zapi_interface_address(zcmd, zclient, &p, ifindex, &expires);
+							
+							// Construct reply
+							char * buf;
+							int buf_len = sisis_construct_message(&buf, SISIS_MESSAGE_VERSION, request_id, (status == 0) ? SISIS_ACK : SISIS_NACK, NULL, 0);
+							printf("\tSending %s\n", (status == 0) ? "ACK" : "NACK");
+							sendto(sock, buf, buf_len, 0, from, from_len);
+							free(buf);
+						}
 					}
-					
-					int zcmd = (command == SISIS_CMD_REGISTER_ADDRESS) ? ZEBRA_INTERFACE_ADDRESS_ADD : ZEBRA_INTERFACE_ADDRESS_DELETE;
-					int status = zapi_interface_address(zcmd, zclient, &p, ifindex, &expires);
-					
-					// Construct reply
-					char * buf;
-					int buf_len = sisis_construct_message(&buf, SISIS_MESSAGE_VERSION, request_id, (status == 0) ? SISIS_ACK : SISIS_NACK, NULL, 0);
-					printf("\tSending %s\n", (status == 0) ? "ACK" : "NACK");
-					sendto(sock, buf, buf_len, 0, from, from_len);
-					free(buf);
 				}
 				break;
 		}
