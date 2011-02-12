@@ -254,11 +254,15 @@ int sisis_do_register(char * sisis_addr)
 	
 	// Setup message
 	char msg[128];
-	sprintf(msg, "%hd %hd %s", htons(AF_INET6), htons(strlen(sisis_addr)), sisis_addr);
+	unsigned short tmp = htons(AF_INET6);
+	memcpy(msg, &tmp, 2);
+	tmp = htons(strlen(sisis_addr));
+	memcpy(msg+2, &tmp, 2);
+	memcpy(msg+4, sisis_addr, strlen(sisis_addr));
 	
 	// Send message
 	char * buf;
-	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, request_id, SISIS_CMD_REGISTER_ADDRESS, msg, strlen(msg));
+	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, request_id, SISIS_CMD_REGISTER_ADDRESS, msg, strlen(sisis_addr)+4);
 	sisis_send(buf, buf_len);
 	free(buf);
 	
@@ -334,11 +338,15 @@ int sisis_unregister(uint32_t ptype, uint32_t host_num, uint64_t pid)
 	
 	// Setup message
 	char msg[128];
-	sprintf(msg, "%hd %hd %s", htons(AF_INET6), htons(strlen(sisis_addr)), sisis_addr);
+	unsigned short tmp = htons(AF_INET6);
+	memcpy(msg, &tmp, 2);
+	tmp = htons(strlen(sisis_addr));
+	memcpy(msg+2, &tmp, 2);
+	memcpy(msg+4, sisis_addr, strlen(sisis_addr));
 	
 	// Send message
 	char * buf;
-	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, request_id, SISIS_CMD_UNREGISTER_ADDRESS, msg, strlen(msg));
+	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, request_id, SISIS_CMD_UNREGISTER_ADDRESS, msg, strlen(sisis_addr)+4);
 	sisis_send(buf, buf_len);
 	free(buf);
 	
