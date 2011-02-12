@@ -739,11 +739,9 @@ static int zread_interface_address_add_or_delete (int command, struct zserv *cli
 	stream_get (&p.u.prefix, s, plen);
 	p.prefixlen = stream_getc (s);
 	
-	/*
 	char addr_str[64];
 	inet_ntop (p.family, &p.u.prefix, addr_str, 64),
 	sprintf(addr_str, "%s/%d", addr_str, p.prefixlen);
-	*/
 	
 	// Get interface
 	struct interface *ifp = if_lookup_by_index (ifindex);
