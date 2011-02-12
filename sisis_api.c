@@ -202,15 +202,10 @@ int sisis_construct_message(char ** buf, unsigned short version, unsigned int re
  * 
  * Returns zero on success.
  */
-int sisis_create_addr(uint32_t ptype, uint32_t host_num, uint64_t pid, char * sisis_addr)
+int sisis_create_addr(uint16_t ptype, uint32_t host_num, uint64_t pid, char * sisis_addr)
 {
-	// Check bounds
-	if (ptype > 255 || host_num > 255)
-		return 1;
-	pid %= 256;
-	
 	// Construct SIS-IS address
-	sprintf(sisis_addr, "fe80:%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x::", (ptype >> 16) & 0xffff, ptype & 0xffff, (host_num >> 16) & 0xffff, host_num & 0xffff, (pid >> 48) & 0xffff, (pid >> 32) & 0xffff, (pid >> 16) & 0xffff, pid & 0xffff);
+	sprintf(sisis_addr, "fe80:%04x:%04x:%04x:%04x:%04x:%04x:%04x", ptype & 0xffff, (host_num >> 16) & 0xffff, host_num & 0xffff, (pid >> 48) & 0xffff, (pid >> 32) & 0xffff, (pid >> 16) & 0xffff, pid & 0xffff);
 	
 	return 0;
 }
@@ -251,8 +246,6 @@ int sisis_do_register(char * sisis_addr)
 	awaiting_ack.request_id = request_id;
 	awaiting_ack.mutex = mutex;
 	awaiting_ack.flags = 0;
-	
-	printf("Registering [%d]: %s\n", strlen(sisis_addr), sisis_addr);
 	
 	// Setup message
 	char msg[128];
@@ -304,7 +297,7 @@ void * sisis_reregister(void * arg)
  * 
  * Returns zero on success.
  */
-int sisis_register(uint32_t ptype, uint32_t host_num, uint64_t pid, char * sisis_addr)
+int sisis_register(uint16_t ptype, uint32_t host_num, uint64_t pid, char * sisis_addr)
 {
 	// Construct SIS-IS address
 	if (sisis_create_addr(ptype, host_num, pid, sisis_addr))
@@ -325,7 +318,7 @@ int sisis_register(uint32_t ptype, uint32_t host_num, uint64_t pid, char * sisis
  * Unregisters SIS-IS process.
  * Returns zero on success.
  */
-int sisis_unregister(uint32_t ptype, uint32_t host_num, uint64_t pid)
+int sisis_unregister(uint16_t ptype, uint32_t host_num, uint64_t pid)
 {
 	// Construct SIS-IS address
 	char sisis_addr[INET_ADDRSTRLEN+1];
@@ -471,7 +464,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv4 * p)
  * Get SIS-IS addresses for a specific process type.  It is the receivers
  * responsibility to free the list when done with it.
  */
-struct list * get_sisis_addrs_for_process_type(uint32_t ptype)
+struct list * get_sisis_addrs_for_process_type(uint16_t ptype)
 {
 	// Create prefix
 	char prefix_addr_str[INET_ADDRSTRLEN+1];
@@ -489,7 +482,7 @@ struct list * get_sisis_addrs_for_process_type(uint32_t ptype)
  * Get SIS-IS addresses for a specific process type and host.  It is the receivers
  * responsibility to free the list when done with it.
  */
-struct list * get_sisis_addrs_for_process_type_and_host(uint32_t ptype, uint32_t host_num)
+struct list * get_sisis_addrs_for_process_type_and_host(uint16_t ptype, uint32_t host_num)
 {
 	// Create prefix
 	char prefix_addr_str[INET_ADDRSTRLEN+1];
