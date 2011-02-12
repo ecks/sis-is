@@ -136,15 +136,6 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 				{
 					if (msg_len >= 12)
 					{
-						int i;
-						for (i = 0; i < msg_len; i++)
-						{
-							printf("%x\t", msg[i]);
-							if ((i+1)% 10 == 0)
-								printf("\n");
-						}
-						printf("\n");
-						
 						// Set up prefix
 						struct prefix p;
 						p.family = ntohs(*(unsigned short *)(msg+8));
