@@ -143,7 +143,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 					short len = ntohs(*(unsigned short *)(msg+10));
 					char ip_addr[64];
 					memset(ip_addr, 0, 64);
-					memcpy(ip_addr, msg+10, len);
+					memcpy(ip_addr, msg+12, len);
 					printf("\tIP Address: %s\n", ip_addr);
 					
 					// Set expiration
