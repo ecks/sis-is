@@ -1519,7 +1519,7 @@ DEFUN (ipv6_address,
        "Set the IP address of an interface\n"
        "IPv6 address (e.g. 3ffe:506::1/48)\n")
 {
-  return ipv6_address_install (vty, vty->index, argv[0], NULL, NULL, 0);
+  return ipv6_address_install (vty, vty->index, argv[0], NULL, NULL, 0, NULL);
 }
 
 DEFUN (no_ipv6_address,
