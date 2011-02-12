@@ -113,9 +113,10 @@ int main (int argc, char ** argv)
 	
 	// Get pid
 	pid = getpid();
+	print("Pid: %ld\n", (uint64_t)pid);
 	
 	// Register address
-	if (sisis_register(ptype, host_num, pid, sisis_addr) != 0)
+	if (sisis_register(ptype, host_num, (uint64_t)pid, sisis_addr) != 0)
 	{
 		printf("Failed to register SIS-IS address.\n");
 		exit(1);

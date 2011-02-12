@@ -218,7 +218,8 @@ int sisis_create_addr(uint16_t ptype, uint32_t host_num, uint64_t pid, char * si
 struct sisis_addr_components get_sisis_addr_components(char * sisis_addr)
 {
 	struct sisis_addr_components rtn;
-	sscanf(sisis_addr, "fe80:%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", &rtn.ptype, (char*)&rtn.ptype + 2, &rtn.host_num, (char *)&rtn.host_num + 2, &rtn.pid, (char *)&rtn.pid + 2, (char *)&rtn.pid + 4, (char *)&rtn.pid + 6);
+	// TODO: Fix this
+	//sscanf(sisis_addr, "fe80:%04hx:%04hx:%04hx:%04hx:%04hx:%04hx:%04hx", &rtn.ptype, &rtn.host_num, (short *)&rtn.host_num + 2, &rtn.pid, (short *)&rtn.pid + 2, (short *)&rtn.pid + 4, (short *)&rtn.pid + 3);
 	return rtn;
 }
 
