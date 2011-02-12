@@ -1367,7 +1367,7 @@ DEFUN (no_ip_address_label,
 #endif /* HAVE_NETLINK */
 
 #ifdef HAVE_IPV6
-static int
+int
 ipv6_address_install (struct vty *vty, struct interface *ifp,
 		      const char *addr_str, const char *peer_str,
 		      const char *label, int secondary, time_t * expires)
@@ -1452,7 +1452,7 @@ ipv6_address_install (struct vty *vty, struct interface *ifp,
   return CMD_SUCCESS;
 }
 
-static int
+int
 ipv6_address_uninstall (struct vty *vty, struct interface *ifp,
 			const char *addr_str, const char *peer_str,
 			const char *label, int secondry)

@@ -102,8 +102,8 @@ extern void zebra_snmp_init (void);
 extern void zebra_vty_init (void);
 extern int ip_address_install (struct vty *, struct interface *, const char *, const char *, const char *, time_t * expires);
 extern int ip_address_uninstall (struct vty *, struct interface *, const char *, const char *, const char *);
-extern static int ipv6_address_install (struct vty *, struct interface *, const char *, const char *, const char *, int, time_t * expires);
-extern static int ipv6_address_uninstall (struct vty *, struct interface *, const char *, const char *, const char *, int);
+extern int ipv6_address_install (struct vty *, struct interface *, const char *, const char *, const char *, int, time_t * expires);
+extern int ipv6_address_uninstall (struct vty *, struct interface *, const char *, const char *, const char *, int);
 
 extern int zsend_interface_add (struct zserv *, struct interface *);
 extern int zsend_interface_delete (struct zserv *, struct interface *);
