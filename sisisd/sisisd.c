@@ -139,7 +139,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 						// Set up prefix
 						struct prefix p;
 						p.family = ntohs(*(unsigned short *)(msg+8));
-						p.prefixlen = 32;
+						p.prefixlen = 128;
 						
 						// Get address
 						short len = ntohs(*(unsigned short *)(msg+10));
