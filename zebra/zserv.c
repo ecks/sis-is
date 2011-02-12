@@ -734,14 +734,14 @@ static int zread_interface_address_add_or_delete (int command, struct zserv *cli
   ifindex = stream_getl (s);
 	
 	// Get prefix
-	p->family = stream_getc (s);
-	int plen = prefix_blen (p);
-	stream_get (&p->u.prefix, s, plen);
-	p->prefixlen = stream_getc (s);
+	p.family = stream_getc (s);
+	int plen = prefix_blen (&p);
+	stream_get (&p.u.prefix, s, plen);
+	p.prefixlen = stream_getc (s);
 	
 	char addr_str[64];
-	inet_ntop (p->family, &p->u.prefix, addr_str, 64),
-	sprintf(&addr_str, "%s/%d", addr_str, p->prefixlen);
+	inet_ntop (p.family, &p.u.prefix, addr_str, 64),
+	sprintf(&addr_str, "%s/%d", addr_str, p.prefixlen);
 	
 	// Get interface
 	struct interface *ifp = if_lookup_by_index (ifindex);
