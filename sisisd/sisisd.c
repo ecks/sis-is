@@ -153,7 +153,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 					int ifindex = if_nametoindex("lo");
 					
 					// Set up prefix
-					if (inet_pton(p.family, ip_addr, &p.u.prefix.s_addr) != 1)
+					if (inet_pton(p.family, ip_addr, &p.u.prefix) != 1)
 					{
 						// Construct reply
 						char * buf;
@@ -211,8 +211,7 @@ struct sisis_listener
 static int sisis_recvfrom(struct thread *thread)
 {
 	int sisis_sock;
-	union sockunion su;
-  struct sisis_listener *listener = THREAD_ARG(thread);
+	struct sisis_listener *listener = THREAD_ARG(thread);
 	
 	sisis_sock = THREAD_FD (thread);
 	if (sisis_sock < 0)
@@ -230,7 +229,7 @@ static int sisis_recvfrom(struct thread *thread)
 	char buf[1024];
 	memset (buf, 0, 1024);
 	int recv_len;
-	int from_len = sizeof from;
+	unsigned int from_len = sizeof from;
 	recv_len = recvfrom(sisis_sock, buf, 1024, 0, &from, &from_len);
 	if (recv_len < 0)
 	{
@@ -300,7 +299,7 @@ int sisis_socket (unsigned short port, const char *address)
   int sock;
   int socklen;
   struct sockaddr_in sin;
-  int ret, en;
+  int ret;
 	
 	// Open socket
   sock = socket (AF_INET, SOCK_DGRAM, 0);
