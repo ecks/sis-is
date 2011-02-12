@@ -134,10 +134,16 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 			case SISIS_CMD_REGISTER_ADDRESS:
 			case SISIS_CMD_UNREGISTER_ADDRESS:
 				{
-					// TODO: This may be better: short len = ntohs(*(unsigned short *)(msg+8));
-					char ip_addr[INET_ADDRSTRLEN+1];
-					memset(ip_addr, 0, INET_ADDRSTRLEN+1);
-					memcpy(ip_addr, msg+8, from_len-8);
+					// Set up prefix
+					struct prefix p;
+					p.family = ntohs(*(unsigned short *)(msg+8));
+					p.prefixlen = 32;
+					
+					// Get address
+					short len = ntohs(*(unsigned short *)(msg+10));
+					char ip_addr[64];
+					memset(ip_addr, 0, 64);
+					memcpy(ip_addr, msg+10, len);
 					printf("\tIP Address: %s\n", ip_addr);
 					
 					// Set expiration
@@ -147,10 +153,7 @@ void sisis_process_message(char * msg, int msg_len, int sock, struct sockaddr * 
 					int ifindex = if_nametoindex("lo");
 					
 					// Set up prefix
-					struct prefix_ipv4 p;
-					p.family = AF_INET;
-					p.prefixlen = 32;
-					if (inet_pton(AF_INET, ip_addr, &p.prefix.s_addr) != 1)
+					if (inet_pton(p.family, ip_addr, &p.u.prefix.s_addr) != 1)
 					{
 						// Construct reply
 						char * buf;

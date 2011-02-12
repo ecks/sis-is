@@ -1370,7 +1370,7 @@ DEFUN (no_ip_address_label,
 static int
 ipv6_address_install (struct vty *vty, struct interface *ifp,
 		      const char *addr_str, const char *peer_str,
-		      const char *label, int secondary)
+		      const char *label, int secondary, time_t * expires)
 {
   struct prefix_ipv6 cp;
   struct connected *ifc;
@@ -1406,6 +1406,13 @@ ipv6_address_install (struct vty *vty, struct interface *ifp,
       /* Add to linked list. */
       listnode_add (ifp->connected, ifc);
     }
+		
+		// Check if this route expires
+		if (expires != NULL)
+		{
+			SET_FLAG (ifc->flags, ZEBRA_IFA_EXPIRES);
+			ifc->expires = *expires;
+		}
 
   /* This address is configured from zebra. */
   if (! CHECK_FLAG (ifc->conf, ZEBRA_IFC_CONFIGURED))

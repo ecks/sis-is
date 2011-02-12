@@ -1021,7 +1021,7 @@ zclient_event (enum event event, struct zclient *zclient)
 }
 
 // Add or delete an IP address from and interface
-int zapi_interface_address (u_char cmd, struct zclient *zclient, struct prefix_ipv4 *p, unsigned int ifindex, time_t * expires)
+int zapi_interface_address (u_char cmd, struct zclient *zclient, struct prefix *p, unsigned int ifindex, time_t * expires)
 {
   int i;
   int psize;
@@ -1036,10 +1036,10 @@ int zapi_interface_address (u_char cmd, struct zclient *zclient, struct prefix_i
 	// Put ifindex
 	stream_putl (s, ifindex);
 	
-  /* Put prefix information. */
-  psize = PSIZE (p->prefixlen);
-  stream_putc (s, p->prefixlen);
-  stream_write (s, (u_char *) & p->prefix, psize);
+	/* Prefix information. */
+	stream_putc (s, p->family);
+	blen = prefix_blen (p);
+	stream_put (s, &p->u.prefix, blen);
 	
 	/* Put Expiration if needed */
 	if (expires)
