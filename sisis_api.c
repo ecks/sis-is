@@ -252,6 +252,8 @@ int sisis_do_register(char * sisis_addr)
 	awaiting_ack.mutex = mutex;
 	awaiting_ack.flags = 0;
 	
+	printf("Registering [%d]: %s\n", strlen(sisis_addr), sisis_addr);
+	
 	// Setup message
 	char msg[128];
 	unsigned short tmp = htons(AF_INET6);
