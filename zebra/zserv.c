@@ -741,7 +741,7 @@ static int zread_interface_address_add_or_delete (int command, struct zserv *cli
 	
 	char addr_str[64];
 	inet_ntop (p.family, &p.u.prefix, addr_str, 64),
-	sprintf(&addr_str, "%s/%d", addr_str, p.prefixlen);
+	sprintf(addr_str, "%s/%d", addr_str, p.prefixlen);
 	
 	// Get interface
 	struct interface *ifp = if_lookup_by_index (ifindex);
@@ -757,16 +757,16 @@ static int zread_interface_address_add_or_delete (int command, struct zserv *cli
 				expires_ptr = &expires;
 			}
 			
-			if (p->family == AF_INET)
+			if (p.family == AF_INET)
 				ip_address_install (NULL, ifp, addr_str, NULL, NULL, expires_ptr);
-			else if (p->family == AF_INET6)
+			else if (p.family == AF_INET6)
 				ipv6_address_install(NULL, ifp, addr_str, NULL, NULL, 0, expires_ptr);
 		}
 		else if (command == ZEBRA_INTERFACE_ADDRESS_DELETE)
 		{
-			if (p->family == AF_INET)
+			if (p.family == AF_INET)
 				ip_address_uninstall (NULL, ifp, addr_str, NULL, NULL);
-			else if (p->family == AF_INET6)
+			else if (p.family == AF_INET6)
 				ipv6_address_uninstall (NULL, ifp, addr_str, NULL, NULL, 0);
 		}
 	}
