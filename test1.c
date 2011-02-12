@@ -113,7 +113,7 @@ int main (int argc, char ** argv)
 	
 	// Get pid
 	pid = getpid();
-	printf("Pid: %ld\n", (uint64_t)pid);
+	printf("Pid: %lld\n", (uint64_t)pid);
 	
 	// Register address
 	if (sisis_register(ptype, host_num, (uint64_t)pid, sisis_addr) != 0)
