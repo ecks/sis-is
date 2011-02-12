@@ -205,7 +205,7 @@ int sisis_construct_message(char ** buf, unsigned short version, unsigned int re
 int sisis_create_addr(uint16_t ptype, uint32_t host_num, uint64_t pid, char * sisis_addr)
 {
 	// Construct SIS-IS address
-	sprintf(sisis_addr, "fe80:%04x:%04x:%04x:%04x:%04x:%04x:%04x", ptype & 0xffff, (host_num >> 16) & 0xffff, host_num & 0xffff, (pid >> 48) & 0xffff, (pid >> 32) & 0xffff, (pid >> 16) & 0xffff, pid & 0xffff);
+	sprintf(sisis_addr, "fe80:%04hx:%04hx:%04hx:%04hx:%04hx:%04hx:%04hx", (unsigned short)ptype & 0xffff, (unsigned short)(host_num >> 16) & 0xffff, (unsigned short)host_num & 0xffff, (unsigned short)(pid >> 48) & 0xffff, (unsigned short)(pid >> 32) & 0xffff, (unsigned short)(pid >> 16) & 0xffff, (unsigned short)pid & 0xffff);
 	
 	return 0;
 }
