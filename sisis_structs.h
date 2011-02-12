@@ -14,6 +14,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <stdint.h>
 
 /* Linked list */
 struct list
@@ -47,9 +48,9 @@ struct sisis_request_ack_info
 /* SIS-IS address components */
 struct sisis_addr_components
 {
-	unsigned int ptype;
-	unsigned int host_num;
-	unsigned int pid;
+	uint32_t ptype;
+	uint32_t host_num;
+	uint64_t pid;
 };
 
 /* IPv4 prefix structure. */
@@ -69,6 +70,27 @@ struct prefix_ipv6
   struct in6_addr prefix __attribute__ ((aligned (8)));
 };
 #endif /* HAVE_IPV6 */
+
+/* IPv4 and IPv6 unified prefix structure. */
+struct prefix
+{
+  u_char family;
+  u_char prefixlen;
+  union 
+  {
+    u_char prefix;
+    struct in_addr prefix4;
+#ifdef HAVE_IPV6
+    struct in6_addr prefix6;
+#endif /* HAVE_IPV6 */
+    struct 
+    {
+      struct in_addr id;
+      struct in_addr adv_router;
+    } lp;
+    u_char val[8];
+  } u __attribute__ ((aligned (8)));
+};
 
 struct route_ipv4
 {

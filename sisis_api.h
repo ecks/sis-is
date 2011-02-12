@@ -38,7 +38,7 @@ void sisis_process_message(char * msg, int msg_len);
  * 
  * Returns zero on success.
  */
-int sisis_create_addr(unsigned int ptype, unsigned int host_num, unsigned int pid, char * sisis_addr);
+int sisis_create_addr(uint32_t ptype, uint32_t host_num, uint64_t pid, char * sisis_addr);
 
 /**
  * Split an SIS-IS address into components.
@@ -54,13 +54,13 @@ struct sisis_addr_components get_sisis_addr_components(char * sisis_addr);
  * 
  * Returns zero on success.
  */
-int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, char * sisis_addr);
+int sisis_register(uint32_t ptype, uint32_t host_num, uint64_t pid, char * sisis_addr);
 
 /**
  * Unregisters SIS-IS process.
  * Returns zero on success.
  */
-int sisis_unregister(unsigned int ptype, unsigned int host_num, unsigned int pid);
+int sisis_unregister(uint32_t ptype, uint32_t host_num, uint64_t pid);
 
 /**
  * Dump kernel routing table.
@@ -90,12 +90,12 @@ int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info);
  * Get SIS-IS addresses for a specific process type.  It is the receivers
  * responsibility to free the list when done with it.
  */
-struct list * get_sisis_addrs_for_process_type(unsigned int ptype);
+struct list * get_sisis_addrs_for_process_type(uint32_t ptype);
 
 /**
  * Get SIS-IS addresses for a specific process type and host.  It is the receivers
  * responsibility to free the list when done with it.
  */
-struct list * get_sisis_addrs_for_process_type_and_host(unsigned int ptype, unsigned int host_num);
+struct list * get_sisis_addrs_for_process_type_and_host(uint32_t ptype, uint32_t host_num);
 
 #endif // _SISIS_API_H
