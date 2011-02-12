@@ -1023,8 +1023,7 @@ zclient_event (enum event event, struct zclient *zclient)
 // Add or delete an IP address from and interface
 int zapi_interface_address (u_char cmd, struct zclient *zclient, struct prefix *p, unsigned int ifindex, time_t * expires)
 {
-  int i;
-  int psize;
+  int blen;
   struct stream *s;
 
   /* Reset stream. */
