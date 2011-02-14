@@ -147,7 +147,7 @@ int main (int argc, char ** argv)
 	}
 	
 	// Status message
-	inet_ntop(AF_INET6, &((struct sockaddr_in *)(addr->ai_addr))->sin_addr, sisis_addr, INET6_ADDRSTRLEN);
+	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)(addr->ai_addr))->sin_addr6, sisis_addr, INET6_ADDRSTRLEN);
 	printf("Socket opened at %s on port %u.\n", sisis_addr, ntohs(((struct sockaddr_in *)(addr->ai_addr))->sin_port));
 	
 	// Listen on the socket
