@@ -1039,6 +1039,7 @@ int zapi_interface_address (u_char cmd, struct zclient *zclient, struct prefix *
 	stream_putc (s, p->family);
 	blen = prefix_blen (p);
 	stream_put (s, &p->u.prefix, blen);
+	stream_putc (s, p->prefixlen);
 	
 	/* Put Expiration if needed */
 	if (expires)
