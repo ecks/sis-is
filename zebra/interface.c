@@ -1628,7 +1628,7 @@ int if_addr_expired_checker(struct thread* th)
 				if (ifc->address->family == AF_INET)
 					ip_address_uninstall (NULL, ifp, buf, NULL, NULL);
 				else if (ifc->address->family == AF_INET6)
-					ip_v6address_uninstall (NULL, ifp, buf, NULL, NULL);
+					ipv6_address_uninstall (NULL, ifp, buf, NULL, NULL);
 			}
 		}
 	}
