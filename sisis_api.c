@@ -322,7 +322,7 @@ int sisis_register(uint16_t ptype, uint32_t host_num, uint64_t pid, char * sisis
 int sisis_unregister(uint16_t ptype, uint32_t host_num, uint64_t pid)
 {
 	// Construct SIS-IS address
-	char sisis_addr[INET_ADDRSTRLEN+1];
+	char sisis_addr[INET6_ADDRSTRLEN+1];
 	if (sisis_create_addr(ptype, host_num, pid, sisis_addr))
 		return 1;
 	
