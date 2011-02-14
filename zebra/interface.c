@@ -1625,7 +1625,10 @@ int if_addr_expired_checker(struct thread* th)
 				char buf[256];
 				prefix2str(ifc->address, buf, sizeof(buf));
 				zlog_debug ("Address %s expired from interface %s.", buf, ifp->name);
-				ip_address_uninstall (NULL, ifp, buf, NULL, NULL);
+				if (ifc->prefix->family == AF_INET)
+					ip_address_uninstall (NULL, ifp, buf, NULL, NULL);
+				else if (ifc->prefix->family == AF_INET6)
+					ip_v6address_uninstall (NULL, ifp, buf, NULL, NULL);
 			}
 		}
 	}
