@@ -205,7 +205,7 @@ int sisis_construct_message(char ** buf, unsigned short version, unsigned int re
 int sisis_create_addr(uint16_t ptype, uint32_t host_num, uint64_t pid, char * sisis_addr)
 {
 	// Construct SIS-IS address
-	sprintf(sisis_addr, "fe80:%04hx:%04hx:%04hx:%04hx:%04hx:%04hx:%04hx", (unsigned short)ptype & 0xffff, (unsigned short)(host_num >> 16) & 0xffff, (unsigned short)host_num & 0xffff, (unsigned short)(pid >> 48) & 0xffff, (unsigned short)(pid >> 32) & 0xffff, (unsigned short)(pid >> 16) & 0xffff, (unsigned short)pid & 0xffff);
+	sprintf(sisis_addr, "fcff:%04hx:%04hx:%04hx:%04hx:%04hx:%04hx:%04hx", (unsigned short)ptype & 0xffff, (unsigned short)(host_num >> 16) & 0xffff, (unsigned short)host_num & 0xffff, (unsigned short)(pid >> 48) & 0xffff, (unsigned short)(pid >> 32) & 0xffff, (unsigned short)(pid >> 16) & 0xffff, (unsigned short)pid & 0xffff);
 	
 	return 0;
 }
@@ -219,7 +219,7 @@ struct sisis_addr_components get_sisis_addr_components(char * sisis_addr)
 {
 	struct sisis_addr_components rtn;
 	// TODO: Fix this
-	//sscanf(sisis_addr, "fe80:%04hx:%04hx:%04hx:%04hx:%04hx:%04hx:%04hx", &rtn.ptype, &rtn.host_num, (short *)&rtn.host_num + 2, &rtn.pid, (short *)&rtn.pid + 2, (short *)&rtn.pid + 4, (short *)&rtn.pid + 3);
+	//sscanf(sisis_addr, "fcff:%04hx:%04hx:%04hx:%04hx:%04hx:%04hx:%04hx", &rtn.ptype, &rtn.host_num, (short *)&rtn.host_num + 2, &rtn.pid, (short *)&rtn.pid + 2, (short *)&rtn.pid + 4, (short *)&rtn.pid + 3);
 	return rtn;
 }
 
