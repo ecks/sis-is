@@ -200,10 +200,10 @@ sisis_netlink_parse_info (int (*filter) (struct sockaddr_nl *, struct nlmsghdr *
           /* OK we got netlink message. */
           
           /* skip unsolicited messages originating from command socket */
+					/*
           if (nl != &sisis_netlink_cmd && h->nlmsg_pid == sisis_netlink_cmd.snl.nl_pid)
-            {
-              continue;
-            }
+            continue;
+					*/
 
           error = (*filter) (&snl, h, info);
           if (error < 0)
