@@ -65,6 +65,7 @@ int rib_monitor_remove_ipv4_route(struct route_ipv4 * route)
 	free(route);
 }
 
+#ifdef HAVE_IPV6
 int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 {
 	char prefix_str[INET6_ADDRSTRLEN];
@@ -84,6 +85,7 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 	// Free memory
 	free(route);
 }
+#endif /* HAVE_IPV6 */
 
 int main (int argc, char ** argv)
 {
@@ -102,6 +104,8 @@ int main (int argc, char ** argv)
 			if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
 				printf("%s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
 		}
+
+#ifdef HAVE_IPV6
 		printf("\n----------------------------------- IPv6 -----------------------------------\n");
 		LIST_FOREACH(ipv4_rib_routes, node)
 		{
@@ -112,6 +116,8 @@ int main (int argc, char ** argv)
 			if (inet_ntop(AF_INET, &(route->p->prefix.sin6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
 				printf("%s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
 		}
+#endif /* HAVE_IPV6 */
+
 		exit(0);
 	}
 	

@@ -4,6 +4,8 @@
  * University of Delaware
  */
 
+#define HAVE_IPV6
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -31,7 +33,9 @@ unsigned int next_request_id = 1;
 
 // IPv4/IPv6 Ribs
 struct list * ipv4_rib_routes = NULL;
+#ifdef HAVE_IPV6
 struct list * ipv6_rib_routes = NULL;
+#endif /* HAVE_IPV6 */
 
 // TODO: Support multiple addresses at once.
 pthread_t sisis_reregistration_thread;
@@ -361,13 +365,15 @@ int sisis_dump_kernel_routes()
 		FREE_LINKED_LIST(ipv4_rib_routes);
 	ipv4_rib_routes = malloc(sizeof(struct list));
 	memset(ipv4_rib_routes, 0, sizeof(*ipv4_rib_routes));
-	
+
+#ifdef HAVE_IPV6
 	// Set up list of IPv6 rib entries
 	if (ipv6_rib_routes)
 		FREE_LINKED_LIST(ipv6_rib_routes);
 	ipv6_rib_routes = malloc(sizeof(struct list));
 	memset(ipv6_rib_routes, 0, sizeof(*ipv6_rib_routes));
-	
+#endif /* HAVE_IPV6 */
+
 	// Set up callbacks
 	struct sisis_netlink_routing_table_info info;
 	memset(&info, 0, sizeof(info));
