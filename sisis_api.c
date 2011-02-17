@@ -4,8 +4,6 @@
  * University of Delaware
  */
 
-#define HAVE_IPV6
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

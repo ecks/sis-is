@@ -69,7 +69,7 @@ int rib_monitor_remove_ipv4_route(struct route_ipv4 * route)
 int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 {
 	char prefix_str[INET6_ADDRSTRLEN];
-	if (inet_ntop(AF_INET6, &(route->p->prefix.sin6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
+	if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
 		printf("Added route: %s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
 	
 	// Free memory
@@ -79,7 +79,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 {
 	char prefix_str[INET6_ADDRSTRLEN];
-	if (inet_ntop(AF_INET6, &(route->p->prefix.sin6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
+	if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
 		printf("Removed route: %s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
 	
 	// Free memory
@@ -113,7 +113,7 @@ int main (int argc, char ** argv)
 			
 			// Set up prefix
 			char prefix_str[INET6_ADDRSTRLEN];
-			if (inet_ntop(AF_INET, &(route->p->prefix.sin6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
+			if (inet_ntop(AF_INET, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
 				printf("%s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
 		}
 #endif /* HAVE_IPV6 */

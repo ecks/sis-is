@@ -7,6 +7,8 @@
 #ifndef _SISIS_API_H
 #define _SISIS_API_H
 
+#define HAVE_IPV6
+
 #include "sisis_structs.h"
 
 #define SISIS_VERSION 1
