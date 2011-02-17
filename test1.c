@@ -65,6 +65,26 @@ int rib_monitor_remove_ipv4_route(struct route_ipv4 * route)
 	free(route);
 }
 
+int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
+{
+	char prefix_str[INET6_ADDRSTRLEN];
+	if (inet_ntop(AF_INET6, &(route->p->prefix.s_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
+		printf("Added route: %s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
+	
+	// Free memory
+	free(route);
+}
+
+int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
+{
+	char prefix_str[INET6_ADDRSTRLEN];
+	if (inet_ntop(AF_INET6, &(route->p->prefix.s_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
+		printf("Removed route: %s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
+	
+	// Free memory
+	free(route);
+}
+
 int main (int argc, char ** argv)
 {
 	// Get kernel routes
@@ -72,6 +92,7 @@ int main (int argc, char ** argv)
 	{
 		sisis_dump_kernel_routes();
 		struct listnode * node;
+		printf("----------------------------------- IPv4 -----------------------------------\n");
 		LIST_FOREACH(ipv4_rib_routes, node)
 		{
 			struct route_ipv4 * route = (struct route_ipv4 *)node->data;
@@ -79,6 +100,16 @@ int main (int argc, char ** argv)
 			// Set up prefix
 			char prefix_str[INET_ADDRSTRLEN];
 			if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
+				printf("%s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
+		}
+		printf("\n----------------------------------- IPv6 -----------------------------------\n");
+		LIST_FOREACH(ipv4_rib_routes, node)
+		{
+			struct route_ipv6 * route = (struct route_ipv6 *)node->data;
+			
+			// Set up prefix
+			char prefix_str[INET6_ADDRSTRLEN];
+			if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
 				printf("%s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
 		}
 		exit(0);

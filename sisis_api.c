@@ -29,8 +29,9 @@ int sisis_listener_port = 54345;
 char * sisis_listener_ip_addr = "127.0.0.1";
 unsigned int next_request_id = 1;
 
-// IPv4 Rib
+// IPv4/IPv6 Ribs
 struct list * ipv4_rib_routes = NULL;
+struct list * ipv6_rib_routes = NULL;
 
 // TODO: Support multiple addresses at once.
 pthread_t sisis_reregistration_thread;
@@ -355,11 +356,17 @@ int sisis_unregister(uint16_t ptype, uint32_t host_num, uint64_t pid)
  */
 int sisis_dump_kernel_routes()
 {
-	// Set up list of rib entries
+	// Set up list of IPv4 rib entries
 	if (ipv4_rib_routes)
 		FREE_LINKED_LIST(ipv4_rib_routes);
 	ipv4_rib_routes = malloc(sizeof(struct list));
 	memset(ipv4_rib_routes, 0, sizeof(*ipv4_rib_routes));
+	
+	// Set up list of IPv6 rib entries
+	if (ipv6_rib_routes)
+		FREE_LINKED_LIST(ipv6_rib_routes);
+	ipv6_rib_routes = malloc(sizeof(struct list));
+	memset(ipv6_rib_routes, 0, sizeof(*ipv6_rib_routes));
 	
 	// Set up callbacks
 	struct sisis_netlink_routing_table_info info;
@@ -393,9 +400,12 @@ int sisis_rib_add_ipv4 (struct route_ipv4 * route)
 }
 
 #ifdef HAVE_IPV6
-// TODO
 int sisis_rib_add_ipv6 (struct route_ipv6 * route)
 {
+	struct listnode * node = malloc(sizeof(struct listnode));
+	node->data = (void *)route;
+	LIST_APPEND(ipv6_rib_routes,node);
+	
 	return 0;
 }
 #endif /* HAVE_IPV6 */
