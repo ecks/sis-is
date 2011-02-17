@@ -107,13 +107,13 @@ int main (int argc, char ** argv)
 
 #ifdef HAVE_IPV6
 		printf("\n----------------------------------- IPv6 -----------------------------------\n");
-		LIST_FOREACH(ipv4_rib_routes, node)
+		LIST_FOREACH(ipv6_rib_routes, node)
 		{
 			struct route_ipv6 * route = (struct route_ipv6 *)node->data;
 			
 			// Set up prefix
 			char prefix_str[INET6_ADDRSTRLEN];
-			if (inet_ntop(AF_INET, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
+			if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
 				printf("%s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
 		}
 #endif /* HAVE_IPV6 */
@@ -127,6 +127,8 @@ int main (int argc, char ** argv)
 		struct subscribe_to_rib_changes_info info;
 		info.rib_add_ipv4_route = rib_monitor_add_ipv4_route;
 		info.rib_remove_ipv4_route = rib_monitor_remove_ipv4_route;
+		info.rib_add_ipv6_route = rib_monitor_add_ipv6_route;
+		info.rib_remove_ipv6_route = rib_monitor_remove_ipv6_route;
 		subscribe_to_rib_changes(&info);
 		
 		// Do nothing
