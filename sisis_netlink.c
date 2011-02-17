@@ -336,23 +336,21 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h, void *
 			// Check for callback
 			if ((h->nlmsg_type == RTM_NEWROUTE && real_info->rib_add_ipv6_route) || (h->nlmsg_type == RTM_DELROUTE && real_info->rib_remove_ipv6_route))
 			{
-				struct prefix_ipv6 * p = malloc(sizeof(struct prefix_ipv6));
-				p->family = AF_INET6;
-				memcpy (&p->prefix, dest, 16);
-				p->prefixlen = rtm->rtm_dst_len;
-				
 				// Construct route info
 				struct route_ipv6 * route = malloc(sizeof(struct route_ipv6));
 				route->type = 1;	// Means nothing right now
 				route->flags = flags;
-				route->p = &p;
+				route->p = malloc(sizeof(struct prefix_ipv6));
+				route->p->family = AF_INET6;
+				memcpy (&route->p->prefix, dest, 16);
+				route->p->prefixlen = rtm->rtm_dst_len;
 				route->gate = gate;
 				route->ifindex = index;
 				route->vrf_id = table;
 				route->metric = metric;
 				route->distance = 0;
 				
-				// Note: Receivers responsibilty to free memory for prefix and route
+				// Note: Receivers responsibilty to free memory for route
 				
 				(h->nlmsg_type == RTM_NEWROUTE) ? real_info->rib_add_ipv6_route(route) : real_info->rib_remove_ipv6_route(route);
 			}
