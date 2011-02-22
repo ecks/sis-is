@@ -109,7 +109,7 @@ int main (int argc, char ** argv)
 	
 	// Get host number
 	sscanf (argv[1], "%d", &host_num);
-	char sisis_addr[INET_ADDRSTRLEN+1];
+	char sisis_addr[INET6_ADDRSTRLEN+1];
 	
 	// Get pid
 	pid = getpid();
@@ -127,7 +127,7 @@ int main (int argc, char ** argv)
 	// Set up socket address info
 	struct addrinfo hints, *addr;
 	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_INET;	// IPv4
+	hints.ai_family = AF_INET6;	// IPv6
 	hints.ai_socktype = SOCK_DGRAM;
 	char port_str[8];
 	sprintf(port_str, "%u", REMOTE_SPAWN_PORT);
@@ -149,7 +149,7 @@ int main (int argc, char ** argv)
 	}
 	
 	// Status message
-	inet_ntop(AF_INET, &((struct sockaddr_in *)(addr->ai_addr))->sin_addr, sisis_addr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)(addr->ai_addr))->sin6_addr, sisis_addr, INET6_ADDRSTRLEN);
 	printf("Socket opened at %s on port %u.\n", sisis_addr, ntohs(((struct sockaddr_in *)(addr->ai_addr))->sin_port));
 	
 	// Set up signal handling
