@@ -1,5 +1,5 @@
 all:
-	gcc -o memory_monitor -lrt -lpthread *.c ../tests/sisis_*.c
+	gcc -o machine_monitor -lrt -lpthread *.c ../tests/sisis_*.c
 
 clean:
-	rm memory_monitor
+	rm machine_monitor
