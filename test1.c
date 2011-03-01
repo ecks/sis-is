@@ -43,6 +43,7 @@ void close_listener()
 		close(sockfd);
 		
 		// Unregister
+		ts_printf("Unregistering SIS-IS address...\n");
 		sisis_unregister(ptype, host_num, pid);
 		
 		sockfd = -1;
