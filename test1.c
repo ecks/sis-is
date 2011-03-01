@@ -14,17 +14,32 @@
 #include <stdlib.h>
 #include <signal.h>
 
+#include <stdarg.h>
 #include <time.h>
 #include "sisis_api.h"
 
 int sockfd = -1, con = -1;
 int ptype, host_num, pid;
 
+void ts_printf(const char * format, ... )
+{
+	// Get & print time
+	struct timespec time;
+  clock_gettime(CLOCK_REALTIME, &time);
+	printf("[%ld.%09ld] ", time.tv_sec, time.tv_nsec);
+	
+	// printf
+	va_list args;
+	va_start(args, format);
+	vprintf(format, args);
+	va_end(args);
+}
+
 void close_listener()
 {
 	if (sockfd != -1)
 	{
-		printf("Closing listening socket...\n");
+		ts_printf("Closing listening socket...\n");
 		close(sockfd);
 		
 		// Unregister
@@ -36,11 +51,11 @@ void close_listener()
 
 void terminate(int signal)
 {
-	printf("Terminating...\n");
+	ts_printf("Terminating...\n");
 	close_listener();
 	if (con != -1)
 	{
-		printf("Closing remove connection socket...\n");
+		ts_printf("Closing remove connection socket...\n");
 		close(con);
 	}
 	exit(0);
@@ -48,13 +63,9 @@ void terminate(int signal)
 
 int rib_monitor_add_ipv4_route(struct route_ipv4 * route)
 {
-	// Get time
-	struct timespec time;
-  clock_gettime(CLOCK_REALTIME, &time);
-	
 	char prefix_str[INET_ADDRSTRLEN];
 	if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
-		printf("[%ld.%09ld] Added route: %s/%d [%u/%u]\n", time.tv_sec, time.tv_nsec, prefix_str, route->p->prefixlen, route->distance, route->metric);
+		ts_printf("Added route: %s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
 	
 	// Free memory
 	free(route);
@@ -62,13 +73,9 @@ int rib_monitor_add_ipv4_route(struct route_ipv4 * route)
 
 int rib_monitor_remove_ipv4_route(struct route_ipv4 * route)
 {
-	// Get time
-	struct timespec time;
-  clock_gettime(CLOCK_REALTIME, &time);
-	
 	char prefix_str[INET_ADDRSTRLEN];
 	if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
-		printf("[%ld.%09ld] Removed route: %s/%d [%u/%u]\n", time.tv_sec, time.tv_nsec, prefix_str, route->p->prefixlen, route->distance, route->metric);
+		ts_printf("Removed route: %s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
 	
 	// Free memory
 	free(route);
@@ -77,13 +84,9 @@ int rib_monitor_remove_ipv4_route(struct route_ipv4 * route)
 #ifdef HAVE_IPV6
 int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 {
-	// Get time
-	struct timespec time;
-  clock_gettime(CLOCK_REALTIME, &time);
-	
 	char prefix_str[INET6_ADDRSTRLEN];
 	if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
-		printf("[%ld.%09ld] Added route: %s/%d [%u/%u]\n", time.tv_sec, time.tv_nsec, prefix_str, route->p->prefixlen, route->distance, route->metric);
+		ts_printf("Added route: %s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
 	
 	// Free memory
 	free(route);
@@ -91,13 +94,9 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 
 int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 {
-	// Get time
-	struct timespec time;
-  clock_gettime(CLOCK_REALTIME, &time);
-	
 	char prefix_str[INET6_ADDRSTRLEN];
 	if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
-		printf("[%ld.%09ld] Removed route: %s/%d [%u/%u]\n", time.tv_sec, time.tv_nsec, prefix_str, route->p->prefixlen, route->distance, route->metric);
+		ts_printf("Removed route: %s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
 	
 	// Free memory
 	free(route);
@@ -170,20 +169,16 @@ int main (int argc, char ** argv)
 	// Get pid
 	pid = getpid();
 	
-	// Get time
-	struct timespec time;
-  
 	// Register address
-	clock_gettime(CLOCK_REALTIME, &time);
-	printf("[%ld.%09ld] Registering SIS-IS address.\n", time.tv_sec, time.tv_nsec);
+	ts_printf("Registering SIS-IS address.\n");
 	if (sisis_register(ptype, host_num, (uint64_t)pid, sisis_addr) != 0)
 	{
-		printf("Failed to register SIS-IS address.\n");
+		ts_printf("Failed to register SIS-IS address.\n");
 		exit(1);
 	}
 	
 	// Status
-	printf("Opening socket at %s on port %s.\n", sisis_addr, argv[3]);
+	ts_printf("Opening socket at %s on port %s.\n", sisis_addr, argv[3]);
 	
 	// Set up socket address info
 	memset(&hints, 0, sizeof hints);
@@ -194,26 +189,26 @@ int main (int argc, char ** argv)
 	// Create socket
 	if ((sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)) == -1)
 	{
-		printf("Failed to open socket.\n");
+		ts_printf("Failed to open socket.\n");
 		exit(1);
 	}
 	
 	// Bind to port
 	if (bind(sockfd, addr->ai_addr, addr->ai_addrlen) == -1)
 	{
-		printf("Failed to bind socket to port.\n");
+		ts_printf("Failed to bind socket to port.\n");
 		close_listener();
 		exit(2);
 	}
 	
 	// Status message
 	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)(addr->ai_addr))->sin6_addr, sisis_addr, INET6_ADDRSTRLEN);
-	printf("Socket opened at %s on port %u.\n", sisis_addr, ntohs(((struct sockaddr_in *)(addr->ai_addr))->sin_port));
+	ts_printf("Socket opened at %s on port %u.\n", sisis_addr, ntohs(((struct sockaddr_in *)(addr->ai_addr))->sin_port));
 	
 	// Listen on the socket
 	if (listen(sockfd, 5) == -1)
 	{
-		printf("Failed to listen on socket.\n");
+		ts_printf("Failed to listen on socket.\n");
 		close_listener();
 		exit(3);
 	}
@@ -236,20 +231,20 @@ int main (int argc, char ** argv)
 			
 			// Send data back
 			if (send(con, buf, len, 0) == -1)
-				printf("Failed to send message.\n");
+				ts_printf("Failed to send message.\n");
 			
 			// Trim
 			while (buf[len-1] == '\r' || buf[len-1] == '\n')
 				buf[--len] = '\0';
 			
-			printf("Received \"%s\".\n", buf);
+			ts_printf("Received \"%s\".\n", buf);
 			
 			// Exit if needed
 			if (strcmp(buf, "exit") == 0)
 				break;
 		}
 		else
-			printf("Failed to receive message.\n");
+			ts_printf("Failed to receive message.\n");
 		
 		// Close connection
 		close(con);
