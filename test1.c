@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <signal.h>
 
+#include <time.h>
 #include "sisis_api.h"
 
 int sockfd = -1, con = -1;
@@ -47,9 +48,13 @@ void terminate(int signal)
 
 int rib_monitor_add_ipv4_route(struct route_ipv4 * route)
 {
+	// Get time
+	struct timespec time;
+  clock_gettime(CLOCK_REALTIME, &time);
+	
 	char prefix_str[INET_ADDRSTRLEN];
 	if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
-		printf("Added route: %s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
+		printf("[%ld.%09ld] Added route: %s/%d [%u/%u]\n", time.tv_sec, tim.tv_nsec, prefix_str, route->p->prefixlen, route->distance, route->metric);
 	
 	// Free memory
 	free(route);
@@ -57,9 +62,13 @@ int rib_monitor_add_ipv4_route(struct route_ipv4 * route)
 
 int rib_monitor_remove_ipv4_route(struct route_ipv4 * route)
 {
+	// Get time
+	struct timespec time;
+  clock_gettime(CLOCK_REALTIME, &time);
+	
 	char prefix_str[INET_ADDRSTRLEN];
 	if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
-		printf("Removed route: %s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
+		printf("[%ld.%09ld] Removed route: %s/%d [%u/%u]\n", time.tv_sec, tim.tv_nsec, prefix_str, route->p->prefixlen, route->distance, route->metric);
 	
 	// Free memory
 	free(route);
@@ -68,9 +77,13 @@ int rib_monitor_remove_ipv4_route(struct route_ipv4 * route)
 #ifdef HAVE_IPV6
 int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 {
+	// Get time
+	struct timespec time;
+  clock_gettime(CLOCK_REALTIME, &time);
+	
 	char prefix_str[INET6_ADDRSTRLEN];
 	if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
-		printf("Added route: %s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
+		printf("[%ld.%09ld] Added route: %s/%d [%u/%u]\n", time.tv_sec, tim.tv_nsec, prefix_str, route->p->prefixlen, route->distance, route->metric);
 	
 	// Free memory
 	free(route);
@@ -78,9 +91,13 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 
 int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 {
+	// Get time
+	struct timespec time;
+  clock_gettime(CLOCK_REALTIME, &time);
+	
 	char prefix_str[INET6_ADDRSTRLEN];
 	if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
-		printf("Removed route: %s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
+		printf("[%ld.%09ld] Removed route: %s/%d [%u/%u]\n", time.tv_sec, tim.tv_nsec, prefix_str, route->p->prefixlen, route->distance, route->metric);
 	
 	// Free memory
 	free(route);
@@ -152,9 +169,13 @@ int main (int argc, char ** argv)
 	
 	// Get pid
 	pid = getpid();
-	printf("Pid: %lld\n", (uint64_t)pid);
 	
+	// Get time
+	struct timespec time;
+  
 	// Register address
+	clock_gettime(CLOCK_REALTIME, &time);
+	printf("[%ld.%09ld] Registering SIS-IS address.\n", time.tv_sec, tim.tv_nsec;
 	if (sisis_register(ptype, host_num, (uint64_t)pid, sisis_addr) != 0)
 	{
 		printf("Failed to register SIS-IS address.\n");
