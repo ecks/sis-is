@@ -262,9 +262,8 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h, void *
   //if (rtm->rtm_type != RTN_UNICAST)
     //return 0;
 	
-	printf("rtm_type: %d %d %d %d\n", rtm->rtm_type, RTN_BLACKHOLE, RTN_UNREACHABLE, RTN_PROHIBIT);
-	// Ignore reject routes
-	if (rtm->rtm_type == RTN_PROHIBIT)
+	// Ignore unreachable routes
+	if (rtm->rtm_type == RTN_UNREACHABLE)
 		return 0;
 
   table = rtm->rtm_table;
