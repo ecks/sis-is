@@ -54,7 +54,7 @@ int rib_monitor_add_ipv4_route(struct route_ipv4 * route)
 	
 	char prefix_str[INET_ADDRSTRLEN];
 	if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
-		printf("[%ld.%09ld] Added route: %s/%d [%u/%u]\n", time.tv_sec, tim.tv_nsec, prefix_str, route->p->prefixlen, route->distance, route->metric);
+		printf("[%ld.%09ld] Added route: %s/%d [%u/%u]\n", time.tv_sec, time.tv_nsec, prefix_str, route->p->prefixlen, route->distance, route->metric);
 	
 	// Free memory
 	free(route);
@@ -68,7 +68,7 @@ int rib_monitor_remove_ipv4_route(struct route_ipv4 * route)
 	
 	char prefix_str[INET_ADDRSTRLEN];
 	if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
-		printf("[%ld.%09ld] Removed route: %s/%d [%u/%u]\n", time.tv_sec, tim.tv_nsec, prefix_str, route->p->prefixlen, route->distance, route->metric);
+		printf("[%ld.%09ld] Removed route: %s/%d [%u/%u]\n", time.tv_sec, time.tv_nsec, prefix_str, route->p->prefixlen, route->distance, route->metric);
 	
 	// Free memory
 	free(route);
@@ -83,7 +83,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 	
 	char prefix_str[INET6_ADDRSTRLEN];
 	if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
-		printf("[%ld.%09ld] Added route: %s/%d [%u/%u]\n", time.tv_sec, tim.tv_nsec, prefix_str, route->p->prefixlen, route->distance, route->metric);
+		printf("[%ld.%09ld] Added route: %s/%d [%u/%u]\n", time.tv_sec, time.tv_nsec, prefix_str, route->p->prefixlen, route->distance, route->metric);
 	
 	// Free memory
 	free(route);
@@ -97,7 +97,7 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 	
 	char prefix_str[INET6_ADDRSTRLEN];
 	if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
-		printf("[%ld.%09ld] Removed route: %s/%d [%u/%u]\n", time.tv_sec, tim.tv_nsec, prefix_str, route->p->prefixlen, route->distance, route->metric);
+		printf("[%ld.%09ld] Removed route: %s/%d [%u/%u]\n", time.tv_sec, time.tv_nsec, prefix_str, route->p->prefixlen, route->distance, route->metric);
 	
 	// Free memory
 	free(route);
@@ -175,7 +175,7 @@ int main (int argc, char ** argv)
   
 	// Register address
 	clock_gettime(CLOCK_REALTIME, &time);
-	printf("[%ld.%09ld] Registering SIS-IS address.\n", time.tv_sec, tim.tv_nsec;
+	printf("[%ld.%09ld] Registering SIS-IS address.\n", time.tv_sec, time.tv_nsec;
 	if (sisis_register(ptype, host_num, (uint64_t)pid, sisis_addr) != 0)
 	{
 		printf("Failed to register SIS-IS address.\n");
