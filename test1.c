@@ -175,7 +175,7 @@ int main (int argc, char ** argv)
   
 	// Register address
 	clock_gettime(CLOCK_REALTIME, &time);
-	printf("[%ld.%09ld] Registering SIS-IS address.\n", time.tv_sec, time.tv_nsec;
+	printf("[%ld.%09ld] Registering SIS-IS address.\n", time.tv_sec, time.tv_nsec);
 	if (sisis_register(ptype, host_num, (uint64_t)pid, sisis_addr) != 0)
 	{
 		printf("Failed to register SIS-IS address.\n");
