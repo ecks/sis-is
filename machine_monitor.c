@@ -420,6 +420,10 @@ int main (int argc, char ** argv)
 		// Unlock mutex
 		pthread_mutex_unlock(&cpu_usage_mutex);
 		
+		// Print sender address
+		char sender[INET6_ADDRSTRLEN+1];
+		inet_ntop(AF_INET6, &(((struct sockaddr_in6 *)&remote_addr)->sin6_addr), sender, INET6_ADDRSTRLEN);
+		printf("Sending data back to %s.\n", sender);
 		
 		// Send data back
 		int len = strlen(send_buf);
@@ -434,7 +438,7 @@ int main (int argc, char ** argv)
 			int sent = sendto(sockfd, send_buf_cur, len, 0, &remote_addr, addr_size);
 			if (sent == -1)
 			{
-				perror("Failed to send message.");
+				perror("\tFailed to send message");
 				break;
 			}
 			len -= sent;
