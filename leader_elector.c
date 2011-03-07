@@ -130,7 +130,8 @@ int main (int argc, char ** argv)
 	signal(SIGINT, terminate);
 	
 	// Give some time for address to propagate
-	usleep(500000);	// 500ms
+	//usleep(500000);	// 500ms
+	sleep(5);
 	
 	// Set up receive thread
 	pthread_t recv_thread_t;
@@ -270,7 +271,7 @@ int main (int argc, char ** argv)
 	
 	printf("Sleeping...\n");
 	
-	sleep(60);
+	sleep(10);
 	
 	printf("Ending...\n");
 	
