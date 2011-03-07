@@ -160,7 +160,7 @@ int main (int argc, char ** argv)
 		if (leader_elector_processes_needed)
 			printf("Need to start %d process%s.\n", leader_elector_processes_needed, leader_elector_processes_needed == 1 ? "" : "es");
 		else
-			printf("Enought processes already running.\n");
+			printf("Enough processes already running.\n");
 		
 		// Free memory
 		if (leader_elector_addrs)
