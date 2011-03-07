@@ -129,10 +129,6 @@ int main (int argc, char ** argv)
 	signal(SIGTERM, terminate);
 	signal(SIGINT, terminate);
 	
-	// Give some time for address to propagate
-	//usleep(500000);	// 500ms
-	sleep(5);
-	
 	// Set up receive thread
 	pthread_t recv_thread_t;
 	pthread_create(&recv_thread_t, NULL, recv_thread, NULL);
