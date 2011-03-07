@@ -344,7 +344,7 @@ int main (int argc, char ** argv)
 	pthread_create(&cpu_usage_thread, NULL, get_cpu_usage_thread, NULL);
 	
 	// Wait for message
-	struct sockaddr_in6  remote_addr;
+	struct sockaddr_in6 remote_addr;
 	int len;
 	char buf[1024];
 	socklen_t addr_size = sizeof remote_addr;
@@ -433,9 +433,9 @@ int main (int argc, char ** argv)
 			// TODO: Deal with fragmented packet order
 			/* For netcat:
 			int send_len = (len > 1024) ? 1024 : len;	// Accommodate netcats 1024 byte limit (TODO: Remove this in the future)
-			int sent = sendto(sockfd, send_buf_cur, send_len, 0, &remote_addr, addr_size);
+			int sent = sendto(sockfd, send_buf_cur, send_len, 0, (struct sockaddr *)&remote_addr, addr_size);
 			*/
-			int sent = sendto(sockfd, send_buf_cur, len, 0, &remote_addr, addr_size);
+			int sent = sendto(sockfd, send_buf_cur, len, 0, (struct sockaddr *)&remote_addr, addr_size);
 			if (sent == -1)
 			{
 				perror("\tFailed to send message");
