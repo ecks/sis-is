@@ -532,7 +532,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 	struct list * rtn = malloc(sizeof(struct list));
 	memset(rtn, 0, sizeof(*rtn));
 	struct listnode * node;
-	LIST_FOREACH(ipv4_rib_routes, node)
+	LIST_FOREACH(ipv6_rib_routes, node)
 	{
 		struct route_ipv6 * route = (struct route_ipv6 *)node->data;
 		
