@@ -434,7 +434,7 @@ int main (int argc, char ** argv)
 			int sent = sendto(sockfd, send_buf_cur, len, 0, &remote_addr, addr_size);
 			if (sent == -1)
 			{
-				printf("Failed to send message.\n");
+				perror("Failed to send message.");
 				break;
 			}
 			len -= sent;
