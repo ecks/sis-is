@@ -221,8 +221,32 @@ int sisis_create_addr(uint16_t ptype, uint32_t host_num, uint64_t pid, char * si
 struct sisis_addr_components get_sisis_addr_components(char * sisis_addr)
 {
 	struct sisis_addr_components rtn;
-	// TODO: Fix this
-	//sscanf(sisis_addr, "fcff:%04hx:%04hx:%04hx:%04hx:%04hx:%04hx:%04hx", &rtn.ptype, &rtn.host_num, (short *)&rtn.host_num + 2, &rtn.pid, (short *)&rtn.pid + 2, (short *)&rtn.pid + 4, (short *)&rtn.pid + 3);
+	
+	// Remove ::
+	char before[INET6_ADDRSTRLEN], after[INET6_ADDRSTRLEN], full[INET6_ADDRSTRLEN] = "";
+	if (!sscanf(sisis_addr, "%s::%s", before, after))
+		strcpy(full, sisis_addr);
+	else
+	{
+		// Count colons
+		int cnt = 0, i;
+		for (i = strlen(before) - 1; i >= 0; i--)
+			if (before[i] == ':')
+				cnt++;
+		for (i = strlen(after) - 1; i >= 0; i--)
+			if (after[i] == ':')
+				cnt++;
+		
+		// Create new string
+		strcpy(full, before);
+		strcpy(full, ":");
+		cnt++;
+		for (; cnt < 7; cnt++)
+			strcpy(full, "0:");
+		strcpy(full, after);
+	}
+	
+	sscanf(full, "fcff:%hx:%hx:%hx:%hx:%hx:%hx:%hx", &rtn.ptype, &rtn.host_num, (short *)&rtn.host_num + 2, &rtn.pid, (short *)&rtn.pid + 2, (short *)&rtn.pid + 4, (short *)&rtn.pid + 3);
 	return rtn;
 }
 
