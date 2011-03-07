@@ -22,8 +22,8 @@
 #define SISIS_NACK							     			4
 
 // Prefix lengths
-#define SISIS_ADD_PREFIX_LEN_PTYPE				16
-#define SISIS_ADD_PREFIX_LEN_HOST_NUM			24
+#define SISIS_ADD_PREFIX_LEN_PTYPE				32
+#define SISIS_ADD_PREFIX_LEN_HOST_NUM			64
 
 extern int sisis_listener_port;
 extern char * sisis_listener_ip_addr;
