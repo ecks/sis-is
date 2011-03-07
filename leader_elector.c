@@ -130,7 +130,7 @@ int main (int argc, char ** argv)
 	signal(SIGINT, terminate);
 	
 	// Give some time for address to propogate
-	usleep(50000000);	// 50ms
+	usleep(50000);	// 50ms
 	
 	// Set up receive thread
 	pthread_t recv_thread_t;
@@ -267,6 +267,10 @@ int main (int argc, char ** argv)
 	}
 	
 	FREE_LINKED_LIST(monitor_addrs);
+	
+	printf("Sleeping...\n");
+	
+	sleep(60);
 	
 	printf("Ending...\n");
 	
