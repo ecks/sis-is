@@ -338,6 +338,9 @@ int main (int argc, char ** argv)
 	signal(SIGTERM, terminate);
 	signal(SIGINT, terminate);
 	
+	// Short sleep while address propagates
+	usleep(50000);	// 50ms
+	
 	// Start thread to record CPU usage
 	pthread_mutex_init(&cpu_usage_mutex, NULL);
 	pthread_t cpu_usage_thread;
