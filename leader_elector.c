@@ -17,7 +17,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include "leader_elector.h"
-#include "../memory_monitor/memory_monitor.h"
+#include "../machine_monitor/machine_monitor.h"
 #include "../remote_spawn/remote_spawn.h"
 
 #include "../tests/sisis_api.h"
@@ -81,7 +81,7 @@ int main (int argc, char ** argv)
 	
 	// Get host number
 	sscanf (argv[1], "%d", &host_num);
-	char sisis_addr[INET_ADDRSTRLEN+1];
+	char sisis_addr[INET6_ADDRSTRLEN+1];
 	
 	// Get pid
 	pid = getpid();
@@ -99,7 +99,7 @@ int main (int argc, char ** argv)
 	// Set up socket address info
 	struct addrinfo hints, *addr;
 	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_INET;	// IPv4
+	hints.ai_family = AF_INET6;	// IPv6
 	hints.ai_socktype = SOCK_DGRAM;
 	char port_str[8];
 	sprintf(port_str, "%u", LEADER_ELECTOR_PORT);
@@ -121,7 +121,7 @@ int main (int argc, char ** argv)
 	}
 	
 	// Status message
-	inet_ntop(AF_INET, &((struct sockaddr_in *)(addr->ai_addr))->sin_addr, sisis_addr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)(addr->ai_addr))->sin6_addr, sisis_addr, INET6_ADDRSTRLEN);
 	printf("Socket opened at %s on port %u.\n", sisis_addr, ntohs(((struct sockaddr_in *)(addr->ai_addr))->sin_port));
 	
 	// Set up signal handling
@@ -134,7 +134,7 @@ int main (int argc, char ** argv)
 	pthread_create(&recv_thread_t, NULL, recv_thread, NULL);
 	
 	// Check how many other processes there are
-	struct list * monitor_addrs = get_sisis_addrs_for_process_type(SISIS_PTYPE_MEMORY_MONITOR);
+	struct list * monitor_addrs = get_sisis_addrs_for_process_type(SISIS_PTYPE_MACHINE_MONITOR);
 	if (monitor_addrs == NULL || monitor_addrs->size == 0)
 	{
 		printf("No other SIS-IS hosts found.\n");
@@ -173,8 +173,8 @@ int main (int argc, char ** argv)
 		
 		// Print address
 		struct in_addr * remote_addr = (struct in_addr *)node->data;
-		char addr_str[INET_ADDRSTRLEN+1];
-		if (inet_ntop(AF_INET, remote_addr, addr_str, INET_ADDRSTRLEN+1) != 1)
+		char addr_str[INET6_ADDRSTRLEN+1];
+		if (inet_ntop(AF_INET6, remote_addr, addr_str, INET6_ADDRSTRLEN+1) != 1)
 		{
 			// Get SIS-IS address info
 			struct sisis_addr_components sisis_comp = get_sisis_addr_components(addr_str);
@@ -186,8 +186,8 @@ int main (int argc, char ** argv)
 			struct sockaddr_in sockaddr;
 			int sockaddr_size = sizeof(sockaddr);
 			memset(&sockaddr, 0, sockaddr_size);
-			sockaddr.sin_family = AF_INET;
-			sockaddr.sin_port = htons(MEMORY_MONITOR_PORT);
+			sockaddr.sin_family = AF_INET6;
+			sockaddr.sin_port = htons(MACHINE_MONITOR_PORT);
 			sockaddr.sin_addr = *remote_addr;
 			
 			// Get memory stats
@@ -233,7 +233,7 @@ int main (int argc, char ** argv)
 							struct sockaddr_in spawn_sockaddr;
 							int spawn_sockaddr_size = sizeof(spawn_sockaddr);
 							memset(&spawn_sockaddr, 0, spawn_sockaddr_size);
-							spawn_sockaddr.sin_family = AF_INET;
+							spawn_sockaddr.sin_family = AF_INET6;
 							spawn_sockaddr.sin_port = htons(REMOTE_SPAWN_PORT);
 							spawn_sockaddr.sin_addr = *(struct in_addr *)spawn_addrs->head->data;
 							
