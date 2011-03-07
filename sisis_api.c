@@ -221,6 +221,7 @@ int sisis_create_addr(uint16_t ptype, uint32_t host_num, uint64_t pid, char * si
 struct sisis_addr_components get_sisis_addr_components(char * sisis_addr)
 {
 	struct sisis_addr_components rtn;
+	memset(&rtn, 0, sizeof rtn);
 	
 	// Remove ::
 	int idx, idx2, len = strlen(sisis_addr);
@@ -251,9 +252,11 @@ struct sisis_addr_components get_sisis_addr_components(char * sisis_addr)
 			full[idx2] = 0;
 		}
 	}
-	printf("Test2: %s\n", full);
 	
-	sscanf(full, "fcff:%hx:%hx:%hx:%hx:%hx:%hx:%hx", (short *)&rtn.ptype, (short *)&rtn.host_num, (short *)&rtn.host_num + 2, (short *)&rtn.pid, (short *)&rtn.pid + 2, (short *)&rtn.pid + 4, (short *)&rtn.pid + 3);
+	unsigned short host[2], pid[4];
+	sscanf(full, "fcff:%hx:%hx:%hx:%hx:%hx:%hx:%hx", (short *)&rtn.ptype, &host[0], &host[1], &pid[0], &pid[1], &pid[2], &pid[3]);
+	rtn.host_num = ((host[0] & 0xffff) << 16) | (host[1] & 0xffff);
+	rtn.pid = ((pid[0] & 0xffff) << 64) | (pid[1] & 0xffff) << 32) | (pid[2] & 0xffff) << 16) | (pid[3] & 0xffff);
 	return rtn;
 }
 
