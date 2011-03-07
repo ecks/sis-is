@@ -509,7 +509,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 	}
 	*/
 	
-	// TODO: IPv6 version
+	// IPv6 version
 	// Create prefix mask IPv6 addr
 	char prefix_addr_str[INET6_ADDRSTRLEN+1] = "";
 	int i;
