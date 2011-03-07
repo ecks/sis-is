@@ -223,11 +223,12 @@ struct sisis_addr_components get_sisis_addr_components(char * sisis_addr)
 	struct sisis_addr_components rtn;
 	
 	// Remove ::
-	char before[INET6_ADDRSTRLEN], after[INET6_ADDRSTRLEN], full[INET6_ADDRSTRLEN] = "";
+	char before[INET6_ADDRSTRLEN], after[INET6_ADDRSTRLEN], full[INET6_ADDRSTRLEN+1] = "";
 	if (!sscanf(sisis_addr, "%s::%s", before, after))
 		strcpy(full, sisis_addr);
 	else
 	{
+		printf("Test1: %s\t%s\n", before, after);
 		// Count colons
 		int cnt = 0, i;
 		for (i = strlen(before) - 1; i >= 0; i--)
@@ -243,8 +244,12 @@ struct sisis_addr_components get_sisis_addr_components(char * sisis_addr)
 		cnt++;
 		for (; cnt < 7; cnt++)
 			strcat(full, "0:");
-		strcat(full, after);
+		if (after == "")
+			strcat(full, "0");
+		else
+			strcat(full, after);
 	}
+	printf("Test2: %s\n", full);
 	
 	sscanf(full, "fcff:%hx:%hx:%hx:%hx:%hx:%hx:%hx", (short *)&rtn.ptype, (short *)&rtn.host_num, (short *)&rtn.host_num + 2, (short *)&rtn.pid, (short *)&rtn.pid + 2, (short *)&rtn.pid + 4, (short *)&rtn.pid + 3);
 	return rtn;
