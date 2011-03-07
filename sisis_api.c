@@ -506,11 +506,11 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv4 * p)
 struct list * get_sisis_addrs_for_process_type(uint16_t ptype)
 {
 	// Create prefix
-	char prefix_addr_str[INET_ADDRSTRLEN+1];
+	char prefix_addr_str[INET6_ADDRSTRLEN+1];
 	memset(prefix_addr_str, 0, sizeof(prefix_addr_str));
 	if (sisis_create_addr(ptype, 0, 0, prefix_addr_str))
 		return NULL;
-	struct prefix_ipv4 p;
+	struct prefix_ipv6 p;
 	p.prefixlen = SISIS_ADD_PREFIX_LEN_PTYPE;
 	inet_pton(AF_INET, prefix_addr_str, &p.prefix);
 	
@@ -524,11 +524,11 @@ struct list * get_sisis_addrs_for_process_type(uint16_t ptype)
 struct list * get_sisis_addrs_for_process_type_and_host(uint16_t ptype, uint32_t host_num)
 {
 	// Create prefix
-	char prefix_addr_str[INET_ADDRSTRLEN+1];
+	char prefix_addr_str[INET6_ADDRSTRLEN+1];
 	memset(prefix_addr_str, 0, sizeof(prefix_addr_str));
 	if (sisis_create_addr(ptype, host_num, 0, prefix_addr_str))
 		return NULL;
-	struct prefix_ipv4 p;
+	struct prefix_ipv6 p;
 	p.prefixlen = SISIS_ADD_PREFIX_LEN_HOST_NUM;
 	inet_pton(AF_INET, prefix_addr_str, &p.prefix);
 	
