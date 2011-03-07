@@ -344,11 +344,11 @@ int main (int argc, char ** argv)
 	pthread_create(&cpu_usage_thread, NULL, get_cpu_usage_thread, NULL);
 	
 	// Wait for message
-	struct sockaddr remote_addr;
+	struct sockaddr_in6  remote_addr;
 	int len;
 	char buf[1024];
 	socklen_t addr_size = sizeof remote_addr;
-	while ((len = recvfrom(sockfd, buf, 1024, 0, &remote_addr, &addr_size)) != -1)
+	while ((len = recvfrom(sockfd, buf, 1024, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
 	{
 		char send_buf[16384];
 		
@@ -422,7 +422,7 @@ int main (int argc, char ** argv)
 		
 		// Print sender address
 		char sender[INET6_ADDRSTRLEN+1];
-		inet_ntop(AF_INET6, &(((struct sockaddr_in6 *)&remote_addr)->sin6_addr), sender, INET6_ADDRSTRLEN);
+		inet_ntop(AF_INET6, &remote_addr.sin6_addr, sender, INET6_ADDRSTRLEN);
 		printf("Sending data back to %s.\n", sender);
 		
 		// Send data back
