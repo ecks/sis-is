@@ -255,8 +255,8 @@ struct sisis_addr_components get_sisis_addr_components(char * sisis_addr)
 	
 	unsigned short host[2], pid[4];
 	sscanf(full, "fcff:%hx:%hx:%hx:%hx:%hx:%hx:%hx", (short *)&rtn.ptype, &host[0], &host[1], &pid[0], &pid[1], &pid[2], &pid[3]);
-	rtn.host_num = ((host[0] & 0xffff) << 16) | (host[1] & 0xffff);
-	rtn.pid = ((pid[0] & 0xffff) << 64) | (pid[1] & 0xffff) << 32) | (pid[2] & 0xffff) << 16) | (pid[3] & 0xffff);
+	rtn.host_num = (((uint64_t)host[0] & 0xffff) << 16) | ((uint64_t)host[1] & 0xffff);
+	rtn.pid = (((uint64_t)pid[0] & 0xffff) << 48) | (((uint64_t)pid[1] & 0xffff) << 32) | (((uint64_t)pid[2] & 0xffff) << 16) | ((uint64_t)pid[3] & 0xffff);
 	return rtn;
 }
 
