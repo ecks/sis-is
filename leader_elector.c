@@ -172,7 +172,7 @@ int main (int argc, char ** argv)
 		num_hosts++;
 		
 		// Print address
-		struct in_addr * remote_addr = (struct in_addr *)node->data;
+		struct in6_addr * remote_addr = (struct in6_addr *)node->data;
 		char addr_str[INET6_ADDRSTRLEN+1];
 		if (inet_ntop(AF_INET6, remote_addr, addr_str, INET6_ADDRSTRLEN+1) != 1)
 		{
