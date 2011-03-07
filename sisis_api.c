@@ -238,12 +238,12 @@ struct sisis_addr_components get_sisis_addr_components(char * sisis_addr)
 				cnt++;
 		
 		// Create new string
-		strcpy(full, before);
-		strcpy(full, ":");
+		strcat(full, before);
+		strcat(full, ":");
 		cnt++;
 		for (; cnt < 7; cnt++)
-			strcpy(full, "0:");
-		strcpy(full, after);
+			strcat(full, "0:");
+		strcat(full, after);
 	}
 	
 	sscanf(full, "fcff:%hx:%hx:%hx:%hx:%hx:%hx:%hx", (short *)&rtn.ptype, (short *)&rtn.host_num, (short *)&rtn.host_num + 2, (short *)&rtn.pid, (short *)&rtn.pid + 2, (short *)&rtn.pid + 4, (short *)&rtn.pid + 3);
@@ -463,11 +463,13 @@ int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
  * Get SIS-IS addresses that match a given ipv4 prefix.  It is the receivers
  * responsibility to free the list when done with it.
  */
-struct list * get_sisis_addrs_for_prefix(struct prefix_ipv4 * p)
+struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 {
 	// Update kernel routes
 	sisis_dump_kernel_routes();
 	
+	/*
+	// IPv4 Version
 	unsigned long prefix_mask = 0xffffffff;
 	int i = 0;
 	for (; i < 32-p->prefixlen; i++)
@@ -495,6 +497,59 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv4 * p)
 			LIST_APPEND(rtn,new_node);
 		}
 	}
+	*/
+	
+	// TODO: IPv6 version
+	// Create prefix mask IPv6 addr
+	char prefix_addr_str[INET6_ADDRSTRLEN+1] = "";
+	int i;
+	if (p->prefixlen / 16 > 0)
+		strcat(prefix_addr_str, "ffff");
+	for (i = 1; i < (p->prefixlen / 16); i++)
+		strcat(prefix_addr_str, ":ffff");
+	int tmp = 0;
+	for (; i < p->prefixlen % 16; i++)
+	{
+		tmp <<= 1;
+		tmp |= 1;
+	}
+	if (tmp != 0)
+	{
+		char tmp_str[8];
+		sprintf(tmp_str, "%s%04x", (p->prefixlen > 16) ? ":" : "", tmp);
+		strcat(prefix_addr_str, tmp_str);
+	}
+	// Finish off
+	if (p->prefixlen <= 96)
+		strcat(prefix_addr_str, "::");
+	else if (p->prefixlen <= 112)
+		strcat(prefix_addr_str, ":0");
+	// Create struct
+	struct in6_addr prefix_mask;
+	inet_pton(AF_INET6, prefix_addr_str, &prefix_mask);
+	
+	// Create list of relevant SIS-IS addresses
+	struct list * rtn = malloc(sizeof(struct list));
+	memset(rtn, 0, sizeof(*rtn));
+	struct listnode * node;
+	LIST_FOREACH(ipv4_rib_routes, node)
+	{
+		struct route_ipv6 * route = (struct route_ipv6 *)node->data;
+		
+		int match = 1;
+		for (i = 0; match && i < 16; i++)
+			match = ((route->p->prefix.s6_addr[i] & prefix_mask.s6_addr[i]) == (p->prefix.s6_addr[i] & prefix_mask.s6_addr[i]));
+		
+		// Check if the route matches the prefix
+		if (route->p->prefixlen == 128 && match)
+		{
+			// Add to list
+			struct listnode * new_node = malloc(sizeof(struct listnode));
+			new_node->data = malloc(sizeof(route->p->prefix));
+			memcpy(new_node->data, &route->p->prefix, sizeof(route->p->prefix));
+			LIST_APPEND(rtn,new_node);
+		}
+	}
 	
 	return rtn;
 }
@@ -512,7 +567,7 @@ struct list * get_sisis_addrs_for_process_type(uint16_t ptype)
 		return NULL;
 	struct prefix_ipv6 p;
 	p.prefixlen = SISIS_ADD_PREFIX_LEN_PTYPE;
-	inet_pton(AF_INET, prefix_addr_str, &p.prefix);
+	inet_pton(AF_INET6, prefix_addr_str, &p.prefix);
 	
 	return get_sisis_addrs_for_prefix(&p);
 }
@@ -530,7 +585,7 @@ struct list * get_sisis_addrs_for_process_type_and_host(uint16_t ptype, uint32_t
 		return NULL;
 	struct prefix_ipv6 p;
 	p.prefixlen = SISIS_ADD_PREFIX_LEN_HOST_NUM;
-	inet_pton(AF_INET, prefix_addr_str, &p.prefix);
+	inet_pton(AF_INET6, prefix_addr_str, &p.prefix);
 	
 	return get_sisis_addrs_for_prefix(&p);
 }
