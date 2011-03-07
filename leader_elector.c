@@ -186,9 +186,9 @@ int main (int argc, char ** argv)
 			struct sockaddr_in6 sockaddr;
 			int sockaddr_size = sizeof(sockaddr);
 			memset(&sockaddr, 0, sockaddr_size);
-			sockaddr.sin_family = AF_INET6;
-			sockaddr.sin_port = htons(MACHINE_MONITOR_PORT);
-			sockaddr.sin_addr = *remote_addr;
+			sockaddr.sin6_family = AF_INET6;
+			sockaddr.sin6_port = htons(MACHINE_MONITOR_PORT);
+			sockaddr.sin6_addr = *remote_addr;
 			
 			// Get memory stats
 			char * req = "data\n";
@@ -233,9 +233,9 @@ int main (int argc, char ** argv)
 							struct sockaddr_in6 spawn_sockaddr;
 							int spawn_sockaddr_size = sizeof(spawn_sockaddr);
 							memset(&spawn_sockaddr, 0, spawn_sockaddr_size);
-							spawn_sockaddr.sin_family = AF_INET6;
-							spawn_sockaddr.sin_port = htons(REMOTE_SPAWN_PORT);
-							spawn_sockaddr.sin_addr = *(struct in_addr *)spawn_addrs->head->data;
+							spawn_sockaddr.sin6_family = AF_INET6;
+							spawn_sockaddr.sin6_port = htons(REMOTE_SPAWN_PORT);
+							spawn_sockaddr.sin6_addr = *(struct in_addr *)spawn_addrs->head->data;
 							
 							char req2[32];
 							sprintf(req2, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_LEADER_ELECTOR);
