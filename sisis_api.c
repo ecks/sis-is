@@ -246,7 +246,7 @@ struct sisis_addr_components get_sisis_addr_components(char * sisis_addr)
 		strcpy(full, after);
 	}
 	
-	sscanf(full, "fcff:%hx:%hx:%hx:%hx:%hx:%hx:%hx", &rtn.ptype, &rtn.host_num, (short *)&rtn.host_num + 2, &rtn.pid, (short *)&rtn.pid + 2, (short *)&rtn.pid + 4, (short *)&rtn.pid + 3);
+	sscanf(full, "fcff:%hx:%hx:%hx:%hx:%hx:%hx:%hx", (short *)&rtn.ptype, (short *)&rtn.host_num, (short *)&rtn.host_num + 2, &rtn.pid, (short *)&rtn.pid + 2, (short *)&rtn.pid + 4, (short *)&rtn.pid + 3);
 	return rtn;
 }
 
