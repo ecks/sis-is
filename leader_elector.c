@@ -183,7 +183,7 @@ int main (int argc, char ** argv)
 			printf("--------------------------------------------------------------------------------\n");
 			
 			// Set up socket info
-			struct sockaddr_in sockaddr;
+			struct sockaddr_in6 sockaddr;
 			int sockaddr_size = sizeof(sockaddr);
 			memset(&sockaddr, 0, sockaddr_size);
 			sockaddr.sin_family = AF_INET6;
@@ -230,7 +230,7 @@ int main (int argc, char ** argv)
 							printf("Starting leader elector on host %u.", sisis_comp.host_num);
 							
 							// Set up socket info
-							struct sockaddr_in spawn_sockaddr;
+							struct sockaddr_in6 spawn_sockaddr;
 							int spawn_sockaddr_size = sizeof(spawn_sockaddr);
 							memset(&spawn_sockaddr, 0, spawn_sockaddr_size);
 							spawn_sockaddr.sin_family = AF_INET6;
