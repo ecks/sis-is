@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <errno.h>
 
 #include <stdarg.h>
 #include <time.h>
@@ -162,7 +163,7 @@ int main (int argc, char ** argv)
 	if (argc != 4)
 	{
 		printf("Usage: %s <host_num> <process_type> <port>\n", argv[0]);
-		exit(1);
+		exit(0);
 	}
 	
 	// Get process type and host number
@@ -178,7 +179,7 @@ int main (int argc, char ** argv)
 	if (sisis_register(ptype, host_num, (uint64_t)pid, sisis_addr) != 0)
 	{
 		ts_printf("Failed to register SIS-IS address.\n");
-		exit(1);
+		exit(3);
 	}
 	
 	// Status
@@ -193,16 +194,16 @@ int main (int argc, char ** argv)
 	// Create socket
 	if ((sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)) == -1)
 	{
-		ts_printf("Failed to open socket.\n");
-		exit(1);
+		ts_printf("Failed to open socket: %s\n", strerror(errno));
+		exit(4);
 	}
 	
 	// Bind to port
 	if (bind(sockfd, addr->ai_addr, addr->ai_addrlen) == -1)
 	{
-		ts_printf("Failed to bind socket to port.\n");
+		ts_printf("Failed to bind socket to port: %s\n", strerror(errno));
 		close_listener();
-		exit(2);
+		exit(5);
 	}
 	
 	// Status message
@@ -212,9 +213,9 @@ int main (int argc, char ** argv)
 	// Listen on the socket
 	if (listen(sockfd, 5) == -1)
 	{
-		ts_printf("Failed to listen on socket.\n");
+		ts_printf("Failed to listen on socket: %s\n", strerror(errno));
 		close_listener();
-		exit(3);
+		exit(6);
 	}
 	
 	// Set up signal handling
