@@ -253,7 +253,7 @@ struct memory_stats get_memory_usage()
 		fscanf(proc_meminfo, "%lf kB\n", &stats.free);
 		fclose(proc_meminfo);
 		
-		stats.usage_percent = (short)(stats.free/stats.total*100);
+		stats.usage_percent = (short)((stats.total-stats.free)/stats.total*100);
 	}
 	return stats;
 }
