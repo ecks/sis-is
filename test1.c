@@ -68,7 +68,7 @@ void ts_printf(const char * format, ... )
 	// printf
 	va_list args;
 	va_start(args, format);
-	savprintf(&tmp->buf, format, args);
+	vasprintf(&tmp->buf, format, args);
 	va_end(args);
 #else // !defined BUFFER_OUTPUT
 	printf("[%ld.%09ld] ", time.tv_sec, time.tv_nsec);
