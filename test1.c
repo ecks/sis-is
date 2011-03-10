@@ -19,14 +19,58 @@
 #include <time.h>
 #include "sisis_api.h"
 
+#define BUFFER_OUTPUT
+
 int sockfd = -1, con = -1;
 int ptype, host_num, pid;
+
+#ifdef BUFFER_OUTPUT
+struct output_buf
+{
+	char * buf;
+	struct output_buf * next;
+};
+struct output_buf * output_buf_head = NULL;
+struct output_buf * output_buf_tail = NULL;
+#endif
 
 void ts_printf(const char * format, ... )
 {
 	// Get & print time
 	struct timespec time;
   clock_gettime(CLOCK_REALTIME, &time);
+#ifdef BUFFER_OUTPUT
+	// Add to list
+	struct output_buf * tmp = malloc(sizeof(struct output_buf));
+	memset(tmp, 0, sizeof(*tmp));
+	if (output_buf_head == NULL)
+		output_buf_head = output_buf_tail = tmp;
+	else
+	{
+		output_buf_tail->next = tmp;
+		output_buf_tail = tmp;
+	}
+	
+	// Timestamp
+	asprintf(&tmp->buf, "[%ld.%09ld] ", time.tv_sec, time.tv_nsec);
+	
+	// Add to list
+	tmp = malloc(sizeof(struct output_buf));
+	memset(tmp, 0, sizeof(*tmp));
+	if (output_buf_head == NULL)
+		output_buf_head = output_buf_tail = tmp;
+	else
+	{
+		output_buf_tail->next = tmp;
+		output_buf_tail = tmp;
+	
+	
+	// printf
+	va_list args;
+	va_start(args, format);
+	savprintf(&tmp->buf, format, args);
+	va_end(args);
+#else // !defined BUFFER_OUTPUT
 	printf("[%ld.%09ld] ", time.tv_sec, time.tv_nsec);
 	
 	// printf
@@ -37,6 +81,7 @@ void ts_printf(const char * format, ... )
 	
 	// Flush output
 	fflush(stdout);
+#endif // BUFFER_OUTPUT
 }
 
 void close_listener()
@@ -63,6 +108,18 @@ void terminate(int signal)
 		ts_printf("Closing remove connection socket...\n");
 		close(con);
 	}
+	
+#ifdef BUFFER_OUTPUT
+	struct output_buf * tmp = output_buf_head, tmp2;
+	while (tmp != NULL)
+	{
+		printf(tmp->buf);
+		tmp2 = tmp->next;
+		free(tmp);
+		tmp = tmp2;
+	}
+#endif // BUFFER_OUTPUT
+	
 	exit(0);
 }
 
