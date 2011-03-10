@@ -167,6 +167,11 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 
 int main (int argc, char ** argv)
 {
+	// Set up signal handling
+	signal(SIGABRT, terminate);
+	signal(SIGTERM, terminate);
+	signal(SIGINT, terminate);
+	
 	// Get kernel routes
 	if (argc == 2 && strcmp(argv[1], "--rib-dump") == 0)
 	{
@@ -274,11 +279,6 @@ int main (int argc, char ** argv)
 		close_listener();
 		exit(6);
 	}
-	
-	// Set up signal handling
-	signal(SIGABRT, terminate);
-	signal(SIGTERM, terminate);
-	signal(SIGINT, terminate);
 	
 	// Wait for connection
 	struct sockaddr_storage remote_addr;
