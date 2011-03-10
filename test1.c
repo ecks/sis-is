@@ -63,7 +63,7 @@ void ts_printf(const char * format, ... )
 	{
 		output_buf_tail->next = tmp;
 		output_buf_tail = tmp;
-	
+	}
 	
 	// printf
 	va_list args;
@@ -110,10 +110,10 @@ void terminate(int signal)
 	}
 	
 #ifdef BUFFER_OUTPUT
-	struct output_buf * tmp = output_buf_head, tmp2;
+	struct output_buf * tmp = output_buf_head, * tmp2;
 	while (tmp != NULL)
 	{
-		printf(tmp->buf);
+		printf("%s", tmp->buf);
 		tmp2 = tmp->next;
 		free(tmp);
 		tmp = tmp2;
