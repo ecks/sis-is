@@ -21,6 +21,8 @@
 #include "sisis_structs.h"
 #include "sisis_netlink.h"
 
+#define TIME_DEBUG
+
 int socket_opened = 0;
 int sisis_socket = 0;
 struct sockaddr_in sisis_listener_addr;
@@ -296,6 +298,13 @@ int sisis_do_register(char * sisis_addr)
 	// Send message
 	char * buf;
 	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, request_id, SISIS_CMD_REGISTER_ADDRESS, msg, strlen(sisis_addr)+4);
+#ifdef TIME_DEBUG
+	char * ts1, * ts2;
+	// Get time
+	struct timespec time;
+  clock_gettime(CLOCK_REALTIME, &time);
+	asprintf(&ts1, "[%ld.%09ld] Sending SIS-IS request to zebra.\n", time.tv_sec, time.tv_nsec);
+#endif
 	sisis_send(buf, buf_len);
 	free(buf);
 	
@@ -306,7 +315,18 @@ int sisis_do_register(char * sisis_addr)
   int status = pthread_mutex_timedlock(mutex, &timeout);
 	if (status != 0)
 		return 1;
+
+#ifdef TIME_DEBUG
+	// Get time
+	struct timespec time;
+  clock_gettime(CLOCK_REALTIME, &time);
+	asprintf(&ts2, "[%ld.%09ld] Received SIS-IS response from zebra.\n", time.tv_sec, time.tv_nsec);
 	
+	printf("%s%s", ts1, ts2);
+	free(ts1);
+	free(ts2);
+#endif
+
 	// Remove mutex
 	pthread_mutex_destroy(mutex);
 	free(mutex);
