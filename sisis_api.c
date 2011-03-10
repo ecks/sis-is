@@ -318,8 +318,7 @@ int sisis_do_register(char * sisis_addr)
 
 #ifdef TIME_DEBUG
 	// Get time
-	struct timespec time;
-  clock_gettime(CLOCK_REALTIME, &time);
+	clock_gettime(CLOCK_REALTIME, &time);
 	asprintf(&ts2, "[%ld.%09ld] Received SIS-IS response from zebra.\n", time.tv_sec, time.tv_nsec);
 	
 	printf("%s%s", ts1, ts2);
