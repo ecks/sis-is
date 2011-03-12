@@ -77,7 +77,7 @@ quagga_timestamp(int timestamp_precision, char *buf, size_t buflen)
   static struct {
     time_t last;
     size_t len;
-    char buf[38];
+    char buf[28];
   } cache;
   struct timeval clock;
 
@@ -92,10 +92,6 @@ quagga_timestamp(int timestamp_precision, char *buf, size_t buflen)
       tm = localtime(&cache.last);
       cache.len = strftime(cache.buf, sizeof(cache.buf),
       			   "%Y/%m/%d %H:%M:%S", tm);
-			
-			// Add nanoseconds
-			sprintf(cache.buf + cache.len, ".%09l", clock.tv_usec);
-			cache.len += 10;
     }
   /* note: it's not worth caching the subsecond part, because
      chances are that back-to-back calls are not sufficiently close together
