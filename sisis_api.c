@@ -16,12 +16,15 @@
 #include <time.h>
 #include <sys/time.h>
 #include <stdint.h>
+#include <stdarg.h>
 
 #include "sisis_api.h"
 #include "sisis_structs.h"
 #include "sisis_netlink.h"
 
 #define TIME_DEBUG
+
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
 
 int socket_opened = 0;
 int sisis_socket = 0;
@@ -37,6 +40,9 @@ struct list * ipv4_rib_routes = NULL;
 struct list * ipv6_rib_routes = NULL;
 #endif /* HAVE_IPV6 */
 
+// SIS-IS Address Components
+components = NULL;
+
 // TODO: Support multiple addresses at once.
 pthread_t sisis_reregistration_thread;
 
@@ -47,6 +53,161 @@ void * sisis_recv_loop(void *);
 // TODO: Handle multiple outstanding requests later
 // Request which we are waiting for an ACK or NACK for
 struct sisis_request_ack_info awaiting_ack;
+
+/**
+ * Setup SIS-IS address format.  Must be called before any other functions.
+ *
+ * filename Name of file defining SIS-IS address format.
+ *
+ * Returns 0 on success
+ */
+int setup_sisis_addr_format(const char * filename)
+{
+	// Components (at most 128)
+	num_components = 0;
+	components = malloc(sizeof(sisis_component_t)*128);
+	memset(components, 0, sizeof(sisis_component_t)*128);
+	int total_bits = 0;
+	
+	// Open file
+	FILE * file = fopen(filename, "r");
+	if (!file)
+		return 1;
+	
+	// Read each line
+	int line_num = 1;
+	int line_size = 512;
+	char * line = malloc(sizeof(char) * line_size);
+	while (fgets(line, line_size, file))
+	{
+		// Read until we get the full line
+		int len = strlen(line);
+		while (len > 0 && line[len-1] != '\n')
+		{
+			line_size *= 2;
+			line = realloc(line, line_size);
+			// Set len to 0 to stop looping on EOF or error
+			if (!fgets(line+len, line_size-len, file))
+				len = 0;
+			// Get new length
+			else
+				len = strlen(line);
+		}
+		
+		// Parse line
+		int i, start = 0, field = 1;
+#define SISIS_DAT_FIELD_NAME			1
+#define SISIS_DAT_FIELD_BITS			2
+#define SISIS_DAT_FIELD_FIXED			3
+#define SISIS_DAT_FIELD_FIXED_VAL	4
+		for (i = 0, len = strlen(line) + 1; i < len; i++)	// Intentionally go to '\0'
+		{
+			if (line[i] == ' ' || line[i] == '\t' || line[i] == '\r' || line[i] == '\n' || line[i] == '\0')
+			{
+				if (start == i)
+					start++;
+				else
+				{
+					// Copy to new buffer
+					int buf_len = i - start + 1;	// Add 1 for '\0'
+					char * buf = malloc(sizeof(char)*buf_len);
+					buf[buf_len-1] = '\0';
+					memcpy(buf, line+start, buf_len-1);
+					start = i+1;
+					
+					/* Save to correct component */
+					switch (field)
+					{	
+						// Name
+						case SISIS_DAT_FIELD_NAME:
+							components[num_components].name = buf;
+							break;
+						// # of bits
+						case SISIS_DAT_FIELD_BITS:
+							{
+								int h = 0;
+								for (; h < buf_len-1; h++)
+								{
+									if (buf[h] >= '0' && buf[h] <= '9')
+										components[num_components].bits = components[num_components].bits*10+(buf[h]-'0');
+									else
+									{
+										printf("Unexpected \"%c\" on line %d around \"%s\".\n", buf[h], line_num, buf);
+										return 1;
+									}
+								}
+								free(buf);
+								
+								// Restrict components to 64 bits
+								if (components[num_components].bits > 64)
+								{
+									printf("Components may be at most 64 bits.\n");
+									return 1;
+								}
+								
+								// Check total number of bits
+								total_bits += components[num_components].bits;
+								if (total_bits > 128)
+								{
+									printf("Too many bits.\n");
+									return 1;
+								}
+							}
+							break;
+						// Fixed or default
+						case SISIS_DAT_FIELD_FIXED:
+							if (strcmp(buf, "fixed") == 0)
+								components[num_components].flags |= SISIS_COMPONENT_FIXED;
+							else
+							{
+								printf("Unexpected \"%s\" on line %d.  Expecting \"fixed\".\n", buf, line_num);
+								return 1;
+							}
+							free(buf);
+							break;
+						// Default value
+						case SISIS_DAT_FIELD_FIXED_VAL:
+							{
+								short base = 10;
+								int h = 0;
+								for (; h < buf_len-1; h++)
+								{
+									if (buf[h] >= '0' && buf[h] <= '9')
+										components[num_components].fixed_val = components[num_components].fixed_val*base+(buf[h]-'0');
+									else if (base == 16 && buf[h] >= 'a' && buf[h] <= 'f')
+										components[num_components].fixed_val = components[num_components].fixed_val*base+(buf[h]-'a'+10);
+									else if (h == 1 && buf[0] == '0' && buf[1] <= 'x')
+										base = 16;
+									else
+									{
+										printf("Unexpected \"%c\" on line %d around \"%s\".\n", buf[h], line_num, buf);
+										exit(1);
+									}
+								}
+								free(buf);
+							}
+							break;
+					}
+					
+					// Next field
+					field++;
+				}
+			}
+		}
+		
+		// Add to number of components
+		num_components++;
+		
+		// Next line
+		line_num++;
+	}
+	fclose(file);
+	
+	// Shrink memory for components
+	components = realloc(components, sizeof(sisis_component_t)*num_components);
+	
+	return 0;
+}
 
 /**
  * Sets up socket to SIS-IS listener.
@@ -207,10 +368,59 @@ int sisis_construct_message(char ** buf, unsigned short version, unsigned int re
  * 
  * Returns zero on success.
  */
-int sisis_create_addr(uint16_t ptype, uint32_t host_num, uint64_t pid, char * sisis_addr)
+int sisis_create_addr(char * sisis_addr, ...)
 {
-	// Construct SIS-IS address
-	sprintf(sisis_addr, "fcff:%04hx:%04hx:%04hx:%04hx:%04hx:%04hx:%04hx", (unsigned short)ptype & 0xffff, (unsigned short)(host_num >> 16) & 0xffff, (unsigned short)host_num & 0xffff, (unsigned short)(pid >> 48) & 0xffff, (unsigned short)(pid >> 32) & 0xffff, (unsigned short)(pid >> 16) & 0xffff, (unsigned short)pid & 0xffff);
+	// Check that the components were set up
+	if (components == NULL)
+		return 1;
+	
+	va_list args;
+	va_start(args, sisis_addr);
+	int comp = 0, bit = 0, consumed_bits = 0, comp_bits = components[comp].bits;
+	unsigned short part = 0;
+	uint64_t arg = (components[comp].flags & SISIS_COMPONENT_FIXED) ? components[comp].fixed_val : va_arg(args, uint64_t);
+	for (; bit < 128; bit+=consumed_bits)
+	{
+		// Find next component with available bits
+		while (comp_bits == 0 && comp + 1 < num_components)
+		{
+			comp++;
+			comp_bits = components[comp].bits;
+			if (components[comp].flags & SISIS_COMPONENT_FIXED)
+				arg = components[comp].fixed_val;
+			else
+				arg = va_arg(args, uint64_t);
+		}
+		// Fill remainder with zeros if there are no more components
+		if (comp_bits == 0)
+		{
+			consumed_bits = 16 - (bit % 16);
+			part <<= consumed_bits;
+		}
+		// Otherwise, copy from arg
+		else
+		{
+			consumed_bits = MIN(16 - (bit % 16), comp_bits);
+			//printf("Consumed: %d\n", consumed_bits);
+			//printf("Arg: %llu\n", arg);
+			int i = 0;
+			for (; i < consumed_bits; i++)
+			{
+				part <<= 1;
+				comp_bits--;
+				part |= (arg >> comp_bits) & 0x1;
+			}
+			//printf("%hu\n", part);
+		}
+		
+		// Print now?
+		if ((bit + consumed_bits) % 16 == 0)
+		{
+			sprintf(sisis_addr+(bit/16)*5, "%04hx%s", part, bit + consumed_bits == 128 ? "" : ":");
+			part = 0;
+		}
+	}
+	va_end(args);
 	
 	return 0;
 }
@@ -220,12 +430,13 @@ int sisis_create_addr(uint16_t ptype, uint32_t host_num, uint64_t pid, char * si
  *
  * sisis_addr SIS-IS/IP address
  */
-struct sisis_addr_components get_sisis_addr_components(char * sisis_addr)
+void get_sisis_addr_components(char * sisis_addr, ...)
 {
-	struct sisis_addr_components rtn;
-	memset(&rtn, 0, sizeof rtn);
+	// Check that the components were set up
+	if (components == NULL)
+		return 1;
 	
-	// Remove ::
+	// Remove :: and ensure 4 numbers per 16 bits
 	int idx, idx2, len = strlen(sisis_addr);
 	char before[INET6_ADDRSTRLEN], after[INET6_ADDRSTRLEN], full[INET6_ADDRSTRLEN+1];
 	full[0] = 0;
@@ -255,11 +466,42 @@ struct sisis_addr_components get_sisis_addr_components(char * sisis_addr)
 		}
 	}
 	
-	unsigned short host[2], pid[4];
-	sscanf(full, "fcff:%hx:%hx:%hx:%hx:%hx:%hx:%hx", (short *)&rtn.ptype, &host[0], &host[1], &pid[0], &pid[1], &pid[2], &pid[3]);
-	rtn.host_num = (((uint64_t)host[0] & 0xffff) << 16) | ((uint64_t)host[1] & 0xffff);
-	rtn.pid = (((uint64_t)pid[0] & 0xffff) << 48) | (((uint64_t)pid[1] & 0xffff) << 32) | (((uint64_t)pid[2] & 0xffff) << 16) | ((uint64_t)pid[3] & 0xffff);
-	return rtn;
+	// Parse into args
+	va_list args;
+	va_start(args, sisis_addr);
+	int comp = 0, bit = 0, consumed_bits = 0, comp_bits = components[comp].bits;
+	unsigned short part = 0;
+	uint64_t * arg = va_arg(args, uint64_t *);
+	memset(arg, 0, sizeof(*arg));
+	for (; bit < 128; bit+=consumed_bits)
+	{
+		// Next part?
+		if (bit % 16 == 0)
+			sscanf(full+(bit/16)*5, "%4hx", &part);
+		
+		consumed_bits = 16;
+		// Find next component with available bits
+		while (comp_bits == 0 && comp + 1 < num_components)
+		{
+			comp++;
+			comp_bits = components[comp].bits;
+			arg = va_arg(args, uint64_t *);
+			memset(arg, 0, sizeof(*arg));
+		}
+		// Make sure there are no more components
+		if (comp_bits > 0)
+		{
+			consumed_bits = MIN(16 - (bit % 16), comp_bits);
+			int i = 0;
+			for (; i < consumed_bits; i++)
+			{
+				*arg <<= 1;
+				comp_bits--;
+				*arg |= (part >> 15-((bit+i)%16)) & 0x1;
+			}
+		}
+	}
+	va_end(args);
 }
 
 /**

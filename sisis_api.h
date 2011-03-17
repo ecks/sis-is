@@ -21,9 +21,21 @@
 #define SISIS_ACK							            3
 #define SISIS_NACK							     			4
 
-// Prefix lengths
-#define SISIS_ADD_PREFIX_LEN_PTYPE				32
-#define SISIS_ADD_PREFIX_LEN_HOST_NUM			64
+// TODO: Remove Prefix lengths
+//#define SISIS_ADD_PREFIX_LEN_PTYPE				32
+//#define SISIS_ADD_PREFIX_LEN_HOST_NUM			64
+
+typedef struct {
+	char * name;
+	short bits;
+	int flags;
+#define SISIS_COMPONENT_FIXED					(1 << 0)
+	uint64_t fixed_val;		// Fixed values only for if bits <= 64
+} sisis_component_t;
+
+// SIS-IS address component info
+int num_components;
+sisis_component_t * components;
 
 extern int sisis_listener_port;
 extern char * sisis_listener_ip_addr;
@@ -33,6 +45,15 @@ extern struct list * ipv4_rib_routes;
 extern struct list * ipv6_rib_routes;
 
 void sisis_process_message(char * msg, int msg_len);
+
+/**
+ * Setup SIS-IS address format.  Must be called before any other functions.
+ *
+ * filename Name of file defining SIS-IS address format.
+ *
+ * Returns 0 on success
+ */
+int setup_sisis_addr_format(const char * filename);
 
 /**
  * Construct SIS-IS address.
