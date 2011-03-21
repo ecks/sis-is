@@ -525,7 +525,7 @@ int get_sisis_addr_components_from_va_list(char * sisis_addr, va_list args)
  *
  * sisis_addr SIS-IS/IP address
  */
-void get_sisis_addr_components(char * sisis_addr, ...)
+int get_sisis_addr_components(char * sisis_addr, ...)
 {
 	// Parse into args
 	va_list args;
@@ -662,7 +662,7 @@ int sisis_unregister(void * nil, ...)
 	char sisis_addr[INET6_ADDRSTRLEN+1];
 	va_list args;
 	va_start(args, nil);
-	int rtn = sisis_create_addr_from_va_list(args);
+	int rtn = sisis_create_addr_from_va_list(&sisis_addr, args);
 	va_end(args);
 	if (rtn)
 		return 1;
