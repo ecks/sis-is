@@ -65,7 +65,7 @@ int sisis_create_addr(char * sisis_addr, ...);
  *
  * sisis_addr SIS-IS/IP address
  */
-void get_sisis_addr_components(char * sisis_addr, ...);
+int get_sisis_addr_components(char * sisis_addr, ...);
 
 /**
  * Registers SIS-IS process.
