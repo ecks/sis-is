@@ -40,8 +40,9 @@ struct list * ipv4_rib_routes = NULL;
 struct list * ipv6_rib_routes = NULL;
 #endif /* HAVE_IPV6 */
 
-// SIS-IS Address Components
-components = NULL;
+// SIS-IS address component info
+int num_components;
+sisis_component_t * components;
 
 // TODO: Support multiple addresses at once.
 pthread_t sisis_reregistration_thread;
@@ -65,7 +66,7 @@ int setup_sisis_addr_format(const char * filename)
 {
 	// Components (at most 128)
 	num_components = 0;
-	components = malloc(sizeof(sisis_component_t)*128);
+	components = (sisis_component_t*)malloc(sizeof(sisis_component_t)*128);
 	memset(components, 0, sizeof(sisis_component_t)*128);
 	int total_bits = 0;
 	

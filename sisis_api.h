@@ -33,10 +33,6 @@ typedef struct {
 	uint64_t fixed_val;		// Fixed values only for if bits <= 64
 } sisis_component_t;
 
-// SIS-IS address component info
-int num_components;
-sisis_component_t * components;
-
 extern int sisis_listener_port;
 extern char * sisis_listener_ip_addr;
 
