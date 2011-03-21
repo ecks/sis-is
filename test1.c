@@ -97,7 +97,7 @@ void close_listener()
 		
 		// Unregister
 		ts_printf("Unregistering SIS-IS address...\n");
-		sisis_unregister(NULL, ptype, VERSION, host_num, pid, timestamp);
+		sisis_unregister(NULL, (uint64_t)ptype, (uint64_t)VERSION, (uint64_t)host_num, (uint64_t)pid, (uint64_t)timestamp);
 		
 		sockfd = -1;
 	}
@@ -248,7 +248,7 @@ int main (int argc, char ** argv)
 	
 	// Register address
 	ts_printf("Registering SIS-IS address.\n");
-	if (sisis_register(sisis_addr, ptype, VERSION, host_num, (uint64_t)pid, timestamp) != 0)
+	if (sisis_register(sisis_addr, (uint64_t)ptype, (uint64_t)VERSION, (uint64_t)host_num, (uint64_t)pid, (uint64_t)timestamp) != 0)
 	{
 		ts_printf("Failed to register SIS-IS address.\n");
 		exit(3);
