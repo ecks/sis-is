@@ -365,17 +365,15 @@ int sisis_construct_message(char ** buf, unsigned short version, unsigned int re
  * Construct SIS-IS address.
  *
  * sisis_addr String to store resulting SIS-IS/IP address in.
- * 
+ *
  * Returns zero on success.
  */
-int sisis_create_addr(char * sisis_addr, ...)
+int sisis_create_addr_from_va_list(char * sisis_addr, va_list args)
 {
 	// Check that the components were set up
 	if (components == NULL)
 		return 1;
 	
-	va_list args;
-	va_start(args, sisis_addr);
 	int comp = 0, bit = 0, consumed_bits = 0, comp_bits = components[comp].bits;
 	unsigned short part = 0;
 	uint64_t arg = (components[comp].flags & SISIS_COMPONENT_FIXED) ? components[comp].fixed_val : va_arg(args, uint64_t);
@@ -420,17 +418,35 @@ int sisis_create_addr(char * sisis_addr, ...)
 			part = 0;
 		}
 	}
-	va_end(args);
 	
 	return 0;
 }
 
 /**
+ * Construct SIS-IS address.
+ *
+ * sisis_addr String to store resulting SIS-IS/IP address in.
+ * 
+ * Returns zero on success.
+ */
+int sisis_create_addr(char * sisis_addr, ...)
+{
+	va_list args;
+	va_start(args, sisis_addr);
+	int rtn = sisis_create_addr_from_va_list(sisis_addr, args);
+	va_end(args);
+	
+	return rtn;
+}
+
+/**
  * Split an SIS-IS address into components.
  *
- * sisis_addr SIS-IS/IP address
+ * sisis_addr SIS-IS/IP address.
+ *
+ * Returns zero on success.
  */
-void get_sisis_addr_components(char * sisis_addr, ...)
+int get_sisis_addr_components_from_va_list(char * sisis_addr, va_list args)
 {
 	// Check that the components were set up
 	if (components == NULL)
@@ -467,8 +483,6 @@ void get_sisis_addr_components(char * sisis_addr, ...)
 	}
 	
 	// Parse into args
-	va_list args;
-	va_start(args, sisis_addr);
 	int comp = 0, bit = 0, consumed_bits = 0, comp_bits = components[comp].bits;
 	unsigned short part = 0;
 	uint64_t * arg = va_arg(args, uint64_t *);
@@ -501,7 +515,24 @@ void get_sisis_addr_components(char * sisis_addr, ...)
 			}
 		}
 	}
+	
+	return 0;
+}
+
+/**
+ * Split an SIS-IS address into components.
+ *
+ * sisis_addr SIS-IS/IP address
+ */
+void get_sisis_addr_components(char * sisis_addr, ...)
+{
+	// Parse into args
+	va_list args;
+	va_start(args, sisis_addr);
+	int rtn = get_sisis_addr_components_from_va_list(sisis_addr, args);
 	va_end(args);
+	
+	return rtn;
 }
 
 /**
@@ -596,14 +627,18 @@ void * sisis_reregister(void * arg)
  * 
  * Returns zero on success.
  */
-int sisis_register(uint16_t ptype, uint32_t host_num, uint64_t pid, char * sisis_addr)
+int sisis_register(char * sisis_addr, ...)
 {
-	// Construct SIS-IS address
-	if (sisis_create_addr(ptype, host_num, pid, sisis_addr))
+	// Construct SIS-IS addresss
+	va_list args;
+	va_start(args, sisis_addr);
+	int rtn = sisis_create_addr_from_va_list(sisis_addr, args);
+	va_end(args);
+	if (rtn)
 		return 1;
 	
 	// Register
-	int rtn = sisis_do_register(sisis_addr);
+	rtn = sisis_do_register(sisis_addr);
 	
 	// TODO: Support multiple addresses at once.
 	char * thread_sisis_addr = malloc(sizeof(char) * (strlen(sisis_addr)+1));
@@ -615,13 +650,20 @@ int sisis_register(uint16_t ptype, uint32_t host_num, uint64_t pid, char * sisis
 
 /**
  * Unregisters SIS-IS process.
+ *
+ * First parameter is ignored.  Set to NULL
+ * 
  * Returns zero on success.
  */
-int sisis_unregister(uint16_t ptype, uint32_t host_num, uint64_t pid)
+int sisis_unregister(void * nil, ...)
 {
 	// Construct SIS-IS address
 	char sisis_addr[INET6_ADDRSTRLEN+1];
-	if (sisis_create_addr(ptype, host_num, pid, sisis_addr))
+	va_list args;
+	va_start(args, nil);
+	int rtn = sisis_create_addr_from_va_list(args);
+	va_end(args);
+	if (rtn)
 		return 1;
 	
 	// Setup socket
@@ -731,7 +773,7 @@ int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
 }
 
 /**
- * Get SIS-IS addresses that match a given ipv4 prefix.  It is the receivers
+ * Get SIS-IS addresses that match a given IP prefix.  It is the receiver's
  * responsibility to free the list when done with it.
  */
 struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
@@ -826,37 +868,12 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 }
 
 /**
- * Get SIS-IS addresses for a specific process type.  It is the receivers
- * responsibility to free the list when done with it.
+ * Creates an IPv6 prefix
  */
-struct list * get_sisis_addrs_for_process_type(uint16_t ptype)
+struct prefix_ipv6 sisis_make_ipv6_prefix(char * addr, int prefix_len)
 {
-	// Create prefix
-	char prefix_addr_str[INET6_ADDRSTRLEN+1];
-	memset(prefix_addr_str, 0, sizeof(prefix_addr_str));
-	if (sisis_create_addr(ptype, 0, 0, prefix_addr_str))
-		return NULL;
 	struct prefix_ipv6 p;
-	p.prefixlen = SISIS_ADD_PREFIX_LEN_PTYPE;
-	inet_pton(AF_INET6, prefix_addr_str, &p.prefix);
-	
-	return get_sisis_addrs_for_prefix(&p);
-}
-
-/**
- * Get SIS-IS addresses for a specific process type and host.  It is the receivers
- * responsibility to free the list when done with it.
- */
-struct list * get_sisis_addrs_for_process_type_and_host(uint16_t ptype, uint32_t host_num)
-{
-	// Create prefix
-	char prefix_addr_str[INET6_ADDRSTRLEN+1];
-	memset(prefix_addr_str, 0, sizeof(prefix_addr_str));
-	if (sisis_create_addr(ptype, host_num, 0, prefix_addr_str))
-		return NULL;
-	struct prefix_ipv6 p;
-	p.prefixlen = SISIS_ADD_PREFIX_LEN_HOST_NUM;
-	inet_pton(AF_INET6, prefix_addr_str, &p.prefix);
-	
-	return get_sisis_addrs_for_prefix(&p);
+	p.prefixlen = prefix_len;
+	inet_pton(AF_INET6, addr, &p.prefix);
+	return p;
 }

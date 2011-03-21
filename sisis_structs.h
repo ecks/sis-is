@@ -45,14 +45,6 @@ struct sisis_request_ack_info
 	#define SISIS_REQUEST_ACK_INFO_NACKED				(1<<1)
 };
 
-/* SIS-IS address components */
-struct sisis_addr_components
-{
-	uint32_t ptype;
-	uint32_t host_num;
-	uint64_t pid;
-};
-
 /* IPv4 prefix structure. */
 struct prefix_ipv4
 {

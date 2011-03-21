@@ -62,14 +62,14 @@ int setup_sisis_addr_format(const char * filename);
  * 
  * Returns zero on success.
  */
-int sisis_create_addr(uint16_t ptype, uint32_t host_num, uint64_t pid, char * sisis_addr);
+int sisis_create_addr(char * sisis_addr, ...);
 
 /**
  * Split an SIS-IS address into components.
  *
  * sisis_addr SIS-IS/IP address
  */
-struct sisis_addr_components get_sisis_addr_components(char * sisis_addr);
+void get_sisis_addr_components(char * sisis_addr, ...);
 
 /**
  * Registers SIS-IS process.
@@ -78,13 +78,16 @@ struct sisis_addr_components get_sisis_addr_components(char * sisis_addr);
  * 
  * Returns zero on success.
  */
-int sisis_register(uint16_t ptype, uint32_t host_num, uint64_t pid, char * sisis_addr);
+int sisis_register(char * sisis_addr, ...);
 
 /**
  * Unregisters SIS-IS process.
+ *
+ * First parameter is ignored.  Set to NULL
+ * 
  * Returns zero on success.
  */
-int sisis_unregister(uint16_t ptype, uint32_t host_num, uint64_t pid);
+int sisis_unregister(void * nil, ...);
 
 /**
  * Dump kernel routing table.
@@ -111,15 +114,14 @@ struct subscribe_to_rib_changes_info
 int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info);
 
 /**
- * Get SIS-IS addresses for a specific process type.  It is the receivers
+ * Get SIS-IS addresses that match a given IP prefix.  It is the receiver's
  * responsibility to free the list when done with it.
  */
-struct list * get_sisis_addrs_for_process_type(uint16_t ptype);
+struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 
 /**
- * Get SIS-IS addresses for a specific process type and host.  It is the receivers
- * responsibility to free the list when done with it.
+ * Creates an IPv6 prefix
  */
-struct list * get_sisis_addrs_for_process_type_and_host(uint16_t ptype, uint32_t host_num);
+struct prefix_ipv6 sisis_make_ipv6_prefix(char * addr, int prefix_len);
 
 #endif // _SISIS_API_H
