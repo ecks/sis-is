@@ -117,7 +117,7 @@ int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info);
  * Get SIS-IS addresses that match a given IP prefix.  It is the receiver's
  * responsibility to free the list when done with it.
  */
-struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
+struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p);
 
 /**
  * Creates an IPv6 prefix
