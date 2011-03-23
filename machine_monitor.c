@@ -24,6 +24,8 @@
 #include "../tests/sisis_api.h"
 #include "../tests/sisis_process_types.h"
 
+#define VERSION 1
+
 int sockfd = -1, con = -1;
 uint64_t ptype, host_num, pid;
 uint64_t timestamp;
@@ -296,7 +298,7 @@ int main (int argc, char ** argv)
 	}
 	
 	// Get host number
-	sscanf (argv[1], "%d", &host_num);
+	sscanf (argv[1], "%llu", &host_num);
 	char sisis_addr[INET6_ADDRSTRLEN+1];
 	
 	// Get pid
