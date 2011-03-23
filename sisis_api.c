@@ -501,7 +501,8 @@ int get_sisis_addr_components_from_va_list(char * sisis_addr, va_list args)
 			comp++;
 			comp_bits = components[comp].bits;
 			arg = va_arg(args, uint64_t *);
-			memset(arg, 0, sizeof(*arg));
+			if (arg != NULL)
+				memset(arg, 0, sizeof(*arg));
 		}
 		// Make sure there are no more components
 		if (comp_bits > 0)
@@ -510,9 +511,12 @@ int get_sisis_addr_components_from_va_list(char * sisis_addr, va_list args)
 			int i = 0;
 			for (; i < consumed_bits; i++)
 			{
-				*arg <<= 1;
 				comp_bits--;
-				*arg |= (part >> 15-((bit+i)%16)) & 0x1;
+				if (arg != NULL)
+				{
+					*arg <<= 1;
+					*arg |= (part >> 15-((bit+i)%16)) & 0x1;
+				}
 			}
 		}
 	}
