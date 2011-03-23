@@ -125,11 +125,19 @@ void get_sisis_addr_components(char * sisis_addr, sisis_component_t * components
 	unsigned short part = 0;
 	uint64_t * arg = va_arg(args, uint64_t *);
 	memset(arg, 0, sizeof(*arg));
+	char * full_ptr = full;
 	for (; bit < 128; bit+=consumed_bits)
 	{
 		// Next part?
 		if (bit % 16 == 0)
-			sscanf(full+(bit/16)*5, "%4hx", &part);
+		{
+			sscanf(full_ptr, "%4hx", &part);
+			while (*full_ptr != '\0' && *full_ptr != ':')
+				full_ptr++;
+			if (*full_ptr == ':')
+				full_ptr++;
+			printf("%d - %04hx - %s\n", bit/16, part, full_ptr);
+		}
 		
 		consumed_bits = 16;
 		// Find next component with available bits
@@ -149,7 +157,7 @@ void get_sisis_addr_components(char * sisis_addr, sisis_component_t * components
 			{
 				*arg <<= 1;
 				comp_bits--;
-				*arg |= (part >> 15-((bit+i)%16)) & 0x1;
+				*arg |= (part >> (15-((bit+i)%16))) & 0x1;
 			}
 		}
 	}
@@ -328,6 +336,7 @@ int main()
 			printf("%s\t%hd\t%llx\n", components[i].name, components[i].bits, components[i].fixed_val);
 		
 		// Test address creation
+		/*
 		char sisis_addr[128];
 		sisis_create_addr(sisis_addr, components, num_components, 0, 0, 0, 0, 0);
 		printf("Address: %s\n", sisis_addr);
@@ -340,6 +349,10 @@ int main()
 		
 		uint64_t prefix, sisis_version, process_type, process_version, sys_id, pid, timestamp;
 		get_sisis_addr_components(sisis_addr, components, num_components, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &pid, &timestamp);
+		printf("%04x\t%u\t%u\t%u\t%u\t%u\t%u\n", (uint)prefix, (uint)sisis_version, (uint)process_type, (uint)process_version, (uint)sys_id, (uint)pid, (uint)timestamp);
+		*/
+		uint64_t prefix, sisis_version, process_type, process_version, sys_id, pid, timestamp;
+		get_sisis_addr_components("fcff:1000:840:0:100:17c9:4d8a:3a71", components, num_components, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &pid, &timestamp);
 		printf("%04x\t%u\t%u\t%u\t%u\t%u\t%u\n", (uint)prefix, (uint)sisis_version, (uint)process_type, (uint)process_version, (uint)sys_id, (uint)pid, (uint)timestamp);
 	}
 	exit(0);

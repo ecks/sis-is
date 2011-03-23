@@ -482,6 +482,7 @@ int get_sisis_addr_components_from_va_list(char * sisis_addr, va_list args)
 			full[idx2] = 0;
 		}
 	}
+	char * full_ptr = full;
 	
 	// Parse into args
 	int comp = 0, bit = 0, consumed_bits = 0, comp_bits = components[comp].bits;
@@ -493,7 +494,13 @@ int get_sisis_addr_components_from_va_list(char * sisis_addr, va_list args)
 	{
 		// Next part?
 		if (bit % 16 == 0)
-			sscanf(full+(bit/16)*5, "%4hx", &part);
+		{
+			sscanf(full_ptr, "%4hx", &part);
+			while (*full_ptr != '\0' && *full_ptr != ':')
+				full_ptr++;
+			if (*full_ptr == ':')
+				full_ptr++;
+		}
 		
 		consumed_bits = 16;
 		// Find next component with available bits
