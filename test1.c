@@ -239,8 +239,8 @@ int main (int argc, char ** argv)
 	}
 	
 	// Get process type and host number
-	sscanf (argv[1], "%d", &host_num);
-	sscanf (argv[2], "%d", &ptype);
+	sscanf (argv[1], "%llu", &host_num);
+	sscanf (argv[2], "%llu", &ptype);
 	char sisis_addr[INET6_ADDRSTRLEN+1];
 	
 	// Get pid
@@ -248,7 +248,7 @@ int main (int argc, char ** argv)
 	
 	// Register address
 	ts_printf("Registering SIS-IS address.\n");
-	if (sisis_register(sisis_addr, (uint64_t)SISIS_PTYPE_REMOTE_SPAWN, (uint64_t)VERSION, host_num, pid, timestamp) != 0)
+	if (sisis_register(sisis_addr, (uint64_t)ptype, (uint64_t)VERSION, host_num, pid, timestamp) != 0)
 	{
 		ts_printf("Failed to register SIS-IS address.\n");
 		exit(3);
