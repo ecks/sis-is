@@ -146,7 +146,10 @@ int main (int argc, char ** argv)
 	pthread_create(&recv_thread_t, NULL, recv_thread, NULL);
 	
 	// Check how many other processes there are
-	struct list * monitor_addrs = get_sisis_addrs_for_process_type(SISIS_PTYPE_MACHINE_MONITOR);
+	char mm_addr[INET6_ADDRSTRLEN+1];
+	sisis_create_addr(mm_addr, (uint64_t)SISIS_PTYPE_MACHINE_MONITOR, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
+	struct prefix_ipv6 mm_prefix = sisis_make_ipv6_prefix(mm_addr, 42);
+	struct list * monitor_addrs = get_sisis_addrs_for_prefix(&mm_prefix);
 	if (monitor_addrs == NULL || monitor_addrs->size == 0)
 	{
 		printf("No other SIS-IS hosts found.\n");
@@ -156,7 +159,10 @@ int main (int argc, char ** argv)
 	
 	// Check how many leader_elector processes there are
 	int leader_elector_processes_needed = 0;
-	struct list * leader_elector_addrs = get_sisis_addrs_for_process_type(SISIS_PTYPE_LEADER_ELECTOR);
+	char ll_addr[INET6_ADDRSTRLEN+1];
+	sisis_create_addr(ll_addr, (uint64_t)SISIS_PTYPE_LEADER_ELECTOR, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
+	struct prefix_ipv6 ll_prefix = sisis_make_ipv6_prefix(ll_addr, 42);
+	struct list * leader_elector_addrs = get_sisis_addrs_for_prefix(&ll_prefix);
 	if (!leader_elector_addrs)
 	{
 		printf("Error.\n");
@@ -189,9 +195,10 @@ int main (int argc, char ** argv)
 		if (inet_ntop(AF_INET6, remote_addr, addr_str, INET6_ADDRSTRLEN+1) != 1)
 		{
 			// Get SIS-IS address info
-			struct sisis_addr_components sisis_comp = get_sisis_addr_components(addr_str);
+			uint64_t remote_host_num;
+			get_sisis_addr_components(addr_str, NULL, NULL, NULL, NULL, &remote_host_num, NULL, NULL);
 			
-			printf("Host[%u]: %s\n", sisis_comp.host_num, addr_str);
+			printf("Host[%u]: %s\n", remote_host_num, addr_str);
 			printf("--------------------------------------------------------------------------------\n");
 			
 			// Set up socket info
@@ -230,16 +237,22 @@ int main (int argc, char ** argv)
 				if (leader_elector_processes_needed)
 				{
 					// Check that the machine doesn't already have a leader elector process running
-					struct list * host_leader_elector_addrs = get_sisis_addrs_for_process_type_and_host(SISIS_PTYPE_LEADER_ELECTOR, sisis_comp.host_num);
+					char host_ll_addr[INET6_ADDRSTRLEN+1];
+					sisis_create_addr(host_ll_addr, (uint64_t)SISIS_PTYPE_LEADER_ELECTOR, (uint64_t)1, remote_host_num, (uint64_t)0, (uint64_t)0);
+					struct prefix_ipv6 host_ll_prefix = sisis_make_ipv6_prefix(host_ll_addr, 74);
+					struct list * host_leader_elector_addrs = get_sisis_addrs_for_prefix(&host_ll_prefix);
 					if (host_leader_elector_addrs && host_leader_elector_addrs->size)
 						printf("Host is already running leader elector.\n");
 					else
 					{
 						// Check if the spawn process is running
-						struct list * spawn_addrs = get_sisis_addrs_for_process_type_and_host(SISIS_PTYPE_REMOTE_SPAWN, sisis_comp.host_num);
+						char host_spawn_addr[INET6_ADDRSTRLEN+1];
+						sisis_create_addr(host_spawn_addr, (uint64_t)SISIS_PTYPE_REMOTE_SPAWN, (uint64_t)1, remote_host_num, (uint64_t)0, (uint64_t)0);
+						struct prefix_ipv6 host_spawn_prefix = sisis_make_ipv6_prefix(host_spawn_addr, 74);
+						struct list * spawn_addrs = get_sisis_addrs_for_prefix(&host_spawn_prefix);
 						if (spawn_addrs && spawn_addrs->size)
 						{
-							printf("Starting leader elector on host %u.", sisis_comp.host_num);
+							printf("Starting leader elector on host %u.", remote_host_num);
 							
 							// Set up socket info
 							struct sockaddr_in6 spawn_sockaddr;
