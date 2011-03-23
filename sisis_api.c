@@ -845,6 +845,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 		strcat(prefix_addr_str, ":0");
 	// Create struct
 	struct in6_addr prefix_mask;
+	printf("Prefix: %s\n", prefix_addr_str);
 	inet_pton(AF_INET6, prefix_addr_str, &prefix_mask);
 	
 	// Create list of relevant SIS-IS addresses
