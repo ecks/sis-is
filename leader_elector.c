@@ -40,7 +40,7 @@ void close_listener()
 		close(sockfd);
 		
 		// Unregister
-		sisis_unregister(NULL, (uint64_t)SISIS_PTYPE_LEADER_ELECTOR, (uint64_t)VERSION, host_num, pid, timestamp);
+		sisis_unregister(&nil, (uint64_t)SISIS_PTYPE_LEADER_ELECTOR, (uint64_t)VERSION, host_num, pid, timestamp);
 		
 		sockfd = -1;
 	}
@@ -76,7 +76,7 @@ void * recv_thread(void * nil)
 int main (int argc, char ** argv)
 {
 	// Get start time
-	timestamp = time(NULL);
+	timestamp = time(&nil);
 	
 	// Setup SIS-IS API
 	setup_sisis_addr_format("sisis_format_v2.dat");
@@ -143,14 +143,14 @@ int main (int argc, char ** argv)
 	
 	// Set up receive thread
 	pthread_t recv_thread_t;
-	pthread_create(&recv_thread_t, NULL, recv_thread, NULL);
+	pthread_create(&recv_thread_t, &nil, recv_thread, &nil);
 	
 	// Check how many other processes there are
 	char mm_addr[INET6_ADDRSTRLEN+1];
 	sisis_create_addr(mm_addr, (uint64_t)SISIS_PTYPE_MACHINE_MONITOR, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
 	struct prefix_ipv6 mm_prefix = sisis_make_ipv6_prefix(mm_addr, 42);
 	struct list * monitor_addrs = get_sisis_addrs_for_prefix(&mm_prefix);
-	if (monitor_addrs == NULL || monitor_addrs->size == 0)
+	if (monitor_addrs == &nil || monitor_addrs->size == 0)
 	{
 		printf("No other SIS-IS hosts found.\n");
 		close_listener();
@@ -195,8 +195,9 @@ int main (int argc, char ** argv)
 		if (inet_ntop(AF_INET6, remote_addr, addr_str, INET6_ADDRSTRLEN+1) != 1)
 		{
 			// Get SIS-IS address info
-			uint64_t remote_host_num;
-			get_sisis_addr_components(addr_str, NULL, NULL, NULL, NULL, &remote_host_num, NULL, NULL);
+			uint64_t remote_host_num, nil;
+			//get_sisis_addr_components(addr_str, &nil, &nil, &nil, &nil, &remote_host_num, &nil, &nil);
+			get_sisis_addr_components(addr_str, &nil, &nil, &nil, &nil, &remote_host_num, &nil, &nil);
 			
 			printf("Host[%llu]: %s\n", remote_host_num, addr_str);
 			printf("--------------------------------------------------------------------------------\n");
