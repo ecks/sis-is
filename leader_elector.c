@@ -24,6 +24,8 @@
 #include "../tests/sisis_structs.h"
 #include "../tests/sisis_process_types.h"
 
+#define VERSION 1
+
 #define MAX(a,b) ((a) > (b) ? (a) : (b));
 
 int sockfd = -1, con = -1;
@@ -87,7 +89,7 @@ int main (int argc, char ** argv)
 	}
 	
 	// Get host number
-	sscanf (argv[1], "%d", &host_num);
+	sscanf (argv[1], "%llu", &host_num);
 	char sisis_addr[INET6_ADDRSTRLEN+1];
 	
 	// Get pid
