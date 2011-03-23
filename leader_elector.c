@@ -195,9 +195,8 @@ int main (int argc, char ** argv)
 		if (inet_ntop(AF_INET6, remote_addr, addr_str, INET6_ADDRSTRLEN+1) != 1)
 		{
 			// Get SIS-IS address info
-			uint64_t remote_host_num, nil;
-			//get_sisis_addr_components(addr_str, NULL, NULL, NULL, NULL, &remote_host_num, NULL, NULL);
-			get_sisis_addr_components(addr_str, &nil, &nil, &nil, &nil, &remote_host_num, &nil, &nil);
+			uint64_t remote_host_num;
+			get_sisis_addr_components(addr_str, NULL, NULL, NULL, NULL, &remote_host_num, NULL, NULL);
 			
 			printf("Host[%llu]: %s\n", remote_host_num, addr_str);
 			printf("--------------------------------------------------------------------------------\n");
