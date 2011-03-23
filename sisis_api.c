@@ -829,8 +829,8 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 	int tmp = 0;
 	for (; i < p->prefixlen % 16; i++)
 	{
-		tmp <<= 1;
-		tmp |= 1;
+		tmp >>= 1;
+		tmp |= 0x8000;
 	}
 	if (tmp != 0)
 	{
