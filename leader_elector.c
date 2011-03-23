@@ -27,7 +27,8 @@
 #define MAX(a,b) ((a) > (b) ? (a) : (b));
 
 int sockfd = -1, con = -1;
-int host_num, pid;
+uint64_t ptype, host_num, pid;
+uint64_t timestamp;
 
 void close_listener()
 {
@@ -37,7 +38,7 @@ void close_listener()
 		close(sockfd);
 		
 		// Unregister
-		sisis_unregister(SISIS_PTYPE_LEADER_ELECTOR, host_num, pid);
+		sisis_unregister(NULL, (uint64_t)SISIS_PTYPE_LEADER_ELECTOR, (uint64_t)VERSION, host_num, pid, timestamp);
 		
 		sockfd = -1;
 	}
@@ -72,6 +73,12 @@ void * recv_thread(void * nil)
 
 int main (int argc, char ** argv)
 {
+	// Get start time
+	timestamp = time(NULL);
+	
+	// Setup SIS-IS API
+	setup_sisis_addr_format("sisis_format_v2.dat");
+	
 	// Check number of args
 	if (argc != 2)
 	{
@@ -87,7 +94,7 @@ int main (int argc, char ** argv)
 	pid = getpid();
 	
 	// Register address
-	if (sisis_register(SISIS_PTYPE_LEADER_ELECTOR, host_num, pid, sisis_addr) != 0)
+	if (sisis_register(sisis_addr, (uint64_t)SISIS_PTYPE_LEADER_ELECTOR, (uint64_t)VERSION, host_num, pid, timestamp) != 0)
 	{
 		printf("Failed to register SIS-IS address.\n");
 		exit(1);
