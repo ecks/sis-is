@@ -487,7 +487,8 @@ int get_sisis_addr_components_from_va_list(char * sisis_addr, va_list args)
 	int comp = 0, bit = 0, consumed_bits = 0, comp_bits = components[comp].bits;
 	unsigned short part = 0;
 	uint64_t * arg = va_arg(args, uint64_t *);
-	memset(arg, 0, sizeof(*arg));
+	if (arg != NULL)
+		memset(arg, 0, sizeof(*arg));
 	for (; bit < 128; bit+=consumed_bits)
 	{
 		// Next part?
