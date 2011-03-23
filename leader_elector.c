@@ -198,6 +198,10 @@ int main (int argc, char ** argv)
 			uint64_t remote_host_num;
 			get_sisis_addr_components(addr_str, NULL, NULL, NULL, NULL, &remote_host_num, NULL, NULL);
 			
+			uint64_t t1,t2,t3,t4,t5,t6,t7;
+			get_sisis_addr_components(addr_str, &t1,&t2,&t3,&t4,&t5,&t6,&t7);
+			printf("%llu\t%llu\t%llu\t%llu\t%llu\t%llu\t%llu\n", t1,t2,t3,t4,t5,t6,t7);
+			
 			printf("Host[%llu]: %s\n", remote_host_num, addr_str);
 			printf("--------------------------------------------------------------------------------\n");
 			
