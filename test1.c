@@ -25,7 +25,7 @@
 #define VERSION 2
 
 int sockfd = -1, con = -1;
-int ptype, host_num, pid;
+uint64_t ptype, host_num, pid;
 uint64_t timestamp;
 
 #ifdef BUFFER_OUTPUT
@@ -174,13 +174,13 @@ int main (int argc, char ** argv)
 	// Get start time
 	timestamp = time(NULL);
 	
+	// Setup SIS-IS API
+	setup_sisis_addr_format("sisis_format_v2.dat");
+	
 	// Set up signal handling
 	signal(SIGABRT, terminate);
 	signal(SIGTERM, terminate);
 	signal(SIGINT, terminate);
-	
-	// Setup SIS-IS API
-	setup_sisis_addr_format("sisis_format_v2.dat");
 	
 	// Get kernel routes
 	if (argc == 2 && strcmp(argv[1], "--rib-dump") == 0)
@@ -248,7 +248,7 @@ int main (int argc, char ** argv)
 	
 	// Register address
 	ts_printf("Registering SIS-IS address.\n");
-	if (sisis_register(sisis_addr, (uint64_t)ptype, (uint64_t)VERSION, (uint64_t)host_num, (uint64_t)pid, (uint64_t)timestamp) != 0)
+	if (sisis_register(sisis_addr, (uint64_t)SISIS_PTYPE_REMOTE_SPAWN, (uint64_t)VERSION, host_num, pid, timestamp) != 0)
 	{
 		ts_printf("Failed to register SIS-IS address.\n");
 		exit(3);
