@@ -22,7 +22,7 @@
 #include "sisis_structs.h"
 #include "sisis_netlink.h"
 
-#define TIME_DEBUG
+//#define TIME_DEBUG
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 
