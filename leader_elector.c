@@ -198,7 +198,7 @@ int main (int argc, char ** argv)
 			uint64_t remote_host_num;
 			get_sisis_addr_components(addr_str, NULL, NULL, NULL, NULL, &remote_host_num, NULL, NULL);
 			
-			printf("Host[%u]: %s\n", remote_host_num, addr_str);
+			printf("Host[%llu]: %s\n", remote_host_num, addr_str);
 			printf("--------------------------------------------------------------------------------\n");
 			
 			// Set up socket info
@@ -252,7 +252,7 @@ int main (int argc, char ** argv)
 						struct list * spawn_addrs = get_sisis_addrs_for_prefix(&host_spawn_prefix);
 						if (spawn_addrs && spawn_addrs->size)
 						{
-							printf("Starting leader elector on host %u.", remote_host_num);
+							printf("Starting leader elector on host %llu.", remote_host_num);
 							
 							// Set up socket info
 							struct sockaddr_in6 spawn_sockaddr;
