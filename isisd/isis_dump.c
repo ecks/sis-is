@@ -29,6 +29,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "thread.h"
 #include "linklist.h"
 #include "if.h"
+#include "vty.h"
 
 #include "isisd/dict.h"
 #include "isisd/isis_constants.h"
