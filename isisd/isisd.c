@@ -2263,4 +2263,5 @@ isis_init ()
   isis_circuit_init ();
   isis_zebra_init ();
   isis_spf_cmds_init ();
+	isis_dump_init();
 }
