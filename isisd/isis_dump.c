@@ -28,11 +28,9 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "prefix.h"
 #include "thread.h"
 #include "linklist.h"
-#include "isisd/isis_table.h"
 
 #include "isisd/isisd.h"
-#include "isisd/isis_route.h"
-#include "isisd/isis_attr.h"
+#include "isisd/isis_lsp.h"
 #include "isisd/isis_dump.h"
 
 enum isis_dump_type
