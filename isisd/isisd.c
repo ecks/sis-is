@@ -52,6 +52,7 @@
 #include "isisd/isis_route.h"
 #include "isisd/isis_zebra.h"
 #include "isisd/isis_events.h"
+#include "isisd/isis_dump.h"
 
 #ifdef TOPOLOGY_GENERATE
 #include "spgrid.h"
