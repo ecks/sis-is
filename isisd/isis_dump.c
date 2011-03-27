@@ -29,10 +29,24 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "thread.h"
 #include "linklist.h"
 
+#include "isisd/dict.h"
+#include "isisd/isis_constants.h"
+#include "isisd/isis_common.h"
+#include "isisd/isis_circuit.h"
 #include "isisd/isisd.h"
+#include "isisd/isis_tlv.h"
 #include "isisd/isis_lsp.h"
+#include "isisd/isis_pdu.h"
+#include "isisd/isis_dynhn.h"
+#include "isisd/isis_misc.h"
+#include "isisd/isis_flags.h"
+#include "isisd/isis_csm.h"
+#include "isisd/isis_adjacency.h"
+#include "isisd/isis_spf.h"
 #include "isisd/isis_dump.h"
-
+
+extern struct thread_master *master;
+
 enum isis_dump_type
 {
   ISIS_DUMP_ALL,
@@ -276,7 +290,6 @@ isis_dump_routes_index_table(struct isis *isis)
 }
 #endif
 
-// TODO: Update
 /* Runs under child process. */
 static unsigned int
 isis_dump_routes_func (int afi, int first_run, unsigned int seq)
@@ -287,7 +300,7 @@ isis_dump_routes_func (int afi, int first_run, unsigned int seq)
   struct isis *isis;
   struct isis_table *table;
 
-  if (isis_dump_routes.fp == NULL)
+  if (isis_dump_all.fp == NULL)
     return seq;
 
   obuf = isis_dump_obuf;
@@ -329,7 +342,7 @@ isis_dump_routes_func (int afi, int first_run, unsigned int seq)
 				
 				// Set size and write
 				isis_dump_set_size(obuf, 0);
-				fwrite (STREAM_DATA (obuf), stream_get_endp (obuf), 1, isis_dump_routes.fp);
+				fwrite (STREAM_DATA (obuf), stream_get_endp (obuf), 1, isis_dump_all.fp);
 				
 				// Switch to next
 				node = next;
@@ -338,7 +351,7 @@ isis_dump_routes_func (int afi, int first_run, unsigned int seq)
 	}
 	
 	// Flush file
-  fflush (isis_dump_routes.fp);
+  fflush (isis_dump_all.fp);
 
   return seq;
 }
