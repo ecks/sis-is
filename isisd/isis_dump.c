@@ -28,6 +28,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "prefix.h"
 #include "thread.h"
 #include "linklist.h"
+#include "if.h"
 
 #include "isisd/dict.h"
 #include "isisd/isis_constants.h"
@@ -313,6 +314,7 @@ isis_dump_routes_func (int afi, int first_run, unsigned int seq)
   for (ALL_LIST_ELEMENTS_RO (isis->area_list, node, area))
 	{
 		// Go through all levels
+		int level;
 		for (level = 0; level < ISIS_LEVELS; level++)
 		{
 			dnode_t *node = dict_first(area->lspdb[level]), *next;
