@@ -24,7 +24,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 /* MRT compatible packet dump values.  */
 /* type value */
-#define MSG_PROTOCOL_ISIS  32
+//#define MSG_PROTOCOL_ISIS  32
 
 #define ISIS_DUMP_HEADER_SIZE 12
 
