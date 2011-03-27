@@ -662,7 +662,7 @@ DEFUN (dump_isis_all,
 {
   return isis_dump_set (vty, &isis_dump_all, ISIS_DUMP_ALL, argv[0], NULL);
 }
-/* TODO
+
 DEFUN (dump_isis_all_interval,
        dump_isis_all_interval_cmd,
        "dump isis all PATH INTERVAL",
@@ -686,6 +686,7 @@ DEFUN (no_dump_isis_all,
   return isis_dump_unset (vty, &isis_dump_all);
 }
 
+/* TODO
 DEFUN (dump_isis_updates,
        dump_isis_updates_cmd,
        "dump isis updates PATH",
