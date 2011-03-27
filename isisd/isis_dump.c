@@ -296,11 +296,8 @@ static unsigned int
 isis_dump_routes_func (int afi, int first_run, unsigned int seq)
 {
 	struct stream *obuf;
-  struct isis_info *info;
-  struct isis_node *rn;
   struct isis *isis;
-  struct isis_table *table;
-
+  
   if (isis_dump_all.fp == NULL)
     return seq;
 
@@ -808,8 +805,9 @@ void
 isis_dump_init (void)
 {
   memset (&isis_dump_all, 0, sizeof (struct isis_dump));
-  memset (&isis_dump_updates, 0, sizeof (struct isis_dump));
-  memset (&isis_dump_routes, 0, sizeof (struct isis_dump));
+	// TODO: Remove
+  //memset (&isis_dump_updates, 0, sizeof (struct isis_dump));
+  //memset (&isis_dump_routes, 0, sizeof (struct isis_dump));
 	
 	isis_dump_obuf = stream_new (RECEIVE_LSP_BUFFER_SIZE + ISIS_DUMP_HEADER_SIZE);
 
