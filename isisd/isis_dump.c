@@ -816,9 +816,9 @@ isis_dump_init (void)
   install_node (&isis_dump_node, config_write_isis_dump);
 
   install_element (CONFIG_NODE, &dump_isis_all_cmd);
-	/* TODO
-  install_element (CONFIG_NODE, &dump_isis_all_interval_cmd);
+	install_element (CONFIG_NODE, &dump_isis_all_interval_cmd);
   install_element (CONFIG_NODE, &no_dump_isis_all_cmd);
+	/* TODO
   install_element (CONFIG_NODE, &dump_isis_updates_cmd);
   install_element (CONFIG_NODE, &dump_isis_updates_interval_cmd);
   install_element (CONFIG_NODE, &no_dump_isis_updates_cmd);
