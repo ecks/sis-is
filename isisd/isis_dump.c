@@ -338,18 +338,7 @@ isis_dump_routes_func ()
 					if (pdu_size > 0)
 					{
 						u_char * dup_buf = malloc(sizeof(u_char) * pdu_size);
-						stream_get(dup_buf, dup_lsp, 1);
-						fwrite ("Test1\n", 8, 1, isis_dump_all.fp);
-						fflush (isis_dump_all.fp);
-						stream_set_getp(dup_lsp,0);
-						stream_get(dup_buf, dup_lsp, pdu_size-5);
-						fwrite ("Test2\n", 8, 1, isis_dump_all.fp);
-						fflush (isis_dump_all.fp);
-						stream_set_getp(dup_lsp,0);
 						stream_get(dup_buf, dup_lsp, pdu_size);
-						fwrite ("Test2\n", 8, 1, isis_dump_all.fp);
-						fflush (isis_dump_all.fp);
-						
 						stream_put(obuf, (void *)dup_buf, pdu_size);
 						stream_free(dup_lsp);
 						free(dup_buf);
@@ -367,10 +356,6 @@ isis_dump_routes_func ()
 				node = next;
 			}
 		}
-		
-		// Testing
-		fwrite ("Test6\n", 6, 1, isis_dump_all.fp);
-		fflush (isis_dump_all.fp);
 	}
 	
 	// Flush file
