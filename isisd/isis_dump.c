@@ -292,18 +292,23 @@ isis_dump_routes_index_table(struct isis *isis)
 }
 #endif
 
+// TODO: Fix parameters & caller
 /* Runs under child process. */
 static unsigned int
-isis_dump_routes_func (int afi, int first_run, unsigned int seq)
+isis_dump_routes_func ()
 {
 	struct stream *obuf;
   struct isis *isis;
   
   if (isis_dump_all.fp == NULL)
-    return seq;
+    return;
 
   obuf = isis_dump_obuf;
   stream_reset(obuf);
+	
+	// Testing
+	fwrite ("Test1", 5, 1, isis_dump_all.fp);
+	fflush (isis_dump_all.fp);
 	
 	// Go through each area
 	struct isis_area *area;
@@ -352,8 +357,6 @@ isis_dump_routes_func (int afi, int first_run, unsigned int seq)
 	
 	// Flush file
   fflush (isis_dump_all.fp);
-
-  return seq;
 }
 
 static int
@@ -369,10 +372,7 @@ isis_dump_interval_func (struct thread *t)
       /* In case of isis_dump_routes, we need special route dump function. */
       if (isis_dump->type == ISIS_DUMP_ALL)
 	{
-	  unsigned int seq = isis_dump_routes_func (AFI_IP, 1, 0);
-#ifdef HAVE_IPV6
-	  isis_dump_routes_func (AFI_IP6, 0, seq);
-#endif /* HAVE_IPV6 */
+	  isis_dump_routes_func ();
 	  /* Close the file now. For a RIB dump there's no point in leaving
 	   * it open until the next scheduled dump starts. */
 	  fclose(isis_dump->fp); isis_dump->fp = NULL;
