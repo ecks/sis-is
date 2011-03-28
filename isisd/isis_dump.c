@@ -367,7 +367,7 @@ isis_dump_interval_func (struct thread *t)
   if (isis_dump_open_file (isis_dump) != NULL)
     {
       /* In case of isis_dump_routes, we need special route dump function. */
-      if (isis_dump->type == ISIS_DUMP_ROUTES)
+      if (isis_dump->type == ISIS_DUMP_ALL)
 	{
 	  unsigned int seq = isis_dump_routes_func (AFI_IP, 1, 0);
 #ifdef HAVE_IPV6
