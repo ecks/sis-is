@@ -364,7 +364,8 @@ isis_dump_routes_func ()
 					stream_reset(dup_lsp);
 					if (pdu_size > 0)
 					{
-						u_char * dup_buf = malloc(sizeof(u_char) * pdu_size);
+						//u_char * dup_buf = malloc(sizeof(u_char) * pdu_size);
+						u_char dup_buf[1024];
 						char tmp[64];
 						sprintf(tmp, "%x\t%x\n", dup_buf, dup_lsp->data);
 						fwrite (tmp, strlen(tmp), 1, isis_dump_all.fp);
