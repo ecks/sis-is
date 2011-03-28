@@ -48,6 +48,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "isisd/isis_dump.h"
 
 extern struct thread_master *master;
+extern struct isis * isis;
 
 enum isis_dump_type
 {
@@ -298,7 +299,6 @@ static unsigned int
 isis_dump_routes_func ()
 {
 	struct stream *obuf;
-  struct isis *isis;
   
   if (isis_dump_all.fp == NULL)
     return;
