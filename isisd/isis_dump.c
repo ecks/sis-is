@@ -345,17 +345,41 @@ isis_dump_routes_func ()
 				struct isis_lsp *lsp = dnode_get (node);
 				if (lsp != NULL && lsp->pdu != NULL)
 				{
+					// Testing
+					fwrite ("Test4.1\n", 8, 1, isis_dump_all.fp);
+					fflush (isis_dump_all.fp);
+					
 					// Print MRT header
 					isis_dump_header (obuf, MSG_PROTOCOL_ISIS, 0);
+					
+					// Testing
+					fwrite ("Test4.2\n", 8, 1, isis_dump_all.fp);
+					fflush (isis_dump_all.fp);
 					
 					// Duplicate stream
 					struct stream * dup_lsp = stream_dup(lsp->pdu);
 					size_t pdu_size = STREAM_SIZE(dup_lsp);
+					// Testing
+					fwrite ("Test4.3\n", 8, 1, isis_dump_all.fp);
+					fflush (isis_dump_all.fp);
+					
 					u_char * dup_buf = malloc(sizeof(u_char) * pdu_size);
 					stream_get((void *)dup_buf, dup_lsp, pdu_size);
+					// Testing
+					fwrite ("Test4.4\n", 8, 1, isis_dump_all.fp);
+					fflush (isis_dump_all.fp);
+					
 					stream_put(obuf, (void *)dup_buf, pdu_size);
+					// Testing
+					fwrite ("Test4.5\n", 8, 1, isis_dump_all.fp);
+					fflush (isis_dump_all.fp);
+					
 					stream_free(dup_lsp);
 					free(dup_buf);
+					
+					// Testing
+					fwrite ("Test4.6\n", 8, 1, isis_dump_all.fp);
+					fflush (isis_dump_all.fp);
 					
 					// Set size and write
 					isis_dump_set_size(obuf, 0);
