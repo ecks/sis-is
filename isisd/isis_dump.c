@@ -312,77 +312,47 @@ isis_dump_routes_func ()
 
   for (ALL_LIST_ELEMENTS (isis->area_list, node, next_node, area))
 	{
-		// Testing
-		fwrite ("Test1\n", 6, 1, isis_dump_all.fp);
-		fflush (isis_dump_all.fp);
-		
 		// Go through all levels
 		int level;
 		for (level = 0; level < ISIS_LEVELS; level++)
 		{
-			// Testing
-			fwrite ("Test2\n", 6, 1, isis_dump_all.fp);
-			fflush (isis_dump_all.fp);
-			
 			dnode_t *node = dict_first(area->lspdb[level]), *next;
 			while (node != NULL)
 			{
-				// Testing
-				fwrite ("Test3\n", 6, 1, isis_dump_all.fp);
-				fflush (isis_dump_all.fp);
-				
 				// Reset stream
 				stream_reset(obuf);
 				
 				// Get next
 				next = dict_next (area->lspdb[level], node);
 				
-				// Testing
-				fwrite ("Test4\n", 6, 1, isis_dump_all.fp);
-				fflush (isis_dump_all.fp);
-				
 				// Get LSP
 				struct isis_lsp *lsp = dnode_get (node);
 				if (lsp != NULL && lsp->pdu != NULL)
 				{
-					// Testing
-					fwrite ("Test4.1\n", 8, 1, isis_dump_all.fp);
-					fflush (isis_dump_all.fp);
-					
 					// Duplicate stream
 					struct stream * dup_lsp = stream_dup(lsp->pdu);
-					// Testing
-					fwrite ("Test4.3\n", 8, 1, isis_dump_all.fp);
-					fflush (isis_dump_all.fp);
 					
 					// Get stream size
-					size_t pdu_size = stream_get_endp(dup_lsp);
-					char tmp[64];
-					sprintf(tmp, "%lu\n", (unsigned long)stream_get_getp(dup_lsp));
-					fwrite (tmp, strlen(tmp), 1, isis_dump_all.fp);
-					fflush (isis_dump_all.fp);
 					stream_reset(dup_lsp);
+					size_t pdu_size = stream_get_endp(dup_lsp);
 					if (pdu_size > 0)
 					{
 						u_char * dup_buf = malloc(sizeof(u_char) * pdu_size);
-						/*
-						sprintf(tmp, "%x\t%x\n", dup_buf, dup_lsp->data);
-						fwrite (tmp, strlen(tmp), 1, isis_dump_all.fp);
+						stream_get(dup_buf, dup_lsp, 1);
+						fwrite ("Test1\n", 8, 1, isis_dump_all.fp);
+						fflush (isis_dump_all.fp);
+						stream_reset(dup_lsp);
+						stream_get(dup_buf, dup_lsp, pdu_size-5);
+						fwrite ("Test2\n", 8, 1, isis_dump_all.fp);
+						fflush (isis_dump_all.fp);
+						stream_reset(dup_lsp);
+						stream_get(dup_buf, dup_lsp, pdu_size);
+						fwrite ("Test2\n", 8, 1, isis_dump_all.fp);
 						fflush (isis_dump_all.fp);
 						
-						stream_get((void *)dup_buf, dup_lsp, pdu_size);
-						// Testing
-						fwrite ("Test4.4\n", 8, 1, isis_dump_all.fp);
-						fflush (isis_dump_all.fp);
-						*/
-						
-						stream_put(obuf, (void *)dup_lsp->data, pdu_size);
+						stream_put(obuf, (void *)dup_buf, pdu_size);
 						stream_free(dup_lsp);
 						free(dup_buf);
-						
-						// Testing
-						fwrite ("Test4.6\n", 8, 1, isis_dump_all.fp);
-						fflush (isis_dump_all.fp);
 						
 						// Print MRT header
 						isis_dump_header (obuf, MSG_PROTOCOL_ISIS, 0);
@@ -392,10 +362,6 @@ isis_dump_routes_func ()
 						fwrite (STREAM_DATA (obuf), stream_get_endp (obuf), 1, isis_dump_all.fp);
 					}
 				}
-				
-				// Testing
-				fwrite ("Test5\n", 6, 1, isis_dump_all.fp);
-				fflush (isis_dump_all.fp);
 				
 				// Switch to next
 				node = next;
