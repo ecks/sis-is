@@ -357,19 +357,19 @@ isis_dump_routes_func ()
 					
 					// Get stream size
 					size_t pdu_size = stream_get_endp(dup_lsp);
-					char tmp[10];
+					char tmp[64];
 					sprintf(tmp, "%lu\n", (unsigned long)stream_get_getp(dup_lsp));
 					fwrite (tmp, strlen(tmp), 1, isis_dump_all.fp);
 					fflush (isis_dump_all.fp);
 					stream_reset(dup_lsp);
 					if (pdu_size > 0)
 					{
-						void * dup_buf = malloc(sizeof(void) * pdu_size);
-						if (!dup_buf)
-						{
-							fwrite ("Test4.3.1\n", 10, 1, isis_dump_all.fp);
-							fflush (isis_dump_all.fp);
-						}
+						u_char * dup_buf = malloc(sizeof(u_char) * pdu_size);
+						char tmp[64];
+						sprintf(tmp, "%x\t%x\n", dup_buf, dup_lsp->data);
+						fwrite (tmp, strlen(tmp), 1, isis_dump_all.fp);
+						fflush (isis_dump_all.fp);
+						
 						stream_get((void *)dup_buf, dup_lsp, pdu_size);
 						// Testing
 						fwrite ("Test4.4\n", 8, 1, isis_dump_all.fp);
