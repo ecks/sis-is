@@ -333,7 +333,7 @@ isis_dump_routes_func ()
 					struct stream * dup_lsp = stream_dup(lsp->pdu);
 					
 					// Get stream size
-					stream_reset(dup_lsp);
+					stream_set_getp(dup_lsp,0);
 					size_t pdu_size = stream_get_endp(dup_lsp);
 					if (pdu_size > 0)
 					{
@@ -341,11 +341,11 @@ isis_dump_routes_func ()
 						stream_get(dup_buf, dup_lsp, 1);
 						fwrite ("Test1\n", 8, 1, isis_dump_all.fp);
 						fflush (isis_dump_all.fp);
-						stream_reset(dup_lsp);
+						stream_set_getp(dup_lsp,0);
 						stream_get(dup_buf, dup_lsp, pdu_size-5);
 						fwrite ("Test2\n", 8, 1, isis_dump_all.fp);
 						fflush (isis_dump_all.fp);
-						stream_reset(dup_lsp);
+						stream_set_getp(dup_lsp,0);
 						stream_get(dup_buf, dup_lsp, pdu_size);
 						fwrite ("Test2\n", 8, 1, isis_dump_all.fp);
 						fflush (isis_dump_all.fp);
