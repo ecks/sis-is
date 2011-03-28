@@ -306,83 +306,48 @@ isis_dump_routes_func ()
   obuf = isis_dump_obuf;
   stream_reset(obuf);
 	
-	// Testing
-	fwrite ("Test1", 5, 1, isis_dump_all.fp);
-	fflush (isis_dump_all.fp);
-	
 	// Go through each area
 	struct isis_area *area;
   struct listnode *node;
 
   for (ALL_LIST_ELEMENTS_RO (isis->area_list, node, area))
 	{
-		// Testing
-		fwrite ("Test2", 5, 1, isis_dump_all.fp);
-		fflush (isis_dump_all.fp);
-	
 		// Go through all levels
 		int level;
 		for (level = 0; level < ISIS_LEVELS; level++)
 		{
-			// Testing
-			fwrite ("Test3", 5, 1, isis_dump_all.fp);
-			fflush (isis_dump_all.fp);
-			
 			dnode_t *node = dict_first(area->lspdb[level]), *next;
-			
-			// Testing
-			fwrite ("Test4", 5, 1, isis_dump_all.fp);
-			fflush (isis_dump_all.fp);
-			
 			while (node != NULL)
 			{
 				// Reset stream
 				stream_reset(obuf);
-				
-				// Testing
-				fwrite ("Test5", 5, 1, isis_dump_all.fp);
-				fflush (isis_dump_all.fp);
 				
 				// Get next
 				next = dict_next (area->lspdb[level], node);
 				
 				// Get LSP
 				struct isis_lsp *lsp = dnode_get (node);
-				
-				// Testing
-				fwrite ("Test6", 5, 1, isis_dump_all.fp);
-				fflush (isis_dump_all.fp);
-				
-				// Print MRT header
-				isis_dump_header (obuf, MSG_PROTOCOL_ISIS, 0);
-				
-				// Testing
-				fwrite ("Test7", 5, 1, isis_dump_all.fp);
-				fflush (isis_dump_all.fp);
-				
-				// Duplicate stream
-				struct stream * dup_lsp = stream_dup(lsp->pdu);
-				size_t pdu_size = STREAM_SIZE(dup_lsp);
-				u_char * dup_buf = malloc(sizeof(u_char) * pdu_size);
-				stream_get((void *)dup_buf, dup_lsp, pdu_size);
-				stream_put(obuf, (void *)dup_buf, pdu_size);
-				stream_free(dup_lsp);
-				free(dup_buf);
-				
-				// Testing
-				fwrite ("Test8", 5, 1, isis_dump_all.fp);
-				fflush (isis_dump_all.fp);
-				
-				// Set size and write
-				isis_dump_set_size(obuf, 0);
-				fwrite (STREAM_DATA (obuf), stream_get_endp (obuf), 1, isis_dump_all.fp);
-				
-				// Testing
-				fwrite ("Test9", 5, 1, isis_dump_all.fp);
-				fflush (isis_dump_all.fp);
-				
-				// Switch to next
-				node = next;
+				if (lsp != NULL && lsp->pdu != NULL)
+				{
+					// Print MRT header
+					isis_dump_header (obuf, MSG_PROTOCOL_ISIS, 0);
+					
+					// Duplicate stream
+					struct stream * dup_lsp = stream_dup(lsp->pdu);
+					size_t pdu_size = STREAM_SIZE(dup_lsp);
+					u_char * dup_buf = malloc(sizeof(u_char) * pdu_size);
+					stream_get((void *)dup_buf, dup_lsp, pdu_size);
+					stream_put(obuf, (void *)dup_buf, pdu_size);
+					stream_free(dup_lsp);
+					free(dup_buf);
+					
+					// Set size and write
+					isis_dump_set_size(obuf, 0);
+					fwrite (STREAM_DATA (obuf), stream_get_endp (obuf), 1, isis_dump_all.fp);
+					
+					// Switch to next
+					node = next;
+				}
 			}
 		}
 	}
