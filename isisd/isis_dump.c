@@ -308,22 +308,38 @@ isis_dump_routes_func ()
 	
 	// Go through each area
 	struct isis_area *area;
-  struct listnode *node;
+  struct listnode *node, *next_node;
 
-  for (ALL_LIST_ELEMENTS_RO (isis->area_list, node, area))
+  for (ALL_LIST_ELEMENTS (isis->area_list, node, next_node, area))
 	{
+		// Testing
+		fwrite ("Test1\n", 6, 1, isis_dump_all.fp);
+		fflush (isis_dump_all.fp);
+		
 		// Go through all levels
 		int level;
 		for (level = 0; level < ISIS_LEVELS; level++)
 		{
+			// Testing
+			fwrite ("Test2\n", 6, 1, isis_dump_all.fp);
+			fflush (isis_dump_all.fp);
+			
 			dnode_t *node = dict_first(area->lspdb[level]), *next;
 			while (node != NULL)
 			{
+				// Testing
+				fwrite ("Test3\n", 6, 1, isis_dump_all.fp);
+				fflush (isis_dump_all.fp);
+				
 				// Reset stream
 				stream_reset(obuf);
 				
 				// Get next
 				next = dict_next (area->lspdb[level], node);
+				
+				// Testing
+				fwrite ("Test4\n", 6, 1, isis_dump_all.fp);
+				fflush (isis_dump_all.fp);
 				
 				// Get LSP
 				struct isis_lsp *lsp = dnode_get (node);
@@ -344,12 +360,20 @@ isis_dump_routes_func ()
 					// Set size and write
 					isis_dump_set_size(obuf, 0);
 					fwrite (STREAM_DATA (obuf), stream_get_endp (obuf), 1, isis_dump_all.fp);
-					
-					// Switch to next
-					node = next;
 				}
+				
+				// Testing
+				fwrite ("Test5\n", 6, 1, isis_dump_all.fp);
+				fflush (isis_dump_all.fp);
+				
+				// Switch to next
+				node = next;
 			}
 		}
+		
+		// Testing
+		fwrite ("Test6\n", 6, 1, isis_dump_all.fp);
+		fflush (isis_dump_all.fp);
 	}
 	
 	// Flush file
