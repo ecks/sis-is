@@ -364,9 +364,8 @@ isis_dump_routes_func ()
 					stream_reset(dup_lsp);
 					if (pdu_size > 0)
 					{
-						//u_char * dup_buf = malloc(sizeof(u_char) * pdu_size);
-						u_char dup_buf[1024];
-						char tmp[64];
+						u_char * dup_buf = malloc(sizeof(u_char) * pdu_size);
+						/*
 						sprintf(tmp, "%x\t%x\n", dup_buf, dup_lsp->data);
 						fwrite (tmp, strlen(tmp), 1, isis_dump_all.fp);
 						fflush (isis_dump_all.fp);
@@ -375,8 +374,9 @@ isis_dump_routes_func ()
 						// Testing
 						fwrite ("Test4.4\n", 8, 1, isis_dump_all.fp);
 						fflush (isis_dump_all.fp);
+						*/
 						
-						stream_put(obuf, (void *)dup_buf, pdu_size);
+						stream_put(obuf, (void *)dup_lsp->data, pdu_size);
 						stream_free(dup_lsp);
 						free(dup_buf);
 						
