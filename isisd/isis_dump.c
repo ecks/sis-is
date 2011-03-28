@@ -337,14 +337,15 @@ isis_dump_routes_func ()
 					size_t pdu_size = stream_get_endp(dup_lsp);
 					if (pdu_size > 0)
 					{
+						// Print MRT header
+						isis_dump_header (obuf, MSG_PROTOCOL_ISIS, 0);
+						
+						// Print data
 						u_char * dup_buf = malloc(sizeof(u_char) * pdu_size);
 						stream_get(dup_buf, dup_lsp, pdu_size);
 						stream_put(obuf, (void *)dup_buf, pdu_size);
 						stream_free(dup_lsp);
 						free(dup_buf);
-						
-						// Print MRT header
-						isis_dump_header (obuf, MSG_PROTOCOL_ISIS, 0);
 						
 						// Set size and write
 						isis_dump_set_size(obuf, 0);
