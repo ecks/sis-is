@@ -1301,7 +1301,7 @@ int netlink_del_reject_route (int family, void *dest, int length, int index)
   {
     struct nlmsghdr n;
     struct rtmsg r;
-    //char buf[1024];
+    char buf[1024];
   } req;
 
   memset (&req, 0, sizeof req);
