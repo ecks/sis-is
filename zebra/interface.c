@@ -50,7 +50,7 @@ const char *rtadv_pref_strs[] = { "medium", "high", "INVALID", "low", 0 };
 
 extern struct zebra_t zebrad;
 
-extern int netlink_del_reject_route (int, void *, int, int, int);
+extern int netlink_del_reject_route (int, void *, int, int);
 
 /* Called when new interface is added. */
 static int
@@ -1455,7 +1455,7 @@ ipv6_address_install (struct vty *vty, struct interface *ifp,
 		
 		// Delete loopback reject route added in Debian
 		//rib_delete_ipv6 (ZEBRA_ROUTE_KERNEL, 0, p, gate, index, table);
-		netlink_del_reject_route(AF_INET6, &p->prefix, p->prefixlen, if_lookup_by_name("lo"), RT_TABLE_DEFAULT);
+		netlink_del_reject_route(AF_INET6, &p->prefix, p->prefixlen, if_lookup_by_name("lo"));
 
   return CMD_SUCCESS;
 }

@@ -1291,7 +1291,7 @@ netlink_route (int cmd, int family, void *dest, int length, void *gate,
 }
 
 /* Routing table change via netlink interface. */
-int netlink_del_reject_route (int family, void *dest, int length, int index, int table)
+int netlink_del_reject_route (int family, void *dest, int length, int index)
 {
   int ret;
   int bytelen;
@@ -1309,15 +1309,15 @@ int netlink_del_reject_route (int family, void *dest, int length, int index, int
   bytelen = (family == AF_INET ? 4 : 16);
 
   req.n.nlmsg_len = NLMSG_LENGTH (sizeof (struct rtmsg));
-  req.n.nlmsg_flags = NLM_F_CREATE | NLM_F_REQUEST;
+  req.n.nlmsg_flags = NLM_F_REQUEST;
   req.n.nlmsg_type = RTM_DELROUTE;
   req.r.rtm_family = family;
-  req.r.rtm_table = table;
+  req.r.rtm_table = RT_TABLE_MAIN;
   req.r.rtm_dst_len = length;
   req.r.rtm_protocol = RTPROT_KERNEL;
-  req.r.rtm_scope = RT_SCOPE_UNIVERSE;
+  req.r.rtm_scope = RT_SCOPE_NOWHERE;
 
-  req.r.rtm_type = 0;//RTN_PROHIBIT;
+  req.r.rtm_type = RTN_PROHIBIT;
   if (dest)
     addattr_l (&req.n, sizeof req, RTA_DST, dest, bytelen);
 
