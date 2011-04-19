@@ -1451,15 +1451,15 @@ ipv6_address_install (struct vty *vty, struct interface *ifp,
       /* If interface is up register connected route. */
       if (if_is_operative(ifp))
 	connected_up_ipv6 (ifp, ifc);
+	
+			// Delete loopback reject route added in Debian
+			//rib_delete_ipv6 (ZEBRA_ROUTE_KERNEL, 0, p, gate, index, table);
+			//netlink_del_reject_route(AF_INET6, &p->prefix, p->prefixlen, if_lookup_by_name("lo"))->ifindex;
+			//netlink_del_reject_route(AF_INET6, &p->prefix, p->prefixlen, lo_index);
+			struct interface * lo_ifp = if_lookup_by_name("lo");
+			if (lo_ifp != NULL && ifp == lo_ifp)
+				netlink_del_reject_route(AF_INET6, &p->prefix, 128, lo_ifp->ifindex);
     }
-		
-		// Delete loopback reject route added in Debian
-		//rib_delete_ipv6 (ZEBRA_ROUTE_KERNEL, 0, p, gate, index, table);
-		//netlink_del_reject_route(AF_INET6, &p->prefix, p->prefixlen, if_lookup_by_name("lo"))->ifindex;
-		//netlink_del_reject_route(AF_INET6, &p->prefix, p->prefixlen, lo_index);
-		struct interface * lo_ifp = if_lookup_by_name("lo");
-		if (lo_ifp != NULL && ifp == lo_ifp)
-			netlink_del_reject_route(AF_INET6, &p->prefix, 128, lo_ifp->ifindex);
 		
   return CMD_SUCCESS;
 }

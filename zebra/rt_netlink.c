@@ -1330,8 +1330,8 @@ int netlink_del_reject_route (int family, void *dest, int length, int index)
 	
 	/* Talk to netlink socket. */
   ret = netlink_talk (&req.n, &netlink_cmd);
-	/*if (ret < 0)
-    return -1;*/
+	if (ret < 0)
+    return -1;
 
   return 0;
 }
