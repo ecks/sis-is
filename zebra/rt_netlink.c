@@ -1314,7 +1314,7 @@ int netlink_del_reject_route (int family, void *dest, int length, int index, int
   req.r.rtm_family = family;
   req.r.rtm_table = table;
   req.r.rtm_dst_len = length;
-  req.r.rtm_protocol = RT_TABLE_DEFAULT;
+  req.r.rtm_protocol = RTPROT_KERNEL;
   req.r.rtm_scope = 0;//RT_SCOPE_UNIVERSE;
 
   req.r.rtm_type = RTN_PROHIBIT;
