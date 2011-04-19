@@ -50,6 +50,8 @@ const char *rtadv_pref_strs[] = { "medium", "high", "INVALID", "low", 0 };
 
 extern struct zebra_t zebrad;
 
+extern int netlink_del_reject_route (int, void *, int, int, int);
+
 /* Called when new interface is added. */
 static int
 if_zebra_new_hook (struct interface *ifp)
