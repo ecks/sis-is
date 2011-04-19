@@ -16,6 +16,8 @@ int kernel_delete_ipv6_old (struct prefix_ipv6 *dest, struct in6_addr *gate,
                             unsigned int index, int flags, int table)
 { return 0; }
 
+int netlink_del_reject_route (int family, void *dest, int length, int index, int table) { return 0; }
+
 int kernel_add_route (struct prefix_ipv4 *a, struct in_addr *b, int c, int d)
 { return 0; }
 
