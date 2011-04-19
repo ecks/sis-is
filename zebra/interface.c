@@ -1454,6 +1454,7 @@ ipv6_address_install (struct vty *vty, struct interface *ifp,
     }
 		
 		// Delete loopback reject route added in Debian
+		sleep(1);
 		//rib_delete_ipv6 (ZEBRA_ROUTE_KERNEL, 0, p, gate, index, table);
 		netlink_del_reject_route(AF_INET6, &p->prefix, p->prefixlen, if_lookup_by_name("lo"));
 
