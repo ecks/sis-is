@@ -1314,15 +1314,15 @@ int netlink_del_reject_route (int family, void *dest, int length, int index)
   req.r.rtm_family = family;
   req.r.rtm_table = RT_TABLE_MAIN;
   req.r.rtm_dst_len = length;
-  req.r.rtm_protocol = RTPROT_KERNEL;
+  //req.r.rtm_protocol = RTPROT_KERNEL;
   req.r.rtm_scope = RT_SCOPE_NOWHERE;
 
   req.r.rtm_type = RTN_PROHIBIT;
   if (dest)
     addattr_l (&req.n, sizeof req, RTA_DST, dest, bytelen);
 
-	if (index > 0)
-		addattr32 (&req.n, sizeof req, RTA_OIF, index);
+	//if (index > 0)
+		//addattr32 (&req.n, sizeof req, RTA_OIF, index);
 
   /* Destination netlink address. */
   memset (&snl, 0, sizeof snl);
