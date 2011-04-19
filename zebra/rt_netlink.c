@@ -1291,8 +1291,7 @@ netlink_route (int cmd, int family, void *dest, int length, void *gate,
 }
 
 /* Routing table change via netlink interface. */
-extern int
-netlink_del_reject_route (int family, void *dest, int length, int index, int table)
+int netlink_del_reject_route (int family, void *dest, int length, int index, int table)
 {
   int ret;
   int bytelen;
