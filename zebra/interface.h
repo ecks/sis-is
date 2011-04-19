@@ -224,6 +224,8 @@ extern void if_flags_update (struct interface *, uint64_t);
 extern int if_subnet_add (struct interface *, struct connected *);
 extern int if_subnet_delete (struct interface *, struct connected *);
 
+extern int netlink_del_reject_route (int family, void *dest, int length, int index, int table);
+
 #ifdef HAVE_PROC_NET_DEV
 extern void ifstat_update_proc (void);
 #endif /* HAVE_PROC_NET_DEV */
