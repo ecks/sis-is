@@ -1328,23 +1328,8 @@ int netlink_del_reject_route (int family, void *dest, int length, int index)
   memset (&snl, 0, sizeof snl);
   snl.nl_family = AF_NETLINK;
 	
-	char buf[BUFSIZ];
-	zlog_debug ("Deleting route %s/%d.", inet_ntop (AF_INET6, dest, buf, BUFSIZ), length);
-	
-	char tmp[1024], tmp2[32];
-	tmp[0] = '\0';
-	char * ptr = &req.n;
-	int i;
-	for (i = 0; i < req.n.nlmsg_len; i++)
-	{
-		sprintf(tmp2, "%02x\t", ((int)*(ptr+i))&0xff);
-		strcat(tmp, tmp2);
-	}
-	zlog_debug ("%s", tmp);
-	
   /* Talk to netlink socket. */
   ret = netlink_talk (&req.n, &netlink_cmd);
-	zlog_debug ("%s", ret < 0 ? "Not deleted" : "Deleted");
   if (ret < 0)
     return -1;
 
