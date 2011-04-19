@@ -1292,6 +1292,53 @@ netlink_route (int cmd, int family, void *dest, int length, void *gate,
 
 /* Routing table change via netlink interface. */
 static int
+netlink_del_reject_route (int family, void *dest, int length, int index, int table)
+{
+  int ret;
+  int bytelen;
+  struct sockaddr_nl snl;
+
+  struct
+  {
+    struct nlmsghdr n;
+    struct rtmsg r;
+    //char buf[1024];
+  } req;
+
+  memset (&req, 0, sizeof req);
+
+  bytelen = (family == AF_INET ? 4 : 16);
+
+  req.n.nlmsg_len = NLMSG_LENGTH (sizeof (struct rtmsg));
+  req.n.nlmsg_flags = NLM_F_CREATE | NLM_F_REQUEST;
+  req.n.nlmsg_type = RTM_DELROUTE;
+  req.r.rtm_family = family;
+  req.r.rtm_table = table;
+  req.r.rtm_dst_len = length;
+  req.r.rtm_protocol = RTPROT_KERNEL;
+  req.r.rtm_scope = RT_SCOPE_UNIVERSE;
+
+  req.r.rtm_type = RTN_PROHIBIT;
+  if (dest)
+    addattr_l (&req.n, sizeof req, RTA_DST, dest, bytelen);
+
+	if (index > 0)
+		addattr32 (&req.n, sizeof req, RTA_OIF, index);
+
+  /* Destination netlink address. */
+  memset (&snl, 0, sizeof snl);
+  snl.nl_family = AF_NETLINK;
+
+  /* Talk to netlink socket. */
+  ret = netlink_talk (&req.n, &netlink_cmd);
+  if (ret < 0)
+    return -1;
+
+  return 0;
+}
+
+/* Routing table change via netlink interface. */
+static int
 netlink_route_multipath (int cmd, struct prefix *p, struct rib *rib,
                          int family)
 {
