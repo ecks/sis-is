@@ -1317,7 +1317,7 @@ int netlink_del_reject_route (int family, void *dest, int length, int index)
   //req.r.rtm_protocol = RTPROT_KERNEL;
   req.r.rtm_scope = RT_SCOPE_NOWHERE;
 
-  req.r.rtm_type = RTN_PROHIBIT;
+  //req.r.rtm_type = RTN_PROHIBIT;
   if (dest)
     addattr_l (&req.n, sizeof req, RTA_DST, dest, bytelen);
 
