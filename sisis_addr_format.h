@@ -12,43 +12,43 @@
 // SIS-IS address component info
 static sisis_component_t components[] = {
 	{
-		'prefix',
+		"prefix",
 		16,
 		SISIS_COMPONENT_FIXED,
 		0xfcff
 	},
 	{
-		'sisis_version',
+		"sisis_version",
 		5,
 		SISIS_COMPONENT_FIXED,
 		2
 	},
 	{
-		'process_type',
+		"process_type",
 		16,
 		0,
 		0
 	},
 	{
-		'process_version',
+		"process_version",
 		5,
 		0,
 		0
 	},
 	{
-		'sys_id',
+		"sys_id",
 		32,
 		0,
 		0
 	},
 	{
-		'pid',
+		"pid",
 		22,
 		0,
 		0
 	},
 	{
-		'timestamp',
+		"timestamp",
 		32,
 		0,
 		0
