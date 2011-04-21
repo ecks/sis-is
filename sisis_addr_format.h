@@ -53,7 +53,7 @@ static sisis_component_t components[] = {
 		0,
 		0
 	}
-}
+};
 static int num_components = sizeof(components);
 
 #endif
