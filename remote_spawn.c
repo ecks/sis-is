@@ -106,9 +106,6 @@ int main (int argc, char ** argv)
 	// Get start time
 	timestamp = time(NULL);
 	
-	// Setup SIS-IS API
-	setup_sisis_addr_format("sisis_format_v2.dat");
-	
 	// Check number of args
 	if (argc != 2)
 	{
