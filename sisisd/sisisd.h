@@ -22,6 +22,8 @@
 #ifndef SISISD_H
 #define SISISD_H
 
+#define USE_IPV6
+
 #define SISISD_VERSION "1.0"
 #define SISIS_MESSAGE_VERSION 1
 #define SISIS_PORT_DEFAULT 54345
