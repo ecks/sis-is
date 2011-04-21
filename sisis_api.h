@@ -8,6 +8,7 @@
 #define _SISIS_API_H
 
 #define HAVE_IPV6
+#define USE_IPV6
 
 #include "sisis_structs.h"
 
@@ -21,9 +22,10 @@
 #define SISIS_ACK							            3
 #define SISIS_NACK							     			4
 
-// TODO: Remove Prefix lengths
-//#define SISIS_ADD_PREFIX_LEN_PTYPE				32
-//#define SISIS_ADD_PREFIX_LEN_HOST_NUM			64
+#ifndef USE_IPV6 /* IPv4 Version */
+// Prefix lengths
+#define SISIS_ADD_PREFIX_LEN_PTYPE				32
+#define SISIS_ADD_PREFIX_LEN_HOST_NUM			64
 
 typedef struct {
 	char * name;
@@ -32,6 +34,7 @@ typedef struct {
 #define SISIS_COMPONENT_FIXED					(1 << 0)
 	uint64_t fixed_val;		// Fixed values only for if bits <= 64
 } sisis_component_t;
+#endif /* IPv4 Version */
 
 extern int sisis_listener_port;
 extern char * sisis_listener_ip_addr;
@@ -42,6 +45,7 @@ extern struct list * ipv6_rib_routes;
 
 void sisis_process_message(char * msg, int msg_len);
 
+#ifndef USE_IPV6
 /**
  * Setup SIS-IS address format.  Must be called before any other functions.
  *
@@ -50,6 +54,7 @@ void sisis_process_message(char * msg, int msg_len);
  * Returns 0 on success
  */
 int setup_sisis_addr_format(const char * filename);
+#endif /* USE_IPV6 */
 
 /**
  * Construct SIS-IS address.
@@ -58,14 +63,22 @@ int setup_sisis_addr_format(const char * filename);
  * 
  * Returns zero on success.
  */
+#ifndef USE_IPV6
 int sisis_create_addr(char * sisis_addr, ...);
+#else /* IPv4 Version */
+int sisis_create_addr(unsigned int ptype, unsigned int host_num, unsigned int pid, char * sisis_addr);
+#endif /* USE_IPV6 */
 
 /**
  * Split an SIS-IS address into components.
  *
  * sisis_addr SIS-IS/IP address
  */
+#ifndef USE_IPV6
 int get_sisis_addr_components(char * sisis_addr, ...);
+#else /* IPv4 Version */
+struct sisis_addr_components get_sisis_addr_components(char * sisis_addr);
+#endif /* USE_IPV6 */
 
 /**
  * Registers SIS-IS process.
@@ -74,8 +87,13 @@ int get_sisis_addr_components(char * sisis_addr, ...);
  * 
  * Returns zero on success.
  */
+#ifndef USE_IPV6
 int sisis_register(char * sisis_addr, ...);
+#else /* IPv4 Version */
+int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, char * sisis_addr);
+#endif /* USE_IPV6 */
 
+#ifndef USE_IPV6
 /**
  * Unregisters SIS-IS process.
  *
@@ -84,6 +102,13 @@ int sisis_register(char * sisis_addr, ...);
  * Returns zero on success.
  */
 int sisis_unregister(void * nil, ...);
+#else /* IPv4 Version */
+/**
+ * Unregisters SIS-IS process.
+ * Returns zero on success.
+ */
+int sisis_unregister(unsigned int ptype, unsigned int host_num, unsigned int pid);
+#endif /* USE_IPV6 */
 
 /**
  * Dump kernel routing table.
@@ -109,6 +134,7 @@ struct subscribe_to_rib_changes_info
 /** Subscribe to route add/remove messages */
 int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info);
 
+#ifndef USE_IPV6
 /**
  * Get SIS-IS addresses that match a given IP prefix.  It is the receiver's
  * responsibility to free the list when done with it.
@@ -119,5 +145,18 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p);
  * Creates an IPv6 prefix
  */
 struct prefix_ipv6 sisis_make_ipv6_prefix(char * addr, int prefix_len);
+#else /* IPv4 Version */
+/**
+ * Get SIS-IS addresses for a specific process type.  It is the receivers
+ * responsibility to free the list when done with it.
+ */
+struct list * get_sisis_addrs_for_process_type(unsigned int ptype);
+
+/**
+ * Get SIS-IS addresses for a specific process type and host.  It is the receivers
+ * responsibility to free the list when done with it.
+ */
+struct list * get_sisis_addrs_for_process_type_and_host(unsigned int ptype, unsigned int host_num);
+#endif // _SISIS_API_H#endif /* USE_IPV6 */
 
 #endif // _SISIS_API_H

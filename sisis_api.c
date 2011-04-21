@@ -22,6 +22,8 @@
 #include "sisis_structs.h"
 #include "sisis_netlink.h"
 
+
+
 //#define TIME_DEBUG
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
@@ -40,9 +42,11 @@ struct list * ipv4_rib_routes = NULL;
 struct list * ipv6_rib_routes = NULL;
 #endif /* HAVE_IPV6 */
 
+#ifdef USE_IPV6
 // SIS-IS address component info
 int num_components;
 sisis_component_t * components;
+#endif /* USE_IPV6 */
 
 // TODO: Support multiple addresses at once.
 pthread_t sisis_reregistration_thread;
@@ -55,6 +59,7 @@ void * sisis_recv_loop(void *);
 // Request which we are waiting for an ACK or NACK for
 struct sisis_request_ack_info awaiting_ack;
 
+#ifdef USE_IPV6
 /**
  * Setup SIS-IS address format.  Must be called before any other functions.
  *
@@ -210,6 +215,8 @@ int setup_sisis_addr_format(const char * filename)
 	return 0;
 }
 
+#endif /* USE_IPV6 */
+
 /**
  * Sets up socket to SIS-IS listener.
  */
@@ -362,6 +369,7 @@ int sisis_construct_message(char ** buf, unsigned short version, unsigned int re
 	return buf_len;
 }
 
+#ifdef USE_IPV6
 /**
  * Construct SIS-IS address.
  *
@@ -548,6 +556,40 @@ int get_sisis_addr_components(char * sisis_addr, ...)
 	return rtn;
 }
 
+#else /* IPv4 Version */
+/**
+ * Construct SIS-IS address.
+ *
+ * sisis_addr String to store resulting SIS-IS/IP address in.
+ * 
+ * Returns zero on success.
+ */
+int sisis_create_addr(unsigned int ptype, unsigned int host_num, unsigned int pid, char * sisis_addr)
+{
+	// Check bounds
+	if (ptype > 255 || host_num > 255)
+		return 1;
+	pid %= 256;
+	
+	// Construct SIS-IS address
+	sprintf(sisis_addr, "26.%u.%u.%u", ptype, host_num, pid);
+	
+	return 0;
+}
+
+/**
+ * Split an SIS-IS address into components.
+ *
+ * sisis_addr SIS-IS/IP address
+ */
+struct sisis_addr_components get_sisis_addr_components(char * sisis_addr)
+{
+	struct sisis_addr_components rtn;
+	sscanf(sisis_addr, "26.%u.%u.%u", &rtn.ptype, &rtn.host_num, &rtn.pid);
+	return rtn;
+}
+#endif /* USE_IPV6 */
+
 /**
  * Does actual registration of SIS-IS address.
  *
@@ -573,6 +615,7 @@ int sisis_do_register(char * sisis_addr)
 	awaiting_ack.mutex = mutex;
 	awaiting_ack.flags = 0;
 	
+#ifdef USE_IPV6
 	// Setup message
 	char msg[128];
 	unsigned short tmp = htons(AF_INET6);
@@ -584,6 +627,12 @@ int sisis_do_register(char * sisis_addr)
 	// Send message
 	char * buf;
 	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, request_id, SISIS_CMD_REGISTER_ADDRESS, msg, strlen(sisis_addr)+4);
+#else /* IPv4 Version */
+	// Send message
+	char * buf;
+	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, request_id, SISIS_CMD_REGISTER_ADDRESS, sisis_addr, strlen(sisis_addr));
+#endif /* USE_IPV6 */
+	
 #ifdef TIME_DEBUG
 	char * ts1, * ts2;
 	// Get time
@@ -633,6 +682,7 @@ void * sisis_reregister(void * arg)
 	} while (1);	// TODO: Stop when the address is deregistered
 }
 
+#ifdef USE_IPV6
 /**
  * Registers SIS-IS process.
  *
@@ -701,6 +751,57 @@ int sisis_unregister(void * nil, ...)
 	
 	return 0;
 }
+#else /* IPv4 Version */
+/**
+ * Registers SIS-IS process.
+ *
+ * sisis_addr String to store resulting SIS-IS/IP address in.
+ * 
+ * Returns zero on success.
+ */
+int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, char * sisis_addr)
+{
+	// Construct SIS-IS address
+	if (sisis_create_addr(ptype, host_num, pid, sisis_addr))
+		return 1;
+	
+	// Register
+	int rtn = sisis_do_register(sisis_addr);
+	
+	// TODO: Support multiple addresses at once.
+	char * thread_sisis_addr = malloc(sizeof(char) * (strlen(sisis_addr)+1));
+	strcpy(thread_sisis_addr, sisis_addr);
+	pthread_create(&sisis_reregistration_thread, NULL, sisis_reregister, (void *)thread_sisis_addr);
+	
+	return rtn;
+}
+
+/**
+ * Unregisters SIS-IS process.
+ * Returns zero on success.
+ */
+int sisis_unregister(unsigned int ptype, unsigned int host_num, unsigned int pid)
+{
+	// Construct SIS-IS address
+	char sisis_addr[INET_ADDRSTRLEN+1];
+	if (sisis_create_addr(ptype, host_num, pid, sisis_addr))
+		return 1;
+	
+	// Setup socket
+	sisis_socket_open();
+	
+	// Get request id
+	unsigned int request_id = next_request_id++;
+	
+	// Send message
+	char * buf;
+	unsigned int buf_len = sisis_construct_message(&buf, SISIS_VERSION, request_id, SISIS_CMD_UNREGISTER_ADDRESS, sisis_addr, strlen(sisis_addr));
+	sisis_send(buf, buf_len);
+	free(buf);
+	
+	return 0;
+}
+#endif /* USE_IPV6 */
 
 /**
  * Dump kernel routing table.
@@ -785,6 +886,7 @@ int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
 	return rtn;
 }
 
+#ifdef USE_IPV6
 /**
  * Get SIS-IS addresses that match a given IP prefix.  It is the receiver's
  * responsibility to free the list when done with it.
@@ -793,37 +895,6 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 {
 	// Update kernel routes
 	sisis_dump_kernel_routes();
-	
-	/*
-	// IPv4 Version
-	unsigned long prefix_mask = 0xffffffff;
-	int i = 0;
-	for (; i < 32-p->prefixlen; i++)
-	{
-		prefix_mask <<= 1;
-		prefix_mask |= 0;
-	}
-	prefix_mask = htonl(prefix_mask);
-	
-	// Create list of relevant SIS-IS addresses
-	struct list * rtn = malloc(sizeof(struct list));
-	memset(rtn, 0, sizeof(*rtn));
-	struct listnode * node;
-	LIST_FOREACH(ipv4_rib_routes, node)
-	{
-		struct route_ipv4 * route = (struct route_ipv4 *)node->data;
-		
-		// Check if the route matches the prefix
-		if (route->p->prefixlen == 32 && (route->p->prefix.s_addr & prefix_mask) == (p->prefix.s_addr & prefix_mask))
-		{
-			// Add to list
-			struct listnode * new_node = malloc(sizeof(struct listnode));
-			new_node->data = malloc(sizeof(route->p->prefix));
-			memcpy(new_node->data, &route->p->prefix, sizeof(route->p->prefix));
-			LIST_APPEND(rtn,new_node);
-		}
-	}
-	*/
 	
 	// IPv6 version
 	// Create prefix mask IPv6 addr
@@ -890,3 +961,80 @@ struct prefix_ipv6 sisis_make_ipv6_prefix(char * addr, int prefix_len)
 	inet_pton(AF_INET6, addr, &p.prefix);
 	return p;
 }
+#else /* IPv4 Version */
+/**
+ * Get SIS-IS addresses that match a given ipv4 prefix.  It is the receivers
+ * responsibility to free the list when done with it.
+ */
+struct list * get_sisis_addrs_for_prefix(struct prefix_ipv4 * p)
+{
+	// Update kernel routes
+	sisis_dump_kernel_routes();
+	
+	unsigned long prefix_mask = 0xffffffff;
+	int i = 0;
+	for (; i < 32-p->prefixlen; i++)
+	{
+		prefix_mask <<= 1;
+		prefix_mask |= 0;
+	}
+	prefix_mask = htonl(prefix_mask);
+	
+	// Create list of relevant SIS-IS addresses
+	struct list * rtn = malloc(sizeof(struct list));
+	memset(rtn, 0, sizeof(*rtn));
+	struct listnode * node;
+	LIST_FOREACH(ipv4_rib_routes, node)
+	{
+		struct route_ipv4 * route = (struct route_ipv4 *)node->data;
+		
+		// Check if the route matches the prefix
+		if (route->p->prefixlen == 32 && (route->p->prefix.s_addr & prefix_mask) == (p->prefix.s_addr & prefix_mask))
+		{
+			// Add to list
+			struct listnode * new_node = malloc(sizeof(struct listnode));
+			new_node->data = malloc(sizeof(route->p->prefix));
+			memcpy(new_node->data, &route->p->prefix, sizeof(route->p->prefix));
+			LIST_APPEND(rtn,new_node);
+		}
+	}
+	
+	return rtn;
+}
+
+/**
+ * Get SIS-IS addresses for a specific process type.  It is the receivers
+ * responsibility to free the list when done with it.
+ */
+struct list * get_sisis_addrs_for_process_type(unsigned int ptype)
+{
+	// Create prefix
+	char prefix_addr_str[INET_ADDRSTRLEN+1];
+	memset(prefix_addr_str, 0, sizeof(prefix_addr_str));
+	if (sisis_create_addr(ptype, 0, 0, prefix_addr_str))
+		return NULL;
+	struct prefix_ipv4 p;
+	p.prefixlen = SISIS_ADD_PREFIX_LEN_PTYPE;
+	inet_pton(AF_INET, prefix_addr_str, &p.prefix);
+	
+	return get_sisis_addrs_for_prefix(&p);
+}
+
+/**
+ * Get SIS-IS addresses for a specific process type and host.  It is the receivers
+ * responsibility to free the list when done with it.
+ */
+struct list * get_sisis_addrs_for_process_type_and_host(unsigned int ptype, unsigned int host_num)
+{
+	// Create prefix
+	char prefix_addr_str[INET_ADDRSTRLEN+1];
+	memset(prefix_addr_str, 0, sizeof(prefix_addr_str));
+	if (sisis_create_addr(ptype, host_num, 0, prefix_addr_str))
+		return NULL;
+	struct prefix_ipv4 p;
+	p.prefixlen = SISIS_ADD_PREFIX_LEN_HOST_NUM;
+	inet_pton(AF_INET, prefix_addr_str, &p.prefix);
+	
+	return get_sisis_addrs_for_prefix(&p);
+}
+#endif /* USE_IPV6 */
