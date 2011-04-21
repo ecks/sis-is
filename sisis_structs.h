@@ -9,6 +9,8 @@
 #ifndef _SISIS_STRUCTS_H
 #define _SISIS_STRUCTS_H
 
+#include "sisis_api.h"
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -44,6 +46,16 @@ struct sisis_request_ack_info
 	#define SISIS_REQUEST_ACK_INFO_ACKED				(1<<0)
 	#define SISIS_REQUEST_ACK_INFO_NACKED				(1<<1)
 };
+
+#ifndef USE_IPV6 /* IPv4 Version */
+/* SIS-IS address components */
+struct sisis_addr_components
+{
+        unsigned int ptype;
+        unsigned int host_num;
+        unsigned int pid;
+};
+#endif /* IPv4 Version */
 
 /* IPv4 prefix structure. */
 struct prefix_ipv4
