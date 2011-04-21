@@ -47,17 +47,6 @@ extern struct list * ipv6_rib_routes;
 
 void sisis_process_message(char * msg, int msg_len);
 
-#ifdef USE_IPV6
-/**
- * Setup SIS-IS address format.  Must be called before any other functions.
- *
- * filename Name of file defining SIS-IS address format.
- *
- * Returns 0 on success
- */
-int setup_sisis_addr_format(const char * filename);
-#endif /* USE_IPV6 */
-
 /**
  * Construct SIS-IS address.
  *

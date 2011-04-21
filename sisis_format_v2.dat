@@ -1,7 +1,0 @@
-prefix						16			fixed				0xfcff
-sisis_version			5				fixed				2
-process_type			16
-process_version		5
-sys_id						32
-pid								22
-timestamp					32
