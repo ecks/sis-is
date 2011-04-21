@@ -26,7 +26,9 @@
 // Prefix lengths
 #define SISIS_ADD_PREFIX_LEN_PTYPE				32
 #define SISIS_ADD_PREFIX_LEN_HOST_NUM			64
+#endif /* IPv4 Version */
 
+#ifndef USE_IPV6
 typedef struct {
 	char * name;
 	short bits;
@@ -34,7 +36,7 @@ typedef struct {
 #define SISIS_COMPONENT_FIXED					(1 << 0)
 	uint64_t fixed_val;		// Fixed values only for if bits <= 64
 } sisis_component_t;
-#endif /* IPv4 Version */
+#endif /* USE_IPV6 */
 
 extern int sisis_listener_port;
 extern char * sisis_listener_ip_addr;
