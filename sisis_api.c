@@ -43,9 +43,7 @@ struct list * ipv6_rib_routes = NULL;
 #endif /* HAVE_IPV6 */
 
 #ifdef USE_IPV6
-// SIS-IS address component info
-int num_components;
-sisis_component_t * components;
+#include "sisis_addr_format.h"
 #endif /* USE_IPV6 */
 
 // TODO: Support multiple addresses at once.
@@ -69,6 +67,7 @@ struct sisis_request_ack_info awaiting_ack;
  */
 int setup_sisis_addr_format(const char * filename)
 {
+#if 0
 	// Components (at most 128)
 	num_components = 0;
 	components = (sisis_component_t*)malloc(sizeof(sisis_component_t)*128);
@@ -211,7 +210,7 @@ int setup_sisis_addr_format(const char * filename)
 	
 	// Shrink memory for components
 	components = realloc(components, sizeof(sisis_component_t)*num_components);
-	
+#endif	
 	return 0;
 }
 
