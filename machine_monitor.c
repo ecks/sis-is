@@ -339,9 +339,9 @@ void * get_memory_usage_thread(void * nil)
 		seconds_to_next_minutely_reading--;
 		if (seconds_to_next_minutely_reading == 0)
 		{
-			usage = (short)usage_sum_min/30;
+			usage = (short)usage_sum_min/60;
 			usage_sum_min = 0;
-			seconds_to_next_minutely_reading = 30;
+			seconds_to_next_minutely_reading = 60;
 			memory_usage_minutely_history[(memory_usage_minutely_history_head+memory_usage_minutely_history_items)%MAX_MEMORY_USAGE_MINUTELY_HISTORY_ITEMS] = usage;
 			if (memory_usage_minutely_history_items == MAX_MEMORY_USAGE_MINUTELY_HISTORY_ITEMS)
 				memory_usage_minutely_history_head = (memory_usage_minutely_history_head+1)%MAX_MEMORY_USAGE_MINUTELY_HISTORY_ITEMS;
@@ -354,9 +354,9 @@ void * get_memory_usage_thread(void * nil)
 		seconds_to_next_30minute_reading--;
 		if (seconds_to_next_30minute_reading == 0)
 		{
-			usage = (short)usage_sum_30min/30;
+			usage = (short)usage_sum_30min/1800;
 			usage_sum_30min = 0;
-			seconds_to_next_30minute_reading = 30;
+			seconds_to_next_30minute_reading = 1800;
 			memory_usage_30minute_history[(memory_usage_30minute_history_head+memory_usage_30minute_history_items)%MAX_MEMORY_USAGE_30MINUTE_HISTORY_ITEMS] = usage;
 			if (memory_usage_30minute_history_items == MAX_MEMORY_USAGE_30MINUTE_HISTORY_ITEMS)
 				memory_usage_30minute_history_head = (memory_usage_30minute_history_head+1)%MAX_MEMORY_USAGE_30MINUTE_HISTORY_ITEMS;
