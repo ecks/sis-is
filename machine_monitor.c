@@ -269,6 +269,26 @@ short memory_usage_30minute_history_items = 0;
 // Mutex
 pthread_mutex_t memory_usage_mutex;
 
+/** Get memory usage. */
+struct memory_stats get_memory_usage()
+{
+	struct memory_stats stats;
+	memset(&stats, 0, sizeof(stats));
+	
+	FILE * proc_meminfo = fopen("/proc/meminfo", "r");
+	if (proc_meminfo != NULL)
+	{
+		fscanf(proc_meminfo, "MemTotal:");
+		fscanf(proc_meminfo, "%lf kB\n", &stats.total);
+		fscanf(proc_meminfo, "MemFree:");
+		fscanf(proc_meminfo, "%lf kB\n", &stats.free);
+		fclose(proc_meminfo);
+		
+		stats.usage_percent = (short)((stats.total-stats.free)/stats.total*1000);
+	}
+	return stats;
+}
+
 /* Get memory usage as a percent. */
 void * get_memory_usage_thread(void * nil)
 {
@@ -350,26 +370,6 @@ void * get_memory_usage_thread(void * nil)
 		// Sleep
 		sleep(1);
 	}
-}
-
-/** Get memory usage. */
-struct memory_stats get_memory_usage()
-{
-	struct memory_stats stats;
-	memset(&stats, 0, sizeof(stats));
-	
-	FILE * proc_meminfo = fopen("/proc/meminfo", "r");
-	if (proc_meminfo != NULL)
-	{
-		fscanf(proc_meminfo, "MemTotal:");
-		fscanf(proc_meminfo, "%lf kB\n", &stats.total);
-		fscanf(proc_meminfo, "MemFree:");
-		fscanf(proc_meminfo, "%lf kB\n", &stats.free);
-		fclose(proc_meminfo);
-		
-		stats.usage_percent = (short)((stats.total-stats.free)/stats.total*1000);
-	}
-	return stats;
 }
 
 /** Get total number of running processes. */
@@ -548,7 +548,6 @@ int main (int argc, char ** argv)
 		pthread_mutex_lock(&memory_usage_mutex);
 		
 		// Secondly history
-		int i, tmp;
 		sprintf(send_buf, "%ssecondlyMemoryUsage: [", send_buf);
 		for (i = memory_usage_secondly_history_head, tmp = memory_usage_secondly_history_items; tmp > 0; tmp--, i = (i+1)%MAX_MEMORY_USAGE_SECONDLY_HISTORY_ITEMS)
 			sprintf(send_buf, "%s%s%hd.%hd", send_buf, ((i == memory_usage_secondly_history_head) ? "" : ","), memory_usage_secondly_history[i]/10, memory_usage_secondly_history[i]%10);
