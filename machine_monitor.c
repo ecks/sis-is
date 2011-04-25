@@ -241,6 +241,117 @@ struct memory_stats
 	double free,total;	// Use double to prevent overflow
 };
 
+
+
+/* Past CPU usage observations.  Stored as percent * 10 so that we can keep
+  precisions to 1/10 of a percent without using floats. */
+// Keep 10 min worth
+#define MAX_MEMORY_USAGE_SECONDLY_HISTORY_ITEMS 600
+short memory_usage_secondly_history[MAX_MEMORY_USAGE_SECONDLY_HISTORY_ITEMS];
+short memory_usage_secondly_history_head = 0;
+short memory_usage_secondly_history_items = 0;
+// Keep 1 hrs worth
+#define MAX_MEMORY_USAGE_30SECOND_HISTORY_ITEMS 120
+short memory_usage_30second_history[MAX_MEMORY_USAGE_30SECOND_HISTORY_ITEMS];
+short memory_usage_30second_history_head = 0;
+short memory_usage_30second_history_items = 0;
+// Keep 24 hrs worth
+#define MAX_MEMORY_USAGE_MINUTELY_HISTORY_ITEMS 1440
+short memory_usage_minutely_history[MAX_MEMORY_USAGE_MINUTELY_HISTORY_ITEMS];
+short memory_usage_minutely_history_head = 0;
+short memory_usage_minutely_history_items = 0;
+// Keep 7 days worth
+#define MAX_MEMORY_USAGE_30MINUTE_HISTORY_ITEMS 336
+short memory_usage_30minute_history[MAX_MEMORY_USAGE_30MINUTE_HISTORY_ITEMS];
+short memory_usage_30minute_history_head = 0;
+short memory_usage_30minute_history_items = 0;
+
+// Mutex
+pthread_mutex_t memory_usage_mutex;
+
+/* Get memory usage as a percent. */
+void * get_memory_usage_thread(void * nil)
+{
+	struct memory_stats stats;
+	double usage_sum_30sec = 0;
+	double usage_sum_min = 0;
+	double usage_sum_30min = 0;
+	
+	// Counters
+	short seconds_to_next_30second_reading = 30;
+	short seconds_to_next_minutely_reading = 60;
+	short seconds_to_next_30minute_reading = 1800;
+	
+	short usage;
+	
+	while (1)
+	{
+		// Get stats
+		stats = get_memory_usage();
+		
+		// Lock mutex
+		pthread_mutex_lock(&memory_usage_mutex);
+		
+		// Secondly history
+		memory_usage_secondly_history[(memory_usage_secondly_history_head+memory_usage_secondly_history_items)%MAX_MEMORY_USAGE_SECONDLY_HISTORY_ITEMS] = stats.usage_percent;
+		if (memory_usage_secondly_history_items == MAX_MEMORY_USAGE_SECONDLY_HISTORY_ITEMS)
+			memory_usage_secondly_history_head = (memory_usage_secondly_history_head+1)%MAX_MEMORY_USAGE_SECONDLY_HISTORY_ITEMS;
+		else
+			memory_usage_secondly_history_items++;
+		
+		// 30 Second history
+		usage_sum_30sec += stats.usage_percent;
+		seconds_to_next_30second_reading--;
+		if (seconds_to_next_30second_reading == 0)
+		{
+			usage = (short)usage_sum_30sec/30;
+			usage_sum_30sec = 0;
+			seconds_to_next_30second_reading = 30;
+			memory_usage_30second_history[(memory_usage_30second_history_head+memory_usage_30second_history_items)%MAX_MEMORY_USAGE_30SECOND_HISTORY_ITEMS] = usage;
+			if (memory_usage_30second_history_items == MAX_MEMORY_USAGE_30SECOND_HISTORY_ITEMS)
+				memory_usage_30second_history_head = (memory_usage_30second_history_head+1)%MAX_MEMORY_USAGE_30SECOND_HISTORY_ITEMS;
+			else
+				memory_usage_30second_history_items++;
+		}
+		
+		// Minutely history
+		usage_sum_min += stats.usage_percent;
+		seconds_to_next_minutely_reading--;
+		if (seconds_to_next_minutely_reading == 0)
+		{
+			usage = (short)usage_sum_min/30;
+			usage_sum_min = 0;
+			seconds_to_next_minutely_reading = 30;
+			memory_usage_minutely_history[(memory_usage_minutely_history_head+memory_usage_minutely_history_items)%MAX_MEMORY_USAGE_MINUTELY_HISTORY_ITEMS] = usage;
+			if (memory_usage_minutely_history_items == MAX_MEMORY_USAGE_MINUTELY_HISTORY_ITEMS)
+				memory_usage_minutely_history_head = (memory_usage_minutely_history_head+1)%MAX_MEMORY_USAGE_MINUTELY_HISTORY_ITEMS;
+			else
+				memory_usage_minutely_history_items++;
+		}
+		
+		// 30 Minute history
+		usage_sum_30min += stats.usage_percent;
+		seconds_to_next_30minute_reading--;
+		if (seconds_to_next_30minute_reading == 0)
+		{
+			usage = (short)usage_sum_30min/30;
+			usage_sum_30min = 0;
+			seconds_to_next_30minute_reading = 30;
+			memory_usage_30minute_history[(memory_usage_30minute_history_head+memory_usage_30minute_history_items)%MAX_MEMORY_USAGE_30MINUTE_HISTORY_ITEMS] = usage;
+			if (memory_usage_30minute_history_items == MAX_MEMORY_USAGE_30MINUTE_HISTORY_ITEMS)
+				memory_usage_30minute_history_head = (memory_usage_30minute_history_head+1)%MAX_MEMORY_USAGE_30MINUTE_HISTORY_ITEMS;
+			else
+				memory_usage_30minute_history_items++;
+		}
+		
+		// Unlock mutex
+		pthread_mutex_unlock(&memory_usage_mutex);
+		
+		// Sleep
+		sleep(1);
+	}
+}
+
 /** Get memory usage. */
 struct memory_stats get_memory_usage()
 {
@@ -256,7 +367,7 @@ struct memory_stats get_memory_usage()
 		fscanf(proc_meminfo, "%lf kB\n", &stats.free);
 		fclose(proc_meminfo);
 		
-		stats.usage_percent = (short)((stats.total-stats.free)/stats.total*100);
+		stats.usage_percent = (short)((stats.total-stats.free)/stats.total*1000);
 	}
 	return stats;
 }
@@ -349,6 +460,11 @@ int main (int argc, char ** argv)
 	pthread_t cpu_usage_thread;
 	pthread_create(&cpu_usage_thread, NULL, get_cpu_usage_thread, NULL);
 	
+	// Start thread to record memory usage
+	pthread_mutex_init(&memory_usage_mutex, NULL);
+	pthread_t memory_usage_thread;
+	pthread_create(&memory_usage_thread, NULL, get_memory_usage_thread, NULL);
+	
 	// Wait for message
 	struct sockaddr_in6 remote_addr;
 	int len;
@@ -360,7 +476,7 @@ int main (int argc, char ** argv)
 		
 		// Memory
 		struct memory_stats mem_stats = get_memory_usage();
-		sprintf(send_buf, "MemoryUsage: %hd%%\n", mem_stats.usage_percent);
+		sprintf(send_buf, "MemoryUsage: %hd.%hd%%\n", mem_stats.usage_percent/10, mem_stats.usage_percent%10);
 		sprintf(send_buf, "%sFreeMemory: %0.0lf\n", send_buf, mem_stats.free);
 		sprintf(send_buf, "%sTotalMemory: %0.0lf\n", send_buf, mem_stats.total);
 		
@@ -394,7 +510,7 @@ int main (int argc, char ** argv)
 		if (uname(&uname_info) == 0)
 			sprintf(send_buf, "%sunameSysname: %s\nunameNodename: %s\nunameRelease: %s\nunameVersion: %s\nunameMachine: %s\n", send_buf, uname_info.sysname, uname_info.nodename, uname_info.release, uname_info.version, uname_info.machine);
 		
-		/* Usage Vectors */
+		/* CPU Usage Vector */
 		// Lock mutex
 		pthread_mutex_lock(&cpu_usage_mutex);
 		
@@ -425,6 +541,40 @@ int main (int argc, char ** argv)
 		
 		// Unlock mutex
 		pthread_mutex_unlock(&cpu_usage_mutex);
+		
+		
+		/* Memory Usage Vector */
+		// Lock mutex
+		pthread_mutex_lock(&memory_usage_mutex);
+		
+		// Secondly history
+		int i, tmp;
+		sprintf(send_buf, "%ssecondlyMemoryUsage: [", send_buf);
+		for (i = memory_usage_secondly_history_head, tmp = memory_usage_secondly_history_items; tmp > 0; tmp--, i = (i+1)%MAX_MEMORY_USAGE_SECONDLY_HISTORY_ITEMS)
+			sprintf(send_buf, "%s%s%hd.%hd", send_buf, ((i == memory_usage_secondly_history_head) ? "" : ","), memory_usage_secondly_history[i]/10, memory_usage_secondly_history[i]%10);
+		sprintf(send_buf, "%s]\n", send_buf);
+		
+		// 30 Second history
+		sprintf(send_buf, "%s30secondMemoryUsage: [", send_buf);
+		for (i = memory_usage_30second_history_head, tmp = memory_usage_30second_history_items; tmp > 0; tmp--, i = (i+1)%MAX_MEMORY_USAGE_30SECOND_HISTORY_ITEMS)
+			sprintf(send_buf, "%s%s%hd.%hd", send_buf, ((i == memory_usage_30second_history_head) ? "" : ","), memory_usage_30second_history[i]/10, memory_usage_30second_history[i]%10);
+		sprintf(send_buf, "%s]\n", send_buf);
+		
+		// Minutely history
+		sprintf(send_buf, "%sminutelyMemoryUsage: [", send_buf);
+		for (i = memory_usage_minutely_history_head, tmp = memory_usage_minutely_history_items; tmp > 0; tmp--, i = (i+1)%MAX_MEMORY_USAGE_MINUTELY_HISTORY_ITEMS)
+			sprintf(send_buf, "%s%s%hd.%hd", send_buf, ((i == memory_usage_minutely_history_head) ? "" : ","), memory_usage_minutely_history[i]/10, memory_usage_minutely_history[i]%10);
+		sprintf(send_buf, "%s]\n", send_buf);
+		
+		// 30 Minute history
+		sprintf(send_buf, "%s30minuteMemoryUsage: [", send_buf);
+		for (i = memory_usage_30minute_history_head, tmp = memory_usage_30minute_history_items; tmp > 0; tmp--, i = (i+1)%MAX_MEMORY_USAGE_30MINUTE_HISTORY_ITEMS)
+			sprintf(send_buf, "%s%s%hd.%hd", send_buf, ((i == memory_usage_30minute_history_head) ? "" : ","), memory_usage_30minute_history[i]/10, memory_usage_30minute_history[i]%10);
+		sprintf(send_buf, "%s]\n", send_buf);
+		
+		// Unlock mutex
+		pthread_mutex_unlock(&memory_usage_mutex);
+		
 		
 		// Print sender address
 		char sender[INET6_ADDRSTRLEN+1];
