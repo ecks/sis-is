@@ -101,8 +101,6 @@ void close_listener()
 		
 		sockfd = -1;
 	}
-	
-	sleep(10);
 }
 
 void terminate(int signal)
