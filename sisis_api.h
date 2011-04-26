@@ -42,7 +42,7 @@ typedef struct {
 extern int sisis_listener_port;
 extern char * sisis_listener_ip_addr;
 
-#define MAX_REREGISTRATIONS 5
+#define MAX_REREGISTRATION_THREADS 5
 
 /** Information for reregistration thread */
 typedef struct {

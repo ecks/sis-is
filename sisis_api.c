@@ -48,7 +48,7 @@ struct list * ipv6_rib_routes = NULL;
 
 // Reregistration information
 pthread_mutex_t reregistration_array_mutex = PTHREAD_MUTEX_INITIALIZER;
-reregistration_info_t * reregistrations[MAX_REREGISTRATIONS] = { NULL };
+reregistration_info_t * reregistrations[MAX_REREGISTRATION_THREADS] = { NULL };
 
 // Listen for messages
 pthread_t sisis_recv_from_thread;
@@ -512,7 +512,7 @@ int sisis_do_register(char * sisis_addr)
 
 void * sisis_reregister(void * arg)
 {
-	reregistration_info_t * info = (char *)arg;
+	reregistration_info_t * info = (reregistration_info_t *)arg;
 	int active = 1;
 	while (active)
 	{
@@ -563,11 +563,11 @@ int sisis_register(char * sisis_addr, ...)
 	// Set up reregistration
 	pthread_mutex_lock(&reregistration_array_mutex);
 	int idx;
-	for (idx = 0; idx < MAX_REREGISTRATIONS && reregistrations[idx] != NULL; reregistrations++);
+	for (idx = 0; idx < MAX_REREGISTRATION_THREADS && reregistrations[idx] != NULL; idx++);
 	pthread_mutex_unlock(&reregistration_array_mutex);
 	
 	// Check if there is an empty spot
-	if (idx == MAX_REREGISTRATIONS)
+	if (idx == MAX_REREGISTRATION_THREADS)
 		return 2;
 	if ((reregistrations[idx] = malloc(sizeof(*reregistrations[idx]))) == NULL)
 		return 3;
@@ -601,8 +601,8 @@ int sisis_unregister(void * nil, ...)
 	// Find and stop deregistration thread	
 	pthread_mutex_lock(&reregistration_array_mutex);
 	int idx;
-	for (idx = 0; idx < MAX_REREGISTRATIONS && (reregistrations[idx] == NULL || strcmp(reregistrations[idx].addr, sisis_addr) != 0); reregistrations++);
-	if (idx < MAX_REREGISTRATIONS)
+	for (idx = 0; idx < MAX_REREGISTRATION_THREADS && (reregistrations[idx] == NULL || strcmp(reregistrations[idx]->addr, sisis_addr) != 0); idx++);
+	if (idx < MAX_REREGISTRATION_THREADS)
 		reregistrations[idx].active = 0;
 	pthread_mutex_unlock(&reregistration_array_mutex);
 	
