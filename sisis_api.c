@@ -462,7 +462,7 @@ int sisis_do_register(char * sisis_addr)
 	int idx;
 	pthread_mutex_lock(&awaiting_acks_pool_mutex);
 	for (idx =  0; idx < AWAITING_ACK_POOL_SIZE && awaiting_acks_pool[idx].valid; idx++);
-	awaiting_acks_pool[idx].valid = true;
+	awaiting_acks_pool[idx].valid = 1;
 	awaiting_acks_pool[idx].request_id = request_id;
 	awaiting_acks_pool[idx].flags = 0;
 	// Be sure that mutex is locked
