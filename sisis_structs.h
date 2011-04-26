@@ -40,8 +40,9 @@ struct listnode
 
 struct sisis_request_ack_info
 {
+	short valid;
 	unsigned long request_id;
-	pthread_mutex_t * mutex;
+	pthread_mutex_t mutex;
 	short flags;
 	#define SISIS_REQUEST_ACK_INFO_ACKED				(1<<0)
 	#define SISIS_REQUEST_ACK_INFO_NACKED				(1<<1)

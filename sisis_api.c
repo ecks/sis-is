@@ -56,7 +56,8 @@ void * sisis_recv_loop(void *);
 
 // TODO: Handle multiple outstanding requests later
 // Request which we are waiting for an ACK or NACK for
-struct sisis_request_ack_info awaiting_ack;
+pthread_mutex_t awaiting_acks_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
+struct sisis_request_ack_info awaiting_acks_pool[AWAITING_ACK_POOL_SIZE] = { { 0, 0, PTHREAD_MUTEX_INITIALIZER, 0} };
 
 /**
  * Sets up socket to SIS-IS listener.
@@ -146,23 +147,34 @@ void sisis_process_message(char * msg, int msg_len)
 		if (msg_len >= 8)
 			command = ntohs(*(unsigned short *)(msg+6));
 		
+		int i;
 		switch (command)
 		{
 			case SISIS_ACK:
-				if (awaiting_ack.request_id == request_id)
-					awaiting_ack.flags |= SISIS_REQUEST_ACK_INFO_ACKED;
+				// Find associated info
+				pthread_mutex_lock(&awaiting_acks_pool_mutex);
+				for (i =  0; i < AWAITING_ACK_POOL_SIZE && (!awaiting_acks_pool[i].valid || awaiting_acks_pool[i].request_id != request_id); i++);
+				if (i < AWAITING_ACK_POOL_SIZE)
+				{
+					awaiting_acks_pool[i].flags |= SISIS_REQUEST_ACK_INFO_ACKED;
 				
-				// Free mutex
-				if (awaiting_ack.mutex)
-					pthread_mutex_unlock(awaiting_ack.mutex);
+					// Free mutex
+					pthread_mutex_unlock(&awaiting_acks_pool[i].mutex);
+				}
+				pthread_mutex_unlock(&awaiting_acks_pool_mutex);
 				break;
 			case SISIS_NACK:
-				if (awaiting_ack.request_id == request_id)
-					awaiting_ack.flags |= SISIS_REQUEST_ACK_INFO_NACKED;
+				// Find associated info
+				pthread_mutex_lock(&awaiting_acks_pool_mutex);
+				for (i =  0; i < AWAITING_ACK_POOL_SIZE && (!awaiting_acks_pool[i].valid || awaiting_acks_pool[i].request_id != request_id); i++);
+				if (i < AWAITING_ACK_POOL_SIZE)
+				{
+					awaiting_acks_pool[i].flags |= SISIS_REQUEST_ACK_INFO_NACKED;
 				
-				// Free mutex
-				if (awaiting_ack.mutex)
-					pthread_mutex_unlock(awaiting_ack.mutex);
+					// Free mutex
+					pthread_mutex_unlock(&awaiting_acks_pool[i].mutex);
+				}
+				pthread_mutex_unlock(&awaiting_acks_pool_mutex);
 				
 				break;
 		}
@@ -446,15 +458,18 @@ int sisis_do_register(char * sisis_addr)
 	// Get request id
 	unsigned int request_id = next_request_id++;
 	
-	// Setup and lock mutex
-	pthread_mutex_t * mutex = malloc(sizeof(pthread_mutex_t));
-	pthread_mutex_init(mutex, NULL);
-	pthread_mutex_lock(mutex);
-	
-	// Fill in the awaiting ack info
-	awaiting_ack.request_id = request_id;
-	awaiting_ack.mutex = mutex;
-	awaiting_ack.flags = 0;
+	// Find empty awaiting ack info from pool
+	int idx;
+	pthread_mutex_lock(&awaiting_acks_pool_mutex);
+	for (idx =  0; idx < AWAITING_ACK_POOL_SIZE && awaiting_acks_pool[idx].valid; idx++);
+	awaiting_acks_pool[idx].valid = true;
+	awaiting_acks_pool[idx].request_id = request_id;
+	awaiting_acks_pool[idx].flags = 0;
+	// Be sure that mutex is locked
+	pthread_mutex_unlock(&awaiting_acks_pool[idx].mutex);
+	pthread_mutex_lock(&awaiting_acks_pool[idx].mutex);
+	// Release lock on pool
+	pthread_mutex_unlock(&awaiting_acks_pool_mutex);
 	
 #ifdef USE_IPV6
 	// Setup message
@@ -488,7 +503,7 @@ int sisis_do_register(char * sisis_addr)
 	struct timespec timeout;
   clock_gettime(CLOCK_REALTIME, &timeout);
 	timeout.tv_sec += 5;
-  int status = pthread_mutex_timedlock(mutex, &timeout);
+  int status = pthread_mutex_timedlock(&awaiting_acks_pool[idx].mutex, &timeout);
 	if (status != 0)
 		return 1;
 
@@ -501,13 +516,14 @@ int sisis_do_register(char * sisis_addr)
 	free(ts1);
 	free(ts2);
 #endif
-
-	// Remove mutex
-	pthread_mutex_destroy(mutex);
-	free(mutex);
 	
-	// Check if it was an ack of nack
-	return (awaiting_ack.request_id == request_id && (awaiting_ack.flags & SISIS_REQUEST_ACK_INFO_ACKED)) ? 0 : 1;
+	// Check if it was an ack of nack and return to pool
+	pthread_mutex_lock(&awaiting_acks_pool_mutex);
+	int rtn = (awaiting_acks_pool[idx].request_id == request_id && (awaiting_acks_pool[idx].flags & SISIS_REQUEST_ACK_INFO_ACKED)) ? 0 : 1;
+	awaiting_acks_pool[idx].valid = 0;
+	pthread_mutex_unlock(&awaiting_acks_pool_mutex);
+	
+	return rtn;
 }
 
 void * sisis_reregister(void * arg)
@@ -528,8 +544,6 @@ void * sisis_reregister(void * arg)
 		if (active)
 			sisis_do_register(info->addr);
 	}
-	
-	printf("Stopping reregistration.\n");
 	
 	// Delete info
 	pthread_mutex_lock(&reregistration_array_mutex);
