@@ -529,6 +529,8 @@ void * sisis_reregister(void * arg)
 			sisis_do_register(info->addr);
 	}
 	
+	printf("Stopping reregistration.\n");
+	
 	// Delete info
 	pthread_mutex_lock(&reregistration_array_mutex);
 	reregistrations[info->idx] = NULL;
@@ -645,10 +647,22 @@ int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, 
 	// Register
 	int rtn = sisis_do_register(sisis_addr);
 	
-	// TODO: Support multiple addresses at once.
-	char * thread_sisis_addr = malloc(sizeof(char) * (strlen(sisis_addr)+1));
-	strcpy(thread_sisis_addr, sisis_addr);
-	pthread_create(&sisis_reregistration_thread, NULL, sisis_reregister, (void *)thread_sisis_addr);
+	// Set up reregistration
+	pthread_mutex_lock(&reregistration_array_mutex);
+	int idx;
+	for (idx = 0; idx < MAX_REREGISTRATION_THREADS && reregistrations[idx] != NULL; idx++);
+	pthread_mutex_unlock(&reregistration_array_mutex);
+	
+	// Check if there is an empty spot
+	if (idx == MAX_REREGISTRATION_THREADS)
+		return 2;
+	if ((reregistrations[idx] = malloc(sizeof(*reregistrations[idx]))) == NULL)
+		return 3;
+	reregistrations[idx]->addr = malloc(sizeof(char) * (strlen(sisis_addr)+1));
+	strcpy(reregistrations[idx]->addr, sisis_addr);
+	reregistrations[idx]->active = 1;
+	reregistrations[idx]->idx = idx;
+	pthread_create(&reregistrations[idx]->thread, NULL, sisis_reregister, (void *)reregistrations[idx]);
 	
 	return rtn;
 }
@@ -663,6 +677,14 @@ int sisis_unregister(unsigned int ptype, unsigned int host_num, unsigned int pid
 	char sisis_addr[INET_ADDRSTRLEN+1];
 	if (sisis_create_addr(ptype, host_num, pid, sisis_addr))
 		return 1;
+	
+	// Find and stop deregistration thread	
+	pthread_mutex_lock(&reregistration_array_mutex);
+	int idx;
+	for (idx = 0; idx < MAX_REREGISTRATION_THREADS && (reregistrations[idx] == NULL || strcmp(reregistrations[idx]->addr, sisis_addr) != 0); idx++);
+	if (idx < MAX_REREGISTRATION_THREADS)
+		reregistrations[idx]->active = 0;
+	pthread_mutex_unlock(&reregistration_array_mutex);
 	
 	// Setup socket
 	sisis_socket_open();

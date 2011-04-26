@@ -8,7 +8,7 @@
 #define _SISIS_API_H
 
 #define HAVE_IPV6
-#define USE_IPV6
+//#define USE_IPV6
 
 #include "sisis_structs.h"
 #include <pthread.h>
