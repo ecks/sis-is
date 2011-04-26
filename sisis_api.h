@@ -8,14 +8,14 @@
 #define _SISIS_API_H
 
 #define HAVE_IPV6
-//#define USE_IPV6
+#define USE_IPV6
 
 #include "sisis_structs.h"
 #include <pthread.h>
 
 #define SISIS_VERSION 1
 
-#define SISIS_REREGISTRATION_TIMEOUT			20
+#define SISIS_REREGISTRATION_TIMEOUT			1
 
 // SIS-IS Commands/Messages
 #define SISIS_CMD_REGISTER_ADDRESS				1
