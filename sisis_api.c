@@ -571,11 +571,11 @@ int sisis_register(char * sisis_addr, ...)
 		return 2;
 	if ((reregistrations[idx] = malloc(sizeof(*reregistrations[idx]))) == NULL)
 		return 3;
-	reregistrations[idx].addr = malloc(sizeof(char) * (strlen(sisis_addr)+1));
-	strcpy(thread_sisis_addr, sisis_addr);
-	reregistrations[idx].active = 1;
-	reregistrations[idx].idx = idx;
-	pthread_create(&reregistrations[idx].thread, NULL, sisis_reregister, (void *)reregistrations[idx]);
+	reregistrations[idx]->addr = malloc(sizeof(char) * (strlen(sisis_addr)+1));
+	strcpy(reregistrations[idx]->addr, sisis_addr);
+	reregistrations[idx]->active = 1;
+	reregistrations[idx]->idx = idx;
+	pthread_create(&reregistrations[idx]->thread, NULL, sisis_reregister, (void *)reregistrations[idx]);
 	
 	return rtn;
 }
@@ -603,7 +603,7 @@ int sisis_unregister(void * nil, ...)
 	int idx;
 	for (idx = 0; idx < MAX_REREGISTRATION_THREADS && (reregistrations[idx] == NULL || strcmp(reregistrations[idx]->addr, sisis_addr) != 0); idx++);
 	if (idx < MAX_REREGISTRATION_THREADS)
-		reregistrations[idx].active = 0;
+		reregistrations[idx]->active = 0;
 	pthread_mutex_unlock(&reregistration_array_mutex);
 	
 	// Setup socket
