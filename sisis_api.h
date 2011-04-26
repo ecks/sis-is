@@ -11,6 +11,7 @@
 #define USE_IPV6
 
 #include "sisis_structs.h"
+#include <pthread.h>
 
 #define SISIS_VERSION 1
 
@@ -40,6 +41,16 @@ typedef struct {
 
 extern int sisis_listener_port;
 extern char * sisis_listener_ip_addr;
+
+#define MAX_REREGISTRATIONS 5
+
+/** Information for reregistration thread */
+typedef struct {
+	pthread_t thread;
+	char * addr;
+	short active;
+	int idx;
+} reregistration_info_t;
 
 // IPv4 & IPv6 RIBs
 extern struct list * ipv4_rib_routes;

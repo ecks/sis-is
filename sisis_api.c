@@ -46,8 +46,9 @@ struct list * ipv6_rib_routes = NULL;
 #include "sisis_addr_format.h"
 #endif /* USE_IPV6 */
 
-// TODO: Support multiple addresses at once.
-pthread_t sisis_reregistration_thread;
+// Reregistration information
+pthread_mutex_t reregistration_array_mutex = PTHREAD_MUTEX_INITIALIZER;
+reregistration_info_t * reregistrations[MAX_REREGISTRATIONS] = { NULL };
 
 // Listen for messages
 pthread_t sisis_recv_from_thread;
@@ -511,15 +512,31 @@ int sisis_do_register(char * sisis_addr)
 
 void * sisis_reregister(void * arg)
 {
-	char * addr = (char *)arg;
-	do
+	reregistration_info_t * info = (char *)arg;
+	int active = 1;
+	while (active)
 	{
 		// Sleep
 		sleep(SISIS_REREGISTRATION_TIMEOUT);
 		
+		// Check if this is still active
+		pthread_mutex_lock(&reregistration_array_mutex);
+		active = info->active;
+		pthread_mutex_unlock(&reregistration_array_mutex);
+		
 		// Register
-		sisis_do_register(addr);
-	} while (1);	// TODO: Stop when the address is deregistered
+		if (active)
+			sisis_do_register(info->addr);
+	}
+	
+	// Delete info
+	pthread_mutex_lock(&reregistration_array_mutex);
+	reregistrations[info->idx] = NULL;
+	pthread_mutex_unlock(&reregistration_array_mutex);
+	
+	// Free struct
+	free(info->addr);
+	free(info);
 }
 
 #ifdef USE_IPV6
@@ -543,10 +560,22 @@ int sisis_register(char * sisis_addr, ...)
 	// Register
 	rtn = sisis_do_register(sisis_addr);
 	
-	// TODO: Support multiple addresses at once.
-	char * thread_sisis_addr = malloc(sizeof(char) * (strlen(sisis_addr)+1));
+	// Set up reregistration
+	pthread_mutex_lock(&reregistration_array_mutex);
+	int idx;
+	for (idx = 0; idx < MAX_REREGISTRATIONS && reregistrations[idx] != NULL; reregistrations++);
+	pthread_mutex_unlock(&reregistration_array_mutex);
+	
+	// Check if there is an empty spot
+	if (idx == MAX_REREGISTRATIONS)
+		return 2;
+	if ((reregistrations[idx] = malloc(sizeof(*reregistrations[idx]))) == NULL)
+		return 3;
+	reregistrations[idx].addr = malloc(sizeof(char) * (strlen(sisis_addr)+1));
 	strcpy(thread_sisis_addr, sisis_addr);
-	pthread_create(&sisis_reregistration_thread, NULL, sisis_reregister, (void *)thread_sisis_addr);
+	reregistrations[idx].active = 1;
+	reregistrations[idx].idx = idx;
+	pthread_create(&reregistrations[idx].thread, NULL, sisis_reregister, (void *)reregistrations[idx]);
 	
 	return rtn;
 }
@@ -568,6 +597,14 @@ int sisis_unregister(void * nil, ...)
 	va_end(args);
 	if (rtn)
 		return 1;
+
+	// Find and stop deregistration thread	
+	pthread_mutex_lock(&reregistration_array_mutex);
+	int idx;
+	for (idx = 0; idx < MAX_REREGISTRATIONS && (reregistrations[idx] == NULL || strcmp(reregistrations[idx].addr, sisis_addr) != 0); reregistrations++);
+	if (idx < MAX_REREGISTRATIONS)
+		reregistrations[idx].active = 0;
+	pthread_mutex_unlock(&reregistration_array_mutex);
 	
 	// Setup socket
 	sisis_socket_open();
