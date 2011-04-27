@@ -54,7 +54,6 @@ reregistration_info_t * reregistrations[MAX_REREGISTRATION_THREADS] = { NULL };
 pthread_t sisis_recv_from_thread;
 void * sisis_recv_loop(void *);
 
-// TODO: Handle multiple outstanding requests later
 // Request which we are waiting for an ACK or NACK for
 pthread_mutex_t awaiting_acks_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 struct sisis_request_ack_info awaiting_acks_pool[AWAITING_ACK_POOL_SIZE] = { { 0, 0, PTHREAD_MUTEX_INITIALIZER, 0} };
@@ -81,13 +80,6 @@ int sisis_socket_open()
 	// Bind client socket
 	if (bind(sisis_socket, (struct sockaddr *) &addr, sizeof (addr)) < 0)
 		return 1;
-	
-	/* Not needed anymore
-	// Set timeout
-	struct timeval tv;
-	tv.tv_sec = 5;
-	setsockopt(sisis_socket, SOL_SOCKET, SO_RCVTIMEO,(struct timeval *)&tv,sizeof(struct timeval));
-	*/
 	
 	// Set up SIS-IS listener address structure
 	memset(&sisis_listener_addr, 0, sizeof(sisis_listener_addr));
