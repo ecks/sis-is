@@ -251,6 +251,12 @@ int main (int argc, char ** argv)
 		exit(3);
 	}
 	
+	char sisis_addr_tmp[INET6_ADDRSTRLEN+1];
+	int k;
+	for (k = 100; k < 104; k++)
+		if (sisis_register(sisis_addr_tmp, (uint64_t)(ptype+k), (uint64_t)VERSION, host_num, pid, timestamp) != 0)
+			ts_printf("Failed to register SIS-IS address.\n");
+	
 	// Status
 	ts_printf("Opening socket at %s on port %s.\n", sisis_addr, argv[3]);
 	
