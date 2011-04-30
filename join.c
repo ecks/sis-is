@@ -150,7 +150,7 @@ int main (int argc, char ** argv)
 		}
 		
 		// Serialize
-		buflen = serialize_join_table(join_table, MAX_TABLE_SIZE, buf, RECV_BUFFER_SIZE);
+		buflen = serialize_join_table(join_table, rows, buf, RECV_BUFFER_SIZE);
 		if (buflen == -1)
 			printf("Failed to serialize table.\n");
 		else
