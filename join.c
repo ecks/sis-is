@@ -13,17 +13,17 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <errno.h>
 
 #include <time.h>
 
-#include "voter.h"
+#include "join.h"
 #include "table.h"
 
 #include "../tests/sisis_api.h"
 #include "../tests/sisis_process_types.h"
 
 #define VERSION 1
-
 int sockfd = -1, con = -1;
 uint64_t ptype, host_num, pid;
 uint64_t timestamp;
@@ -36,7 +36,7 @@ void close_listener()
 		close(sockfd);
 		
 		// Unregister
-		sisis_unregister(NULL, (uint64_t)SISIS_PTYPE_DEMO1_VOTER, (uint64_t)VERSION, host_num, pid, timestamp);
+		sisis_unregister(NULL, (uint64_t)SISIS_PTYPE_DEMO1_JOIN, (uint64_t)VERSION, host_num, pid, timestamp);
 		
 		sockfd = -1;
 	}
@@ -74,14 +74,14 @@ int main (int argc, char ** argv)
 	pid = getpid();
 	
 	// Register address
-	if (sisis_register(sisis_addr, (uint64_t)SISIS_PTYPE_DEMO1_VOTER, (uint64_t)VERSION, host_num, pid, timestamp) != 0)
+	if (sisis_register(sisis_addr, (uint64_t)SISIS_PTYPE_DEMO1_JOIN, (uint64_t)VERSION, host_num, pid, timestamp) != 0)
 	{
 		printf("Failed to register SIS-IS address.\n");
 		exit(1);
 	}
 	
 	// Status
-	printf("Opening socket at %s on port %i.\n", sisis_addr, VOTER_PORT);
+	printf("Opening socket at %s on port %i.\n", sisis_addr, JOIN_PORT);
 	
 	// Set up socket address info
 	struct addrinfo hints, *addr;
@@ -89,7 +89,7 @@ int main (int argc, char ** argv)
 	hints.ai_family = AF_INET6;	// IPv6
 	hints.ai_socktype = SOCK_DGRAM;
 	char port_str[8];
-	sprintf(port_str, "%u", VOTER_PORT);
+	sprintf(port_str, "%u", JOIN_PORT);
 	getaddrinfo(sisis_addr, port_str, &hints, &addr);
 	
 	// Create socket
@@ -116,16 +116,28 @@ int main (int argc, char ** argv)
 	signal(SIGTERM, terminate);
 	signal(SIGINT, terminate);
 	
+	// TODO: Thread to be sure that there are enough processes
+	
 	// Wait for message
 	struct sockaddr_in6 remote_addr;
-	int len;
+	int i;
+	int buflen;
 	char buf[RECV_BUFFER_SIZE];
 	socklen_t addr_size = sizeof remote_addr;
-	while ((len = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
+	while ((buflen = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
 	{
 		// Deserialize
-		demo_merge_table_entry table[MAX_TABLE_SIZE];
-		int rows = deserialize_join_table(table, MAX_TABLE_SIZE, buf, RECV_BUFFER_SIZE);
+		demo_table1_entry table1[MAX_TABLE_SIZE];
+		int bytes_used;
+		int rows1 = deserialize_table1(table1, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
+		demo_table2_entry table2[MAX_TABLE_SIZE];
+		int rows2 = deserialize_table2(table2, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
+		printf("Table 1 Rows: %d\n", rows1);
+		printf("Table 2 Rows: %d\n", rows2);
+		
+		// Join
+		demo_merge_table_entry join_table[MAX_TABLE_SIZE];
+		int rows = merge_join(table1, rows1, table2, rows2, join_table, MAX_TABLE_SIZE);
 		
 		// Print
 		if (rows == -1)
@@ -135,6 +147,45 @@ int main (int argc, char ** argv)
 			printf("Joined Rows: %d\n", rows);
 			for (i = 0; i < rows; i++)
 				printf("User Id: %d\tName: %s\tGender: %c\n", join_table[i].user_id, join_table[i].name, join_table[i].gender);
+		}
+		
+		// Serialize
+		buflen = serialize_join_table(join_table, MAX_TABLE_SIZE, buf, RECV_BUFFER_SIZE);
+		if (buflen != -1)
+			printf("Failed to serialize tables.\n");
+		else
+		{
+			// Find all voter processes
+			char voter_addr[INET6_ADDRSTRLEN+1];
+			sisis_create_addr(voter_addr, (uint64_t)SISIS_PTYPE_DEMO1_VOTER, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
+			struct prefix_ipv6 voter_prefix = sisis_make_ipv6_prefix(voter_addr, 42);
+			struct list * voter_addrs = get_sisis_addrs_for_prefix(&voter_prefix);
+			if (voter_addrs == NULL || voter_addrs->size == 0)
+				printf("No voter processes found.\n");
+			else
+			{
+				// Send to all join processes
+				struct listnode * node;
+				LIST_FOREACH(voter_addrs, node)
+				{
+					// Get address
+					struct in6_addr * remote_addr = (struct in6_addr *)node->data;
+					
+					// Set up socket info
+					struct sockaddr_in6 sockaddr;
+					int sockaddr_size = sizeof(sockaddr);
+					memset(&sockaddr, 0, sockaddr_size);
+					sockaddr.sin6_family = AF_INET6;
+					sockaddr.sin6_port = htons(JOIN_PORT);
+					sockaddr.sin6_addr = *remote_addr;
+					
+					if (sendto(sockfd, buf, buflen, 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
+						printf("Failed to send message.  Error: %i\n", errno);
+				}
+				
+				// Free memory
+				FREE_LINKED_LIST(voter_addrs);
+			}
 		}
 	}
 	

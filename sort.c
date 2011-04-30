@@ -162,7 +162,7 @@ int main (int argc, char ** argv)
 				printf("No join processes found.\n");
 			else
 			{
-				// Send to all sort processes
+				// Send to all join processes
 				struct listnode * node;
 				LIST_FOREACH(join_addrs, node)
 				{
@@ -174,7 +174,7 @@ int main (int argc, char ** argv)
 					int sockaddr_size = sizeof(sockaddr);
 					memset(&sockaddr, 0, sockaddr_size);
 					sockaddr.sin6_family = AF_INET6;
-					sockaddr.sin6_port = htons(SORT_PORT);
+					sockaddr.sin6_port = htons(JOIN_PORT);
 					sockaddr.sin6_addr = *remote_addr;
 					
 					if (sendto(sockfd, buf, buflen+buflen2, 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
