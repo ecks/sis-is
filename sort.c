@@ -143,7 +143,7 @@ int main (int argc, char ** argv)
 		for (i = 0; i < rows1; i++)
 			printf("User Id: %d\tName: %s\n", table1[i].user_id, table1[i].name);
 		for (i = 0; i < rows2; i++)
-			printf("User Id: %d\tName: %s\n", table2[i].user_id, table2[i].name);
+			printf("User Id: %d\tGender: %c\n", table2[i].user_id, table2[i].gender);
 		
 		// Serialize
 		buflen = serialize_table1(table1, MAX_TABLE_SIZE, buf, RECV_BUFFER_SIZE);
