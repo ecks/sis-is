@@ -124,8 +124,9 @@ int main (int argc, char ** argv)
 	while ((len = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
 	{
 		// Deserialize
-		demo_merge_table_entry table[MAX_TABLE_SIZE];
-		int rows = deserialize_join_table(table, MAX_TABLE_SIZE, buf, RECV_BUFFER_SIZE);
+		int bytes_used;
+		demo_merge_table_entry join_table[MAX_TABLE_SIZE];
+		int rows = deserialize_join_table(join_table, MAX_TABLE_SIZE, buf, RECV_BUFFER_SIZE, &bytes_used);
 		
 		// Print
 		if (rows == -1)
@@ -133,6 +134,7 @@ int main (int argc, char ** argv)
 		else
 		{
 			printf("Joined Rows: %d\n", rows);
+			int i;
 			for (i = 0; i < rows; i++)
 				printf("User Id: %d\tName: %s\tGender: %c\n", join_table[i].user_id, join_table[i].name, join_table[i].gender);
 		}
