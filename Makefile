@@ -1,3 +1,4 @@
+CC = gcc
 EXECUTABLES = shim sort join voter
 USER_OBJS   = shim.o voter.o sort.o join.o table.o
 SISIS_API_C = ../tests/sisis_*.c
