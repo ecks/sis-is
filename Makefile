@@ -8,16 +8,16 @@ all: $(EXECUTABLES)
 #	$(CC) $(CFLAGS) -o sort $(USER_OBJS)
 
 shim: shim.o table.o
-	$(CC) $(CFLAGS) -o shim shim.o table.o
+	$(CC) $(CFLAGS) -o shim shim.o table.o $(SISIS_API_C)
 
 sort: sort.o table.o
-	$(CC) $(CFLAGS) -o sort sort.o table.o
+	$(CC) $(CFLAGS) -o sort sort.o table.o $(SISIS_API_C)
 
-join: $(USER_OBJS)
-	$(CC) $(CFLAGS) -o sort $(USER_OBJS)
+join: join.o table.o
+	$(CC) $(CFLAGS) -o join join.o table.o $(SISIS_API_C)
 
 voter: voter.o table.o
-	$(CC) $(CFLAGS) -o voter voter.o table.o
+	$(CC) $(CFLAGS) -o voter voter.o table.o $(SISIS_API_C)
 
 .c.o: 
 	gcc -c $*.c
