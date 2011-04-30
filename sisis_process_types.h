@@ -4,5 +4,8 @@
 #define SISIS_PTYPE_MACHINE_MONITOR					1
 #define SISIS_PTYPE_REMOTE_SPAWN						2
 #define SISIS_PTYPE_LEADER_ELECTOR					3
+#define SISIS_PTYPE_DEMO1_SORT							4
+#define SISIS_PTYPE_DEMO1_JOIN							5
+#define SISIS_PTYPE_DEMO1_VOTER							6
 
 #endif
