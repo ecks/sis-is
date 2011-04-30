@@ -84,6 +84,10 @@ int main (int argc, char ** argv)
 		close(sockfd);
 		exit(2);
 	}
+	
+	// Status message
+	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)(addr->ai_addr))->sin6_addr, sisis_addr, INET6_ADDRSTRLEN);
+	printf("Socket opened at %s on port %u.\n", sisis_addr, ntohs(((struct sockaddr_in *)(addr->ai_addr))->sin_port));
 	*/
 	// Create socket
 	if ((sockfd = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
@@ -91,10 +95,6 @@ int main (int argc, char ** argv)
 		printf("Failed to open socket.\n");
 		exit(1);
 	}
-	
-	// Status message
-	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)(addr->ai_addr))->sin6_addr, sisis_addr, INET6_ADDRSTRLEN);
-	printf("Socket opened at %s on port %u.\n", sisis_addr, ntohs(((struct sockaddr_in *)(addr->ai_addr))->sin_port));
 	
 	// Set up signal handling
 	signal(SIGABRT, terminate);
