@@ -62,12 +62,13 @@ int main (int argc, char ** argv)
 	printf("Opening socket...\n");
 	
 	// Set up socket address info
+	/*
 	struct addrinfo hints, *addr;
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_INET6;	// IPv6
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_flags = AI_PASSIVE; // Fill in IP
-	getaddrinfo(NULL, NULL, &hints, &addr);
+	getaddrinfo(NULL, "", &hints, &addr);
 	
 	// Create socket
 	if ((sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)) == -1)
@@ -82,6 +83,13 @@ int main (int argc, char ** argv)
 		printf("Failed to bind socket to address.\n");
 		close(sockfd);
 		exit(2);
+	}
+	*/
+	// Create socket
+	if ((sockfd = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
+	{
+		printf("Failed to open socket.\n");
+		exit(1);
 	}
 	
 	// Status message
