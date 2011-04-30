@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <errno.h>
 
 #include <time.h>
 
@@ -102,7 +103,7 @@ int main (int argc, char ** argv)
 	short user_id_pool[100];
 	for (i = 0; i < 100; i++)
 		user_id_pool[i] = 0;
-	for (i = 0; i < TABLE_SIZE; i++)
+	for (i = 0; i < MAX_TABLE_SIZE; i++)
 	{
 		do {
 			table1[i].user_id = rand() % 100;
@@ -116,7 +117,7 @@ int main (int argc, char ** argv)
 	demo_table2_entry table2[MAX_TABLE_SIZE];
 	for (i = 0; i < 100; i++)
 		user_id_pool[i] = 0;
-	for (i = 0; i < TABLE_SIZE; i++)
+	for (i = 0; i < MAX_TABLE_SIZE; i++)
 	{
 		do {
 			table2[i].user_id = rand() % 100;
