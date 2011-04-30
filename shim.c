@@ -59,6 +59,8 @@ int main (int argc, char ** argv)
 	// Get pid
 	pid = getpid();
 	
+	printf("Opening socket...\n");
+	
 	// Set up socket address info
 	struct addrinfo hints, *addr;
 	memset(&hints, 0, sizeof hints);
