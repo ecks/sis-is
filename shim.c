@@ -61,34 +61,6 @@ int main (int argc, char ** argv)
 	
 	printf("Opening socket...\n");
 	
-	// Set up socket address info
-	/*
-	struct addrinfo hints, *addr;
-	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_INET6;	// IPv6
-	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_flags = AI_PASSIVE; // Fill in IP
-	getaddrinfo(NULL, "", &hints, &addr);
-	
-	// Create socket
-	if ((sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)) == -1)
-	{
-		printf("Failed to open socket.\n");
-		exit(1);
-	}
-	
-	// Bind to address
-	if (bind(sockfd, addr->ai_addr, addr->ai_addrlen) == -1)
-	{
-		printf("Failed to bind socket to address.\n");
-		close(sockfd);
-		exit(2);
-	}
-	
-	// Status message
-	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)(addr->ai_addr))->sin6_addr, sisis_addr, INET6_ADDRSTRLEN);
-	printf("Socket opened at %s on port %u.\n", sisis_addr, ntohs(((struct sockaddr_in *)(addr->ai_addr))->sin_port));
-	*/
 	// Create socket
 	if ((sockfd = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
 	{
@@ -145,7 +117,7 @@ int main (int argc, char ** argv)
 	int buflen, buflen2;
 	buflen = serialize_table1(table1, MAX_TABLE_SIZE, buf, RECV_BUFFER_SIZE);
 	if (buflen != -1)
-		buflen2 = serialize_table2(table2, MAX_TABLE_SIZE, buf, RECV_BUFFER_SIZE - buflen);
+		buflen2 = serialize_table2(table2, MAX_TABLE_SIZE, buf+buflen, RECV_BUFFER_SIZE - buflen);
 	if (buflen == -1 || buflen2 == -1)
 		printf("Failed to serialize tables.\n");
 	else
