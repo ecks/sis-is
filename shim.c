@@ -113,7 +113,7 @@ int main (int argc, char ** argv)
 	}
 	
 	// Table 2
-	demo_table2_entry table2[TABLE_SIZE];
+	demo_table2_entry table2[MAX_TABLE_SIZE];
 	for (i = 0; i < 100; i++)
 		user_id_pool[i] = 0;
 	for (i = 0; i < TABLE_SIZE; i++)
@@ -159,10 +159,10 @@ int main (int argc, char ** argv)
 				sockaddr.sin6_family = AF_INET6;
 				sockaddr.sin6_port = htons(SORT_PORT);
 				sockaddr.sin6_addr = *remote_addr;
+				
+				if (sendto(sockfd, buf, buflen+buflen2, 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
+					printf("Failed to send message.  Error: %i\n", errno);
 			}
-			
-			if (sendto(sockfd, buf, buflen+buflen2, 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
-				printf("Failed to send message.  Error: %i\n", errno);
 			
 			// Free memory
 			FREE_LINKED_LIST(sort_addrs);
