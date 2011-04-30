@@ -119,17 +119,18 @@ int main (int argc, char ** argv)
 	
 	// Wait for message
 	struct sockaddr_in6 remote_addr;
-	int len;
+	int i;
+	int buflen, buflen2;
 	char buf[RECV_BUFFER_SIZE];
 	socklen_t addr_size = sizeof remote_addr;
-	while ((len = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
+	while ((buflen = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
 	{
 		// Deserialize
 		demo_table1_entry table1[MAX_TABLE_SIZE];
 		int bytes_used;
-		int rows1 = deserialize_table1(table1, MAX_TABLE_SIZE, buf, buflen, len);
+		int rows1 = deserialize_table1(table1, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
 		demo_table2_entry table2[MAX_TABLE_SIZE];
-		int rows2 = deserialize_table2(table2, MAX_TABLE_SIZE, buf+bytes_used, len-bytes_used);
+		int rows2 = deserialize_table2(table2, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
 		printf("Table 1 Rows: %d\n", rows1);
 		printf("Table 2 Rows: %d\n", rows2);
 		
@@ -144,7 +145,6 @@ int main (int argc, char ** argv)
 			printf("User Id: %d\tName: %s\n", table2[i].user_id, table2[i].name);
 		
 		// Serialize
-		int buflen, buflen2;
 		buflen = serialize_table1(table1, MAX_TABLE_SIZE, buf, RECV_BUFFER_SIZE);
 		if (buflen != -1)
 			buflen2 = serialize_table2(table2, MAX_TABLE_SIZE, buf, RECV_BUFFER_SIZE - buflen);
@@ -175,10 +175,10 @@ int main (int argc, char ** argv)
 					sockaddr.sin6_family = AF_INET6;
 					sockaddr.sin6_port = htons(SORT_PORT);
 					sockaddr.sin6_addr = *remote_addr;
+					
+					if (sendto(sockfd, buf, buflen+buflen2, 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
+						printf("Failed to send message.  Error: %i\n", errno);
 				}
-				
-				if (sendto(sockfd, buf, buflen+buflen2, 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
-					printf("Failed to send message.  Error: %i\n", errno);
 				
 				// Free memory
 				FREE_LINKED_LIST(join_addrs);

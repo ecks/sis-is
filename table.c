@@ -71,7 +71,10 @@ int deserialize_table1(demo_table1_entry * table, int size, char * buf, int bufs
 		memcpy(table[i].name, buf+pos, TABLE1_NAME_LEN);
 		pos += TABLE1_NAME_LEN;
 	}
-	*bytes_used = pos;
+	
+	if (bytes_used != NULL)
+		*bytes_used = pos;
+	
 	return rows;
 }
 
@@ -136,7 +139,10 @@ int deserialize_table2(demo_table2_entry * table, int size, char * buf, int bufs
 		table[i].gender = buf[pos];
 		pos++;
 	}
-	*bytes_used = pos;
+	
+	if (bytes_used != NULL)
+		*bytes_used = pos;
+	
 	return rows;
 }
 
@@ -209,7 +215,10 @@ int deserialize_join_table(demo_merge_table_entry * table, int size, char * buf,
 		table[i].gender = buf[pos];
 		pos++;
 	}
-	*bytes_used = pos;
+	
+	if (bytes_used != NULL)
+		*bytes_used = pos;
+	
 	return rows;
 }
 
