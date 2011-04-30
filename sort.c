@@ -146,9 +146,9 @@ int main (int argc, char ** argv)
 			printf("User Id: %d\tGender: %c\n", table2[i].user_id, table2[i].gender);
 		
 		// Serialize
-		buflen = serialize_table1(table1, MAX_TABLE_SIZE, buf, RECV_BUFFER_SIZE);
+		buflen = serialize_table1(table1, rows1, buf, RECV_BUFFER_SIZE);
 		if (buflen != -1)
-			buflen2 = serialize_table2(table2, MAX_TABLE_SIZE, buf, RECV_BUFFER_SIZE - buflen);
+			buflen2 = serialize_table2(table2, rows2, buf+buflen, RECV_BUFFER_SIZE - buflen);
 		if (buflen == -1 || buflen2 == -1)
 			printf("Failed to serialize tables.\n");
 		else
