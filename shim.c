@@ -99,6 +99,7 @@ int main (int argc, char ** argv)
 	int i;
 	
 	// Table 1
+	printf("Building table 1...\n");
 	demo_table1_entry table1[MAX_TABLE_SIZE];
 	short user_id_pool[100];
 	for (i = 0; i < 100; i++)
@@ -114,6 +115,7 @@ int main (int argc, char ** argv)
 	}
 	
 	// Table 2
+	printf("Building table 2...\n");
 	demo_table2_entry table2[MAX_TABLE_SIZE];
 	for (i = 0; i < 100; i++)
 		user_id_pool[i] = 0;
