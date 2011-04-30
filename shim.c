@@ -128,6 +128,7 @@ int main (int argc, char ** argv)
 	}
 	
 	// Serialize
+	printf("Serializing...\n");
 	char buf[RECV_BUFFER_SIZE];
 	int buflen, buflen2;
 	buflen = serialize_table1(table1, MAX_TABLE_SIZE, buf, RECV_BUFFER_SIZE);
@@ -138,6 +139,7 @@ int main (int argc, char ** argv)
 	else
 	{
 		// Find all sort processes
+		printf("Searching for sort processes...\n");
 		char sort_addr[INET6_ADDRSTRLEN+1];
 		sisis_create_addr(sort_addr, (uint64_t)SISIS_PTYPE_DEMO1_SORT, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
 		struct prefix_ipv6 sort_prefix = sisis_make_ipv6_prefix(sort_addr, 42);
@@ -161,6 +163,7 @@ int main (int argc, char ** argv)
 				sockaddr.sin6_port = htons(SORT_PORT);
 				sockaddr.sin6_addr = *remote_addr;
 				
+				printf("Sending data to sort process...\n");
 				if (sendto(sockfd, buf, buflen+buflen2, 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
 					printf("Failed to send message.  Error: %i\n", errno);
 			}
