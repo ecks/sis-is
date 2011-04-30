@@ -135,12 +135,6 @@ int main (int argc, char ** argv)
 		printf("Table 1 Rows: %d\n", rows1);
 		printf("Table 2 Rows: %d\n", rows2);
 		
-		// Print
-		for (i = 0; i < rows1; i++)
-			printf("User Id: %d\tName: %s\n", table1[i].user_id, table1[i].name);
-		for (i = 0; i < rows2; i++)
-			printf("User Id: %d\tGender: %c\n", table2[i].user_id, table2[i].gender);
-		
 		// Join
 		demo_merge_table_entry join_table[MAX_TABLE_SIZE];
 		int rows = merge_join(table1, rows1, table2, rows2, join_table, MAX_TABLE_SIZE);
@@ -157,7 +151,7 @@ int main (int argc, char ** argv)
 		
 		// Serialize
 		buflen = serialize_join_table(join_table, MAX_TABLE_SIZE, buf, RECV_BUFFER_SIZE);
-		if (buflen != -1)
+		if (buflen == -1)
 			printf("Failed to serialize table.\n");
 		else
 		{
