@@ -133,7 +133,7 @@ prefix_bit (const u_char *prefix, const u_char prefixlen)
 {
   unsigned int offset = prefixlen / 8;
   unsigned int shift  = 7 - (prefixlen % 8);
-
+  
   return (prefix[offset] >> shift) & 1;
 }
 

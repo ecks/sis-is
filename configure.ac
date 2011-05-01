@@ -123,7 +123,7 @@ if test "x${cflags_specified}" = "x" ; then
         AC_MSG_RESULT([Intel default])
         ;;
     "GCC")
-  	CFLAGS="-Os -fno-omit-frame-pointer -g -std=gnu99 -Wall"
+  	CFLAGS="-O0 -fno-omit-frame-pointer -ggdb3 -std=gnu99 -Wall"
   	CFLAGS="${CFLAGS} -Wsign-compare -Wpointer-arith"
   	CFLAGS="${CFLAGS} -Wbad-function-cast -Wwrite-strings"
   	CFLAGS="${CFLAGS} -Wmissing-prototypes -Wmissing-declarations"
@@ -204,6 +204,8 @@ AC_ARG_ENABLE(isisd,
 [  --enable-isisd          build isisd])
 AC_ARG_ENABLE(sisisd,
 [  --enable-sisisd          build sisisd])
+AC_ARG_ENABLE(rib-comp,
+[  --enable-rib-comp	   build rib-comp])
 AC_ARG_ENABLE(solaris,
 [  --enable-solaris          build solaris])
 AC_ARG_ENABLE(bgp-announce,
@@ -1238,6 +1240,12 @@ case "${enable_sisisd}" in
   *    ) ;;
 esac
 
+case "${enable_rib_comp}" in
+  "yes") RIBCOMP="rib-comparison";;
+  "no" ) RIBCOMP="rib-comparison";;
+  *    ) ;;
+esac
+
 # XXX Perhaps auto-enable on Solaris, but that's messy for cross builds.
 case "${enable_solaris}" in
   "yes") SOLARIS="solaris";;
@@ -1261,6 +1269,7 @@ AC_SUBST(OSPF6D)
 AC_SUBST(WATCHQUAGGA)
 AC_SUBST(ISISD)
 AC_SUBST(SISISD)
+AC_SUBST(RIBCOMP)
 AC_SUBST(SOLARIS)
 AC_SUBST(VTYSH)
 AC_SUBST(INCLUDES)
@@ -1538,7 +1547,7 @@ AC_MSG_RESULT($ac_cv_htonl_works)
 
 AC_CONFIG_FILES([Makefile lib/Makefile zebra/Makefile ripd/Makefile 
 	  ripngd/Makefile bgpd/Makefile ospfd/Makefile watchquagga/Makefile
-	  ospf6d/Makefile isisd/Makefile sisisd/Makefile vtysh/Makefile doc/Makefile 
+	  ospf6d/Makefile isisd/Makefile sisisd/Makefile rib-comparison/Makefile vtysh/Makefile doc/Makefile 
 	  ospfclient/Makefile tests/Makefile m4/Makefile redhat/Makefile
 	  pkgsrc/Makefile
 	  redhat/quagga.spec 
