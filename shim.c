@@ -116,12 +116,12 @@ int main (int argc, char ** argv)
 	// 1
 	table1_group.first = malloc(sizeof(table_group_item_t));
 	table_group_item_t * cur_item = table1_group.first;
-	cur_item->table = (void *)table1;
+	cur_item->table = (void *)table1_bad;
 	cur_item->table_size = MAX_TABLE_SIZE;
 	// 2
 	cur_item->next = malloc(sizeof(table_group_item_t));
 	cur_item = cur_item->next;
-	cur_item->table = (void *)table1_bad;
+	cur_item->table = (void *)table1;
 	cur_item->table_size = MAX_TABLE_SIZE;
 	// 3
 	cur_item->next = malloc(sizeof(table_group_item_t));
@@ -137,18 +137,50 @@ int main (int argc, char ** argv)
 		table1_voted = cur_item->table;
 	
 	// Print
-	printf("GOOD TABLE\n");
-	for (i = 0; i < MAX_TABLE_SIZE; i++)
-		printf("User Id: %d\tName: %s\n", table1[i].user_id, table1[i].name);
-	printf("BAD TABLE\n");
-	for (i = 0; i < MAX_TABLE_SIZE; i++)
-		printf("User Id: %d\tName: %s\n", table1_bad[i].user_id, table1_bad[i].name);
-	printf("VOTED TABLE\n");
-	if (!table1_voted)
-		printf("No table.\n");
+	if (table1_voted == table1)
+		printf("Voted correctly.\n");
 	else
-		for (i = 0; i < MAX_TABLE_SIZE; i++)
-			printf("User Id: %d\tName: %s\n", table1_voted[i].user_id, table1_voted[i].name);
+		printf("Voted INCORRECTLY!!!.\n");
+	
+	// Try again
+	cur_item = table1_group.first;
+	cur_item->table = (void *)table1;
+	cur_item = cur_item->next;
+	cur_item->table = (void *)table1;
+	cur_item = cur_item->next;
+	cur_item->table = (void *)table1_bad;
+	
+	// Vote
+	demo_table1_entry * table1_voted = NULL;
+	cur_item = (table_group_item_t *)table1_vote(&table1_group);
+	if (cur_item)
+		table1_voted = cur_item->table;
+	
+	// Print
+	if (table1_voted == table1)
+		printf("Voted correctly.\n");
+	else
+		printf("Voted INCORRECTLY!!!.\n");
+	
+	// Try again
+	cur_item = table1_group.first;
+	cur_item->table = (void *)table1_bad;
+	cur_item = cur_item->next;
+	cur_item->table = (void *)table1;
+	cur_item = cur_item->next;
+	cur_item->table = (void *)table1_bad;
+	
+	// Vote
+	demo_table1_entry * table1_voted = NULL;
+	cur_item = (table_group_item_t *)table1_vote(&table1_group);
+	if (cur_item)
+		table1_voted = cur_item->table;
+	
+	// Print
+	if (table1_voted == table1)
+		printf("Voted correctly.\n");
+	else
+		printf("Voted INCORRECTLY, but for majority!!!.\n");
 	
 	exit(0);
 	
