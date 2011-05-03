@@ -12,7 +12,7 @@
 #include "table.h"
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
-#define ABS(a) ((a) < 0 ? (0 - (a)))
+#define ABS(a) ((a) < 0 ? (0 - (a)) : (a))
 
 
 /** Serialize table 1.  Returns -1 if buffer is not long enough. */
@@ -295,12 +295,12 @@ void * table1_vote(table_group_t * tables)
 	void * winner = NULL;
 	
 	// Compare each table against all others
-	int distance, min_distance;
+	int dist, min_dist;
 	table_group_item_t * item = tables->first;
 	table_group_item_t * item2;
 	while (item != NULL)
 	{
-		distance = 0;
+		dist = 0;
 		item2 = tables->first;
 		while (item2 != NULL)
 		{
@@ -309,7 +309,7 @@ void * table1_vote(table_group_t * tables)
 			{
 				demo_table1_entry * t1 = (demo_table1_entry *)(item->table);
 				demo_table1_entry * t2 = (demo_table1_entry *)(item2->table);
-				distance += table1_distance(t1, item->table_size, t2, item2->table_size);
+				dist += table1_distance(t1, item->table_size, t2, item2->table_size);
 			}
 			
 			// Get next item
@@ -317,10 +317,10 @@ void * table1_vote(table_group_t * tables)
 		}
 		
 		// Check if this is the lowest distance
-		if (winner == NULL || distance < min_distance)
+		if (winner == NULL || dist < min_dist)
 		{
 			winner = item;
-			min_distance = distance;
+			min_dist = dist;
 		}
 		
 		// Get next item
@@ -339,12 +339,13 @@ int table1_distance(demo_table1_entry * table1, int size1, demo_table1_entry * t
 	dist += ABS(size1 - size2) * 3;	// 3 is an arbitrary weight
 	
 	// Check each entry
+	int i;
 	for (i = 0; i < MIN(size1, size2); i++)
 	{
 		if (table1[i].user_id != table2[i].user_id)
-			distance += 1;
+			dist += 1;
 		if (strcmp(table1[i].name, table2[i].name))
-			distance += 1;
+			dist += 1;
 	}
 	
 	return dist;
