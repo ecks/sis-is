@@ -116,19 +116,19 @@ int main (int argc, char ** argv)
 	// 1
 	table1_group.first = malloc(sizeof(table_group_item_t));
 	table_group_item_t * cur_item = table1_group.first;
-	cur_item.table = (void *)table1;
-	cur_item.table_size = MAX_TABLE_SIZE;
+	cur_item->table = (void *)table1;
+	cur_item->table_size = MAX_TABLE_SIZE;
 	// 2
-	cur_item.next = malloc(sizeof(table_group_item_t));
+	cur_item->next = malloc(sizeof(table_group_item_t));
 	cur_item = cur_item.next;
-	cur_item.table = (void *)table1_bad;
-	cur_item.table_size = MAX_TABLE_SIZE;
+	cur_item->table = (void *)table1_bad;
+	cur_item->table_size = MAX_TABLE_SIZE;
 	// 3
-	cur_item.next = malloc(sizeof(table_group_item_t));
+	cur_item->next = malloc(sizeof(table_group_item_t));
 	cur_item = cur_item.next;
-	cur_item.table = (void *)table1;
-	cur_item.table_size = MAX_TABLE_SIZE;
-	cur_item.next = NULL;
+	cur_item->table = (void *)table1;
+	cur_item->table_size = MAX_TABLE_SIZE;
+	cur_item->next = NULL;
 	
 	// Vote
 	demo_table1_entry * table1_voted = NULL;

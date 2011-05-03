@@ -68,7 +68,7 @@ typedef struct table_group_item {
 } table_group_item_t;
 
 typedef struct {
-	table_group_item * first;
+	table_group_item_t * first;
 } table_group_t;
 
 /** Voter on a group of table 1s. */
