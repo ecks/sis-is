@@ -61,4 +61,20 @@ void sort_table2_by_user_id(demo_table2_entry * table, int size);
 /** Merge join table 1 and 2.  Input tables should be pre-sorted.  Assumes user_id is a primary key. */
 int merge_join(demo_table1_entry * table1, int size1, demo_table2_entry * table2, int size2, demo_merge_table_entry * table, int size);
 
+typedef struct table_group_item {
+	void * table;
+	int table_size;
+	struct table_group_item * next;
+} table_group_item_t;
+
+typedef struct {
+	table_group_item * first;
+} table_group_t;
+
+/** Voter on a group of table 1s. */
+void * table1_vote(table_group_t * tables);
+
+/** Compute distance between 2 table 1s. */
+int table1_distance(demo_table1_entry * table1, int size1, demo_table1_entry * table2, int size2);
+
 #endif

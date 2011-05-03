@@ -7,8 +7,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <netinet/in.h>
+#include <math.h>
 
 #include "table.h"
+
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define ABS(a) ((a) < 0 ? (0 - (a)))
+
 
 /** Serialize table 1.  Returns -1 if buffer is not long enough. */
 int serialize_table1(demo_table1_entry * table, int size, char * buf, int bufsize)
@@ -282,4 +287,65 @@ int merge_join(demo_table1_entry * table1, int size1, demo_table2_entry * table2
 	}
 	
 	return rows;
+}
+
+/** Voter on a group of table 1s. */
+void * table1_vote(table_group_t * tables)
+{
+	void * winner = NULL;
+	
+	// Compare each table against all others
+	int distance, min_distance;
+	table_group_item_t * item = tables->first;
+	table_group_item_t * item2;
+	while (item != NULL)
+	{
+		distance = 0;
+		item2 = tables->first;
+		while (item2 != NULL)
+		{
+			// Don't compare against itself
+			if (item2 != item)
+			{
+				demo_table1_entry * t1 = (demo_table1_entry *)(item->table);
+				demo_table1_entry * t2 = (demo_table1_entry *)(item2->table);
+				distance += table1_distance(t1, item->table_size, t2, item2->table_size);
+			}
+			
+			// Get next item
+			item2 = item2->next;
+		}
+		
+		// Check if this is the lowest distance
+		if (winner == NULL || distance < min_distance)
+		{
+			winner = item;
+			min_distance = distance;
+		}
+		
+		// Get next item
+		item = item->next;
+	}
+	
+	return winner;
+}
+
+/** Compute distance between 2 table 1s. */
+int table1_distance(demo_table1_entry * table1, int size1, demo_table1_entry * table2, int size2)
+{
+	int dist = 0;
+	
+	// Check sizes
+	dist += ABS(size1 - size2) * 3;	// 3 is an arbitrary weight
+	
+	// Check each entry
+	for (i = 0; i < MIN(size1, size2); i++)
+	{
+		if (table1[i].user_id != table2[i].user_id)
+			distance += 1;
+		if (strcmp(table1[i].name, table2[i].name))
+			distance += 1;
+	}
+	
+	return dist;
 }
