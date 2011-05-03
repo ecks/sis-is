@@ -151,7 +151,7 @@ int main (int argc, char ** argv)
 	cur_item->table = (void *)table1_bad;
 	
 	// Vote
-	demo_table1_entry * table1_voted = NULL;
+	table1_voted = NULL;
 	cur_item = (table_group_item_t *)table1_vote(&table1_group);
 	if (cur_item)
 		table1_voted = cur_item->table;
@@ -171,7 +171,7 @@ int main (int argc, char ** argv)
 	cur_item->table = (void *)table1_bad;
 	
 	// Vote
-	demo_table1_entry * table1_voted = NULL;
+	table1_voted = NULL;
 	cur_item = (table_group_item_t *)table1_vote(&table1_group);
 	if (cur_item)
 		table1_voted = cur_item->table;
