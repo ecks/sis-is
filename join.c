@@ -220,7 +220,6 @@ int main (int argc, char ** argv)
 int get_sort_process_count()
 {
 	int cnt = 0;
-	int i;
 	
 	char addr[INET6_ADDRSTRLEN+1];
 	sisis_create_addr(addr, (uint64_t)SISIS_PTYPE_LEADER_ELECTOR, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
@@ -241,6 +240,8 @@ int get_sort_process_count()
 /** Join tables and send result to voter processes. */
 void process_tables(demo_table1_entry * table1, int rows1, demo_table2_entry * table2, int rows2)
 {
+	int i;
+	
 	// Join
 	demo_merge_table_entry join_table[MAX_TABLE_SIZE];
 	int rows = merge_join(table1, rows1, table2, rows2, join_table, MAX_TABLE_SIZE);
