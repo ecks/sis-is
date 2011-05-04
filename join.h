@@ -10,7 +10,7 @@
 #define RECV_BUFFER_SIZE 65536
 #define SEND_BUFFER_SIZE 65536
 
-#define GATHER_RESULTS_TIMEOUT_USEC		5000000	// 5s
+#define GATHER_RESULTS_TIMEOUT_USEC		100000	// 100ms
 
 // From time.h
 #ifndef timersub
