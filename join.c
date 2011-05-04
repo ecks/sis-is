@@ -25,7 +25,7 @@
 #include "../tests/sisis_api.h"
 #include "../tests/sisis_process_types.h"
 
-//#define DEBUG
+#define DEBUG
 
 #define VERSION 1
 int sockfd = -1, con = -1;
@@ -161,7 +161,6 @@ int main (int argc, char ** argv)
 				// Setup table
 				if (num_tables == 0)
 				{
-					// TODO: Check for NULL
 					// Table 1
 					cur_table1_item = malloc(sizeof(table_group_item_t));
 					table1_group.first = cur_table1_item;
@@ -178,7 +177,6 @@ int main (int argc, char ** argv)
 				}
 				else
 				{
-					// TODO: Check for NULL
 					// Table 1
 					cur_table1_item->next = malloc(sizeof(table_group_item_t));
 					cur_table1_item = cur_table1_item->next;
@@ -193,10 +191,16 @@ int main (int argc, char ** argv)
 					select_timeout.tv_sec = tmp2.tv_sec;
 					select_timeout.tv_usec = tmp2.tv_usec;
 				}
+				// Check memory
+				if (cur_table1_item == NULL || cur_table2_item == NULL)
+				{ printf("Out of memory.\n"); exit(0); }
 				cur_table1_item->table = malloc(sizeof(demo_table1_entry)*MAX_TABLE_SIZE);
 				cur_table1_item->next = NULL;
 				cur_table2_item->table = malloc(sizeof(demo_table2_entry)*MAX_TABLE_SIZE);
 				cur_table2_item->next = NULL;
+				// Check memory
+				if (cur_table1_item->table == NULL || cur_table2_item->table == NULL)
+				{ printf("Out of memory.\n"); exit(0); }
 				num_tables++;
 				
 				// Deserialize
