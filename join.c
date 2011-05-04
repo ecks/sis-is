@@ -150,7 +150,6 @@ int main (int argc, char ** argv)
 		// TODO: Remove
 		demo_table2_entry table2[MAX_TABLE_SIZE];
 		int rows2 = 0;
-		
 		do
 		{
 			// Setup table
