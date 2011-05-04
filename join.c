@@ -165,6 +165,13 @@ int main (int argc, char ** argv)
 		
 		// Check how many sort processes there are
 		int sort_count = get_sort_process_count();
+		/*
+		// Vote
+		demo_table1_entry * table1_voted = NULL;
+		cur_item = (table_group_item_t *)table1_vote(&table1_group);
+		if (cur_item)
+			table1_voted = cur_item->table;
+		*/
 		
 		// Process tables
 		//process_tables(table1, rows1, table2, rows2);
