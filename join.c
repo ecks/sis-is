@@ -199,7 +199,7 @@ int main (int argc, char ** argv)
 			sort_count = get_sort_process_count();
 			printf("# inputs: %d\n", num_table1s);
 			printf("# sort processes: %d\n", sort_count);
-	
+			printf("Waiting %d.%06d seconds for more results.\n", (long)select_timeout.tv_sec, (long)select_timeout.tv_usec);
 		} while(num_table1s < sort_count && select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
 		
 		// Check that at least 1/2 of the processes sent inputs
