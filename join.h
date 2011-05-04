@@ -13,7 +13,6 @@
 #define GATHER_RESULTS_TIMEOUT_USEC		100000	// 100ms
 
 // From time.h
-#ifndef timersub
 #define timersub(a, b, result)						      \
   do {									      \
     (result)->tv_sec = (a)->tv_sec - (b)->tv_sec;			      \
