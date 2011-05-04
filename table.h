@@ -72,9 +72,21 @@ typedef struct {
 } table_group_t;
 
 /** Voter on a group of table 1s. */
-void * table1_vote(table_group_t * tables);
+table_group_item_t * table1_vote(table_group_t * tables);
 
 /** Compute distance between 2 table 1s. */
 int table1_distance(demo_table1_entry * table1, int size1, demo_table1_entry * table2, int size2);
+
+/** Voter on a group of table 2s. */
+table_group_item_t * table2_vote(table_group_t * tables);
+
+/** Compute distance between 2 table 2s. */
+int table2_distance(demo_table2_entry * table1, int size1, demo_table2_entry * table2, int size2);
+
+/** Voter on a group of join tables. */
+table_group_item_t * merge_table_vote(table_group_t * tables);
+
+/** Compute distance between 2 join tables. */
+int merge_table_distance(demo_merge_table_entry * table1, int size1, demo_merge_table_entry * table2, int size2);
 
 #endif

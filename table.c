@@ -290,9 +290,9 @@ int merge_join(demo_table1_entry * table1, int size1, demo_table2_entry * table2
 }
 
 /** Voter on a group of table 1s. */
-void * table1_vote(table_group_t * tables)
+table_group_item_t * table1_vote(table_group_t * tables)
 {
-	void * winner = NULL;
+	table_group_item_t * winner = NULL;
 	
 	// Compare each table against all others
 	int dist, min_dist;
@@ -345,6 +345,132 @@ int table1_distance(demo_table1_entry * table1, int size1, demo_table1_entry * t
 		if (table1[i].user_id != table2[i].user_id)
 			dist += 1;
 		if (strcmp(table1[i].name, table2[i].name))
+			dist += 1;
+	}
+	
+	return dist;
+}
+
+/** Voter on a group of table 2s. */
+table_group_item_t * table2_vote(table_group_t * tables)
+{
+	table_group_item_t * winner = NULL;
+	
+	// Compare each table against all others
+	int dist, min_dist;
+	table_group_item_t * item = tables->first;
+	table_group_item_t * item2;
+	while (item != NULL)
+	{
+		dist = 0;
+		item2 = tables->first;
+		while (item2 != NULL)
+		{
+			// Don't compare against itself
+			if (item2 != item)
+			{
+				demo_table2_entry * t1 = (demo_table2_entry *)(item->table);
+				demo_table2_entry * t2 = (demo_table2_entry *)(item2->table);
+				dist += table2_distance(t1, item->table_size, t2, item2->table_size);
+			}
+			
+			// Get next item
+			item2 = item2->next;
+		}
+		
+		// Check if this is the lowest distance
+		if (winner == NULL || dist < min_dist)
+		{
+			winner = item;
+			min_dist = dist;
+		}
+		
+		// Get next item
+		item = item->next;
+	}
+	
+	return winner;
+}
+
+/** Compute distance between 2 table 2s. */
+int table2_distance(demo_table2_entry * table1, int size1, demo_table2_entry * table2, int size2)
+{
+	int dist = 0;
+	
+	// Check sizes
+	dist += ABS(size1 - size2) * 3;	// 3 is an arbitrary weight
+	
+	// Check each entry
+	int i;
+	for (i = 0; i < MIN(size1, size2); i++)
+	{
+		if (table1[i].user_id != table2[i].user_id)
+			dist += 1;
+		if (table1[i].gender != table2[i].gender))
+			dist += 1;
+	}
+	
+	return dist;
+}
+
+/** Voter on a group of join tables. */
+table_group_item_t * merge_table_vote(table_group_t * tables)
+{
+	table_group_item_t * winner = NULL;
+	
+	// Compare each table against all others
+	int dist, min_dist;
+	table_group_item_t * item = tables->first;
+	table_group_item_t * item2;
+	while (item != NULL)
+	{
+		dist = 0;
+		item2 = tables->first;
+		while (item2 != NULL)
+		{
+			// Don't compare against itself
+			if (item2 != item)
+			{
+				demo_merge_table_entry * t1 = (demo_merge_table_entry *)(item->table);
+				demo_merge_table_entry * t2 = (demo_merge_table_entry *)(item2->table);
+				dist += merge_table_distance(t1, item->table_size, t2, item2->table_size);
+			}
+			
+			// Get next item
+			item2 = item2->next;
+		}
+		
+		// Check if this is the lowest distance
+		if (winner == NULL || dist < min_dist)
+		{
+			winner = item;
+			min_dist = dist;
+		}
+		
+		// Get next item
+		item = item->next;
+	}
+	
+	return winner;
+}
+
+/** Compute distance between 2 join tables. */
+int merge_table_distance(demo_merge_table_entry * table1, int size1, demo_merge_table_entry * table2, int size2)
+{
+	int dist = 0;
+	
+	// Check sizes
+	dist += ABS(size1 - size2) * 3;	// 3 is an arbitrary weight
+	
+	// Check each entry
+	int i;
+	for (i = 0; i < MIN(size1, size2); i++)
+	{
+		if (table1[i].user_id != table2[i].user_id)
+			dist += 1;
+		if (strcmp(table1[i].name, table2[i].name))
+			dist += 1;
+		if (table1[i].gender != table2[i].gender))
 			dist += 1;
 	}
 	

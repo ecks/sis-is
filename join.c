@@ -167,7 +167,7 @@ int main (int argc, char ** argv)
 		/*
 		// Vote
 		demo_table1_entry * table1_voted = NULL;
-		cur_item = (table_group_item_t *)table1_vote(&table1_group);
+		cur_item = table1_vote(&table1_group);
 		if (cur_item)
 			table1_voted = cur_item->table;
 		*/
