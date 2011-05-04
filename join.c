@@ -142,7 +142,6 @@ int main (int argc, char ** argv)
 	
 	// Wait for message
 	struct sockaddr_in6 remote_addr;
-	int i;
 	int buflen;
 	char buf[RECV_BUFFER_SIZE];
 	socklen_t addr_size = sizeof remote_addr;
@@ -192,14 +191,14 @@ int main (int argc, char ** argv)
 			// Deserialize
 			rows2 = deserialize_table2(table2, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
 	#ifdef DEBUG
-			printf("Table 1 Rows: %d\n", cur_table1_item.table_size);
+			printf("Table 1 Rows: %d\n", cur_table1_item->table_size);
 			printf("Table 2 Rows: %d\n", rows2);
 	#endif
 
 			// Check how many sort processes there are
 			sort_count = get_sort_process_count();
 	
-		} while(num_table1s < sort_count || select(sockfd+1, &socks, NULL, NULL, select_timeout) > 0);
+		} while(num_table1s < sort_count || select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
 		
 		// Vote
 		printf("Voting...\n");
@@ -221,6 +220,7 @@ int main (int argc, char ** argv)
 int get_sort_process_count()
 {
 	int cnt = 0;
+	int i;
 	
 	char addr[INET6_ADDRSTRLEN+1];
 	sisis_create_addr(addr, (uint64_t)SISIS_PTYPE_LEADER_ELECTOR, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
