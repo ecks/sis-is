@@ -266,8 +266,8 @@ void process_tables(demo_table1_entry * table1, int rows1, demo_table2_entry * t
 	else
 	{
 		printf("Joined Rows: %d\n", rows);
-		for (i = 0; i < rows; i++)
-			printf("User Id: %d\tName: %s\tGender: %c\n", join_table[i].user_id, join_table[i].name, join_table[i].gender);
+		//for (i = 0; i < rows; i++)
+			//printf("User Id: %d\tName: %s\tGender: %c\n", join_table[i].user_id, join_table[i].name, join_table[i].gender);
 	}
 #endif
 	
