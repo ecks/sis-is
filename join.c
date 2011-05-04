@@ -153,7 +153,6 @@ int main (int argc, char ** argv)
 		cur_table1_item->table_size = deserialize_table1(cur_table1_item->table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
 		
 		// Deserialize
-		int bytes_used;
 		demo_table2_entry table2[MAX_TABLE_SIZE];
 		int rows2 = deserialize_table2(table2, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
 #ifdef DEBUG

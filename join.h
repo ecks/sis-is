@@ -1,6 +1,8 @@
 #ifndef SORT_H
 #define SORT_H
 
+#include "table.h"
+
 #define JOIN_PORT 50000
 #define VOTER_PORT 50000
 
