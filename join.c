@@ -145,7 +145,7 @@ int main (int argc, char ** argv)
 	int buflen;
 	char buf[RECV_BUFFER_SIZE];
 	socklen_t addr_size = sizeof remote_addr;
-	while ((buflen = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
+	while (1)
 	{
 		// TODO: Remove
 		demo_table2_entry table2[MAX_TABLE_SIZE];
@@ -153,53 +153,57 @@ int main (int argc, char ** argv)
 		
 		do
 		{
-			// Setup table
-			if (num_table1s == 0)
+			// Read from socket
+			if ((buflen = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
 			{
-				// TODO: Check for NULL
-				cur_table1_item = malloc(sizeof(table_group_item_t));
-				table1_group.first = cur_table1_item;
+				// Setup table
+				if (num_table1s == 0)
+				{
+					// TODO: Check for NULL
+					cur_table1_item = malloc(sizeof(table_group_item_t));
+					table1_group.first = cur_table1_item;
+					
+					// Set socket select timeout
+					select_timeout.tv_sec = GATHER_RESULTS_TIMEOUT_USEC / 1000000;
+					select_timeout.tv_usec = GATHER_RESULTS_TIMEOUT_USEC % 1000000;
+					
+					// Get start time
+					gettimeofday(&start_time, NULL);
+				}
+				else
+				{
+					// TODO: Check for NULL
+					cur_table1_item->next = malloc(sizeof(table_group_item_t));
+					cur_table1_item = cur_table1_item->next;
+					
+					// Determine new socket select timeout
+					gettimeofday(&cur_time, NULL);
+					timersub(&cur_time, &start_time, &tmp1);
+					timersub(&select_timeout, &tmp1, &tmp2);
+					select_timeout.tv_sec = tmp2.tv_sec;
+					select_timeout.tv_usec = tmp2.tv_usec;
+				}
+				cur_table1_item->table = malloc(sizeof(demo_table1_entry)*MAX_TABLE_SIZE);
+				cur_table1_item->next = NULL;
+				num_table1s++;
 				
-				// Set socket select timeout
-				select_timeout.tv_sec = GATHER_RESULTS_TIMEOUT_USEC / 1000000;
-				select_timeout.tv_usec = GATHER_RESULTS_TIMEOUT_USEC % 1000000;
+				// Deserialize
+				int bytes_used;
+				cur_table1_item->table_size = deserialize_table1(cur_table1_item->table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
 				
-				// Get start time
-				gettimeofday(&start_time, NULL);
+				// Deserialize
+				rows2 = deserialize_table2(table2, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
+		#ifdef DEBUG
+				printf("Table 1 Rows: %d\n", cur_table1_item->table_size);
+				printf("Table 2 Rows: %d\n", rows2);
+		#endif
+	
+				// Check how many sort processes there are
+				sort_count = get_sort_process_count();
+				printf("# inputs: %d\n", num_table1s);
+				printf("# sort processes: %d\n", sort_count);
+				printf("Waiting %d.%06d seconds for more results.\n", (long)select_timeout.tv_sec, (long)select_timeout.tv_usec);
 			}
-			else
-			{
-				// TODO: Check for NULL
-				cur_table1_item->next = malloc(sizeof(table_group_item_t));
-				cur_table1_item = cur_table1_item->next;
-				
-				// Determine new socket select timeout
-				gettimeofday(&cur_time, NULL);
-				timersub(&cur_time, &start_time, &tmp1);
-				timersub(&select_timeout, &tmp1, &tmp2);
-				select_timeout.tv_sec = tmp2.tv_sec;
-				select_timeout.tv_usec = tmp2.tv_usec;
-			}
-			cur_table1_item->table = malloc(sizeof(demo_table1_entry)*MAX_TABLE_SIZE);
-			cur_table1_item->next = NULL;
-			num_table1s++;
-			
-			// Deserialize
-			int bytes_used;
-			cur_table1_item->table_size = deserialize_table1(cur_table1_item->table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
-			
-			// Deserialize
-			rows2 = deserialize_table2(table2, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
-	#ifdef DEBUG
-			printf("Table 1 Rows: %d\n", cur_table1_item->table_size);
-			printf("Table 2 Rows: %d\n", rows2);
-	#endif
-
-			// Check how many sort processes there are
-			sort_count = get_sort_process_count();
-			printf("# inputs: %d\n", num_table1s);
-			printf("# sort processes: %d\n", sort_count);
-			printf("Waiting %d.%06d seconds for more results.\n", (long)select_timeout.tv_sec, (long)select_timeout.tv_usec);
 		} while(num_table1s < sort_count && select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
 		
 		// Check that at least 1/2 of the processes sent inputs
