@@ -406,7 +406,7 @@ int table2_distance(demo_table2_entry * table1, int size1, demo_table2_entry * t
 	{
 		if (table1[i].user_id != table2[i].user_id)
 			dist += 1;
-		if (table1[i].gender != table2[i].gender))
+		if (table1[i].gender != table2[i].gender)
 			dist += 1;
 	}
 	
@@ -470,7 +470,7 @@ int merge_table_distance(demo_merge_table_entry * table1, int size1, demo_merge_
 			dist += 1;
 		if (strcmp(table1[i].name, table2[i].name))
 			dist += 1;
-		if (table1[i].gender != table2[i].gender))
+		if (table1[i].gender != table2[i].gender)
 			dist += 1;
 	}
 	
