@@ -197,6 +197,8 @@ int main (int argc, char ** argv)
 
 			// Check how many sort processes there are
 			sort_count = get_sort_process_count();
+			printf("# inputs: %d\n", num_table1s);
+			printf("# sort processes: %d\n", sort_count);
 	
 		} while(num_table1s < sort_count && select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
 		
