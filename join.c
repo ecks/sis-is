@@ -18,6 +18,7 @@
 
 #include <time.h>
 
+#include "demo.h"
 #include "join.h"
 #include "table.h"
 
