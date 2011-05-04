@@ -24,7 +24,7 @@
 #include "../tests/sisis_api.h"
 #include "../tests/sisis_process_types.h"
 
-#define DEBUG
+//#define DEBUG
 
 #define VERSION 1
 int sockfd = -1, con = -1;
@@ -202,16 +202,18 @@ int main (int argc, char ** argv)
 				int bytes_used;
 				cur_table1_item->table_size = deserialize_table1(cur_table1_item->table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
 				cur_table2_item->table_size = deserialize_table2(cur_table2_item->table, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
-		#ifdef DEBUG
+#ifdef DEBUG
 				printf("Table 1 Rows: %d\n", cur_table1_item->table_size);
 				printf("Table 2 Rows: %d\n", cur_table2_item->table_size);
-		#endif
+#endif
 	
 				// Check how many sort processes there are
 				sort_count = get_sort_process_count();
+#ifdef DEBUG
 				printf("# inputs: %d\n", num_tables);
 				printf("# sort processes: %d\n", sort_count);
 				printf("Waiting %d.%06d seconds for more results.\n", (long)select_timeout.tv_sec, (long)select_timeout.tv_usec);
+#endif
 			}
 		} while(num_tables < sort_count && select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
 		
@@ -221,7 +223,9 @@ int main (int argc, char ** argv)
 		else
 		{
 			// Vote
+#ifdef DEBUG
 			printf("Voting...\n");
+#endif
 			table_group_item_t * cur_item_table1 = table1_vote(&table1_group);
 			table_group_item_t * cur_item_table2 = table2_vote(&table2_group);
 			if (!cur_item_table1 || !cur_item_table2)
