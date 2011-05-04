@@ -142,11 +142,11 @@ int main (int argc, char ** argv)
 		else
 		{
 			// TODO: Check for NULL
-			cur_table1_item.next = malloc(sizeof(table_group_item_t));
-			cur_table1_item = cur_table1_item.next;
+			cur_table1_item->next = malloc(sizeof(table_group_item_t));
+			cur_table1_item = cur_table1_item->next;
 		}
-		cur_table1_item.table = malloc(sizeof(demo_table1_entry)*MAX_TABLE_SIZE);
-		cur_table1_item.next = NULL;
+		cur_table1_item->table = malloc(sizeof(demo_table1_entry)*MAX_TABLE_SIZE);
+		cur_table1_item->next = NULL;
 		
 		// Deserialize
 		int bytes_used;
