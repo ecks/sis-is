@@ -17,6 +17,7 @@
 
 #include <time.h>
 
+#include "demo.h"
 #include "shim.h"
 #include "table.h"
 

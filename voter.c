@@ -16,6 +16,7 @@
 
 #include <time.h>
 
+#include "demo.h"
 #include "voter.h"
 #include "table.h"
 
