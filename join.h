@@ -6,8 +6,12 @@
 #define JOIN_PORT 50000
 #define VOTER_PORT 50000
 
+
 #define RECV_BUFFER_SIZE 65536
 #define SEND_BUFFER_SIZE 65536
+
+#define GATHER_RESULTS_TIMEOUT_USEC		100000	// 100ms
+
 #define MAX_TABLE_SIZE 50
 
 /** Count number of sort processes */

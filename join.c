@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <string.h>
@@ -22,6 +23,8 @@
 
 #include "../tests/sisis_api.h"
 #include "../tests/sisis_process_types.h"
+
+#define DEBUG
 
 #define VERSION 1
 int sockfd = -1, con = -1;
@@ -124,6 +127,19 @@ int main (int argc, char ** argv)
 	table1_group.first = NULL;
 	table_group_item_t * cur_table1_item = NULL;
 	
+	// Set of sockets for select call
+	fd_set socks;
+	FD_ZERO(&socks);
+	FD_SET(sockfd, &socks);
+	
+	// Timeout information for select call
+	struct timeval select_timeout;
+	struct timeval start_time, cur_time, tmp1, tmp2;
+	
+	// Number of sort processes
+	int sort_count;
+	
+	
 	// Wait for message
 	struct sockaddr_in6 remote_addr;
 	int i;
@@ -132,48 +148,66 @@ int main (int argc, char ** argv)
 	socklen_t addr_size = sizeof remote_addr;
 	while ((buflen = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
 	{
-		// Setup table
-		if (num_table1s == 0)
+		do
 		{
-			// TODO: Check for NULL
-			cur_table1_item = malloc(sizeof(table_group_item_t));
-			table1_group.first = cur_table1_item;
-		}
+			// Setup table
+			if (num_table1s == 0)
+			{
+				// TODO: Check for NULL
+				cur_table1_item = malloc(sizeof(table_group_item_t));
+				table1_group.first = cur_table1_item;
+				
+				// Set socket select timeout
+				select_timeout.tv_sec = GATHER_RESULTS_TIMEOUT_USEC / 1000000;
+				select_timeout.tv_usec = GATHER_RESULTS_TIMEOUT_USEC % 1000000
+				
+				// Get start time
+				gettimeofday(&start_time, NULL);
+			}
+			else
+			{
+				// TODO: Check for NULL
+				cur_table1_item->next = malloc(sizeof(table_group_item_t));
+				cur_table1_item = cur_table1_item->next;
+				
+				// Determine new socket select timeout
+				gettimeofday(&cur_time, NULL);
+				timersub(&cur_time, &start_time, &tmp1);
+				timersub(&select_timeout, &tmp1, &tmp2);
+				select_timeout.tv_sec = tmp2.tv_sec;
+				select_timeout.tv_usec = tmp2.tv_usec;
+			}
+			cur_table1_item->table = malloc(sizeof(demo_table1_entry)*MAX_TABLE_SIZE);
+			cur_table1_item->next = NULL;
+			num_table1s++;
+			
+			// Deserialize
+			int bytes_used;
+			cur_table1_item->table_size = deserialize_table1(cur_table1_item->table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
+			
+			// Deserialize
+			demo_table2_entry table2[MAX_TABLE_SIZE];
+			int rows2 = deserialize_table2(table2, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
+	#ifdef DEBUG
+			printf("Table 1 Rows: %d\n", cur_table1_item.table_size);
+			printf("Table 2 Rows: %d\n", rows2);
+	#endif
+
+			// Check how many sort processes there are
+			sort_count = get_sort_process_count();
+	
+		} while(num_table1s < sort_count || select(sockfd+1, &socks, NULL, NULL, select_timeout) > 0);
+		
+		// Vote
+		printf("Voting...\n");
+		cur_item = table1_vote(&table1_group);
+		if (!cur_item)
+			printf("Failed to vote on table 1.\n");
 		else
 		{
-			// TODO: Check for NULL
-			cur_table1_item->next = malloc(sizeof(table_group_item_t));
-			cur_table1_item = cur_table1_item->next;
+			// Process tables
+			process_tables(cur_item->table, cur_item->table_size, table2, rows2);
 		}
-		cur_table1_item->table = malloc(sizeof(demo_table1_entry)*MAX_TABLE_SIZE);
-		cur_table1_item->next = NULL;
-		
-		// Deserialize
-		int bytes_used;
-		cur_table1_item->table_size = deserialize_table1(cur_table1_item->table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
-		
-		// Deserialize
-		demo_table2_entry table2[MAX_TABLE_SIZE];
-		int rows2 = deserialize_table2(table2, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
-#ifdef DEBUG
-		printf("Table 1 Rows: %d\n", cur_table1_item.table_size);
-		printf("Table 2 Rows: %d\n", rows2);
-#endif
-		
-		// TODO: Have a thread that waits for input from all sort processes
-		
-		// Check how many sort processes there are
-		int sort_count = get_sort_process_count();
-		/*
-		// Vote
-		demo_table1_entry * table1_voted = NULL;
-		cur_item = table1_vote(&table1_group);
-		if (cur_item)
-			table1_voted = cur_item->table;
-		*/
-		
-		// Process tables
-		//process_tables(table1, rows1, table2, rows2);
 	}
 	
 	// Close socket
