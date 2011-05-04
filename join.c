@@ -150,7 +150,7 @@ int main (int argc, char ** argv)
 		
 		// Deserialize
 		int bytes_used;
-		cur_table1_item.table_size = deserialize_table1(table1, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
+		cur_table1_item->table_size = deserialize_table1(cur_table1_item->table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
 		
 		// Deserialize
 		int bytes_used;
