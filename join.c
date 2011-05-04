@@ -148,6 +148,10 @@ int main (int argc, char ** argv)
 	socklen_t addr_size = sizeof remote_addr;
 	while ((buflen = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
 	{
+		// TODO: Remove
+		demo_table2_entry table2[MAX_TABLE_SIZE];
+		int rows2 = 0;
+		
 		do
 		{
 			// Setup table
@@ -159,7 +163,7 @@ int main (int argc, char ** argv)
 				
 				// Set socket select timeout
 				select_timeout.tv_sec = GATHER_RESULTS_TIMEOUT_USEC / 1000000;
-				select_timeout.tv_usec = GATHER_RESULTS_TIMEOUT_USEC % 1000000
+				select_timeout.tv_usec = GATHER_RESULTS_TIMEOUT_USEC % 1000000;
 				
 				// Get start time
 				gettimeofday(&start_time, NULL);
@@ -186,8 +190,7 @@ int main (int argc, char ** argv)
 			cur_table1_item->table_size = deserialize_table1(cur_table1_item->table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
 			
 			// Deserialize
-			demo_table2_entry table2[MAX_TABLE_SIZE];
-			int rows2 = deserialize_table2(table2, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
+			rows2 = deserialize_table2(table2, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
 	#ifdef DEBUG
 			printf("Table 1 Rows: %d\n", cur_table1_item.table_size);
 			printf("Table 2 Rows: %d\n", rows2);
@@ -200,7 +203,7 @@ int main (int argc, char ** argv)
 		
 		// Vote
 		printf("Voting...\n");
-		cur_item = table1_vote(&table1_group);
+		table_group_item_t * cur_item = table1_vote(&table1_group);
 		if (!cur_item)
 			printf("Failed to vote on table 1.\n");
 		else
