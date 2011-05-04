@@ -202,16 +202,27 @@ int main (int argc, char ** argv)
 	
 		} while(num_table1s < sort_count && select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
 		
-		// Vote
-		printf("Voting...\n");
-		table_group_item_t * cur_item = table1_vote(&table1_group);
-		if (!cur_item)
-			printf("Failed to vote on table 1.\n");
+		// Check that at least 1/2 of the processes sent inputs
+		if (num_table1s <= sort_count/2)
+			printf("Not enough inputs for a vote.\n");
 		else
 		{
-			// Process tables
-			process_tables(cur_item->table, cur_item->table_size, table2, rows2);
+			// Vote
+			printf("Voting...\n");
+			table_group_item_t * cur_item = table1_vote(&table1_group);
+			if (!cur_item)
+				printf("Failed to vote on table 1.\n");
+			else
+			{
+				// Process tables
+				process_tables(cur_item->table, cur_item->table_size, table2, rows2);
+			}
 		}
+		
+		// Reset
+		num_table1s = 0;
+		// TODO: Free table1_group
+		// TODO: Free table2_group
 	}
 	
 	// Close socket
@@ -224,7 +235,7 @@ int get_sort_process_count()
 	int cnt = 0;
 	
 	char addr[INET6_ADDRSTRLEN+1];
-	sisis_create_addr(addr, (uint64_t)SISIS_PTYPE_LEADER_ELECTOR, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
+	sisis_create_addr(addr, (uint64_t)SISIS_PTYPE_DEMO1_SORT, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
 	struct prefix_ipv6 prefix = sisis_make_ipv6_prefix(addr, 42);
 	struct list * addrs = get_sisis_addrs_for_prefix(&prefix);
 	if (addrs != NULL)
