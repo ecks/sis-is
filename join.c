@@ -150,6 +150,7 @@ int main (int argc, char ** argv)
 		// TODO: Remove
 		demo_table2_entry table2[MAX_TABLE_SIZE];
 		int rows2 = 0;
+		
 		do
 		{
 			// Setup table
@@ -197,7 +198,7 @@ int main (int argc, char ** argv)
 			// Check how many sort processes there are
 			sort_count = get_sort_process_count();
 	
-		} while(num_table1s < sort_count || select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
+		} while(num_table1s < sort_count && select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
 		
 		// Vote
 		printf("Voting...\n");
