@@ -161,6 +161,8 @@ int main (int argc, char ** argv)
 		printf("Table 2 Rows: %d\n", rows2);
 #endif
 		
+		// TODO: Have a thread that waits for input from all sort processes
+		
 		// Check how many sort processes there are
 		int sort_count = get_sort_process_count();
 		

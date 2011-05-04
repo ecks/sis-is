@@ -121,7 +121,7 @@ int main (int argc, char ** argv)
 	// Wait for message
 	struct sockaddr_in6 remote_addr;
 	int i;
-	int buflen, buflen2;
+	int buflen;
 	char buf[RECV_BUFFER_SIZE];
 	socklen_t addr_size = sizeof remote_addr;
 	while ((buflen = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
@@ -162,6 +162,7 @@ void process_tables(demo_table1_entry * table1, int rows1, demo_table2_entry * t
 	
 	// Serialize
 	char buf[SEND_BUFFER_SIZE];
+	int buflen2;
 	int buflen = serialize_table1(table1, rows1, buf, SEND_BUFFER_SIZE);
 	if (buflen != -1)
 		buflen2 = serialize_table2(table2, rows2, buf+buflen, SEND_BUFFER_SIZE - buflen);
