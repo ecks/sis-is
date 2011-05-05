@@ -530,6 +530,7 @@ void check_redundancy()
 		struct list * addrs = get_processes_by_type((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
 		if (addrs)
 		{
+			struct listnode * node;
 			LIST_FOREACH(addrs, node)
 			{
 				struct in6_addr * remote_addr = (struct in6_addr *)node->data;
