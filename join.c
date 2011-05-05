@@ -24,6 +24,7 @@
 
 #include "../tests/sisis_api.h"
 #include "../tests/sisis_process_types.h"
+#include "../tests/sisis_addr_format.h"
 
 //#define DEBUG
 
@@ -376,7 +377,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 				// Check that this is an SIS-IS address
 				if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
 				{
-					printf("New process\n\tProcess: %u v%u\n\tSystem Id: %u\n\tPID: %u\n\tTimestamp: %u\n", process_type, process_version, sys_id, pid, ts);
+					printf("New process\n\tProcess: %llu v%llu\n\tSystem Id: %llu\n\tPID: %llu\n\tTimestamp: %llu\n", process_type, process_version, sys_id, pid, ts);
 				}
 			}
 		}
@@ -401,7 +402,7 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 				// Check that this is an SIS-IS address
 				if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
 				{
-					printf("Removed process\n\tProcess: %u v%u\n\tSystem Id: %u\n\tPID: %u\n\tTimestamp: %u\n", process_type, process_version, sys_id, pid, ts);
+					printf("Removed process\n\tProcess: %llu v%llu\n\tSystem Id: %llu\n\tPID: %llu\n\tTimestamp: %llu\n", process_type, process_version, sys_id, pid, ts);
 				}
 			}
 		}
