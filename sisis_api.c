@@ -796,8 +796,7 @@ int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
 int unsubscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
 {
 	// Subscribe to changes
-	//sisis_netlink_unsubscribe_to_rib_changes(info->subscribe_info);
-	printf("Unsubscribe rtn: %d\n", sisis_netlink_unsubscribe_to_rib_changes(info->subscribe_info));
+	sisis_netlink_unsubscribe_to_rib_changes(info->subscribe_info);
 }
 
 #ifdef USE_IPV6
