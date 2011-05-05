@@ -19,7 +19,7 @@
 #include <time.h>
 #include "sisis_api.h"
 
-#define BUFFER_OUTPUT
+//#define BUFFER_OUTPUT
 
 
 #define VERSION 2
@@ -241,7 +241,7 @@ int main (int argc, char ** argv)
 		
 		unsubscribe_to_rib_changes(&info);
 		
-		sleep(60000);
+		exit(0);
 	}
 	
 	struct addrinfo hints, *addr;
