@@ -467,6 +467,7 @@ void check_redundancy()
 	// Check current number of processes
 	if (num_join_processes == -1)
 		num_join_processes = get_process_type_count((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
+	printf("Need %d processes... Have %d.\n", num_procs, num_join_processes);
 	// Too few
 	if (num_join_processes < num_procs)
 	{
