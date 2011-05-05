@@ -240,6 +240,8 @@ int main (int argc, char ** argv)
 		sleep(10);
 		
 		unsubscribe_to_rib_changes(&info);
+		
+		sleep(60000);
 	}
 	
 	struct addrinfo hints, *addr;
