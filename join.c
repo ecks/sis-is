@@ -25,7 +25,7 @@
 #include "../tests/sisis_api.h"
 #include "../tests/sisis_process_types.h"
 
-#define DEBUG
+//#define DEBUG
 
 #define VERSION 1
 int sockfd = -1, con = -1;
