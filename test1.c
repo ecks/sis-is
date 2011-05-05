@@ -241,6 +241,7 @@ int main (int argc, char ** argv)
 		
 		unsubscribe_to_rib_changes(&info);
 		
+		sleep(3600);
 		exit(0);
 	}
 	
