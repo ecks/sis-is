@@ -22,6 +22,7 @@
 #include "join.h"
 #include "table.h"
 
+#include "../remote_spawn/remote_spawn.h"
 #include "../tests/sisis_api.h"
 #include "../tests/sisis_process_types.h"
 #include "../tests/sisis_addr_format.h"
