@@ -26,4 +26,7 @@
 
 #define MAX_TABLE_SIZE 50
 
+#define REDUNDANCY_PERCENTAGE 20
+#define MIN_REDUNDANCY 3
+
 #endif

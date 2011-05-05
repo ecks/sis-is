@@ -26,12 +26,19 @@
 #include "../tests/sisis_process_types.h"
 #include "../tests/sisis_addr_format.h"
 
+#ifndef MAX(a,b)
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+#endif
+
 //#define DEBUG
 
 #define VERSION 1
 int sockfd = -1, con = -1;
 uint64_t ptype, host_num, pid;
 uint64_t timestamp;
+
+// Current number of join processes (-1 for invalid)
+int num_join_processes = -1;
 
 void close_listener()
 {
@@ -120,6 +127,9 @@ int main (int argc, char ** argv)
 	signal(SIGABRT, terminate);
 	signal(SIGTERM, terminate);
 	signal(SIGINT, terminate);
+	
+	// Check redundancy
+	check_redundancy();
 	
 	// TODO: Thread to be sure that there are enough processes
 	// Subscribe to RIB changes
@@ -278,14 +288,14 @@ int main (int argc, char ** argv)
 	close_listener();
 }
 
-/** Count number of sort processes */
-int get_sort_process_count()
+/** Count number of processes of a given type */
+int get_process_type_count(uint64_t process_type)
 {
 	int cnt = 0;
 	
 	char addr[INET6_ADDRSTRLEN+1];
-	sisis_create_addr(addr, (uint64_t)SISIS_PTYPE_DEMO1_SORT, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
-	struct prefix_ipv6 prefix = sisis_make_ipv6_prefix(addr, 42);
+	sisis_create_addr(addr, process_type, (uint64_t)0, (uint64_t)0, (uint64_t)0, (uint64_t)0);
+	struct prefix_ipv6 prefix = sisis_make_ipv6_prefix(addr, 37);
 	struct list * addrs = get_sisis_addrs_for_prefix(&prefix);
 	if (addrs != NULL)
 	{
@@ -297,6 +307,12 @@ int get_sort_process_count()
 	}
 	
 	return cnt;
+}
+
+/** Count number of sort processes */
+int get_sort_process_count()
+{
+	return get_process_type_count((uint64_t)SISIS_PTYPE_DEMO1_SORT);
 }
 
 /** Join tables and send result to voter processes. */
@@ -364,24 +380,32 @@ void process_tables(demo_table1_entry * table1, int rows1, demo_table2_entry * t
 
 int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 {
-	printf("Here1\n");
 	// Make sure it is a host address
 	if (route->p->prefixlen == 128)
 	{
-		printf("Here2\n");
 		char addr[INET6_ADDRSTRLEN];
 		if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), addr, INET6_ADDRSTRLEN) != 1)
 		{
-			printf("Here3\n");
 			// Parse components
 			uint64_t prefix, sisis_version, process_type, process_version, sys_id, pid, ts;
 			if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &pid, &ts) == 0)
 			{
-				printf("New process: %llu v%llu\n\tProcess: %llu v%llu\n\tSystem Id: %llu\n\tPID: %llu\n\tTimestamp: %llu\n", prefix, sisis_version, process_type, process_version, sys_id, pid, ts);
 				// Check that this is an SIS-IS address
 				if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
 				{
-					printf("New process\n\tProcess: %llu v%llu\n\tSystem Id: %llu\n\tPID: %llu\n\tTimestamp: %llu\n", process_type, process_version, sys_id, pid, ts);
+					// Check if this is a join process
+					if (process_type == (uint64_t)SISIS_PTYPE_DEMO1_JOIN)
+					{
+						// Update current number of join processes
+						if (num_join_processes == -1)
+							num_join_processes = get_process_type_count((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
+						else
+							num_join_processes++;
+						
+						// Check redundancy
+						check_redundancy();
+					}
+					//printf("New process\n\tProcess: %llu v%llu\n\tSystem Id: %llu\n\tPID: %llu\n\tTimestamp: %llu\n", process_type, process_version, sys_id, pid, ts);
 				}
 			}
 		}
@@ -406,7 +430,19 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 				// Check that this is an SIS-IS address
 				if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
 				{
-					printf("Removed process\n\tProcess: %llu v%llu\n\tSystem Id: %llu\n\tPID: %llu\n\tTimestamp: %llu\n", process_type, process_version, sys_id, pid, ts);
+					// Check if this is a join process
+					if (process_type == (uint64_t)SISIS_PTYPE_DEMO1_JOIN)
+					{
+						// Update current number of join processes
+						if (num_join_processes == -1)
+							num_join_processes = get_process_type_count((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
+						else
+							num_join_processes--;
+						
+						// Check redundancy
+						check_redundancy();
+					}
+					//printf("Removed process\n\tProcess: %llu v%llu\n\tSystem Id: %llu\n\tPID: %llu\n\tTimestamp: %llu\n", process_type, process_version, sys_id, pid, ts);
 				}
 			}
 		}
@@ -414,4 +450,69 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 	
 	// Free memory
 	free(route);
+}
+
+/** Checks if there is an appropriate number of join processes running in the system. */
+void check_redundancy()
+{
+	// TODO: Maybe only have the leader do this (or a leader and spare)
+	
+	// Get total number of machines (by looking for machine monitors)
+	int num_machines = get_process_type_count((uint64_t)SISIS_PTYPE_MACHINE_MONITOR);
+	
+	// Determine number of processes we should have
+	int num_procs = MAX(num_machines*REDUNDANCY_PERCENTAGE/100, 3);
+	
+	// Check current number of processes
+	if (num_join_processes == -1)
+		num_join_processes = get_process_type_count((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
+	// Too few
+	if (num_join_processes < num_procs)
+	{
+		// Number of processes to start
+		int num_start = num_procs - num_join_processes;
+		// TODO: Add logic to spread across machines and check CPU/memory usage
+		
+		// Check if the spawn process is running
+		char spawn_addr[INET6_ADDRSTRLEN+1];
+		sisis_create_addr(spawn_addr, (uint64_t)SISIS_PTYPE_REMOTE_SPAWN, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
+		struct prefix_ipv6 spawn_prefix = sisis_make_ipv6_prefix(spawn_addr, 42);
+		struct list * spawn_addrs = get_sisis_addrs_for_prefix(&spawn_prefix);
+		if (spawn_addrs && spawn_addrs->size)
+		{
+			struct listnode * node;
+			LIST_FOREACH(spawn_addrs, node)
+			{
+				struct in6_addr * remote_addr = (struct in6_addr *)node->data;
+				
+				// Set up socket info
+				struct sockaddr_in6 sockaddr;
+				int sockaddr_size = sizeof(sockaddr);
+				memset(&sockaddr, 0, sockaddr_size);
+				sockaddr.sin6_family = AF_INET6;
+				sockaddr.sin6_port = htons(JOIN_PORT);
+				sockaddr.sin6_addr = *remote_addr;
+				
+				// Send request
+				char req[32];
+				sprintf(req, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_DEMO1_JOIN);
+				if (sendto(sockfd, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
+					printf("Failed to send message.  Error: %i\n", errno);
+				else
+					num_start--;
+				
+				// Have we started enough?
+				if (num_start == 0)
+					break;
+			}
+		}
+		// Free memory
+		if (spawn_addrs)
+			FREE_LINKED_LIST(spawn_addrs);
+	}
+	// Too many
+	else if (num_join_processes > num_procs)
+	{
+		// TODO:
+	}
 }
