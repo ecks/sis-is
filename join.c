@@ -121,6 +121,12 @@ int main (int argc, char ** argv)
 	signal(SIGINT, terminate);
 	
 	// TODO: Thread to be sure that there are enough processes
+	// Subscribe to RIB changes
+	struct subscribe_to_rib_changes_info info;
+	memset(&info, 0, sizeof info);
+	info.rib_add_ipv6_route = rib_monitor_add_ipv6_route;
+	info.rib_remove_ipv6_route = rib_monitor_remove_ipv6_route;
+	subscribe_to_rib_changes(&info);
 	
 	// Setup list of tables
 	int num_tables = 0;
@@ -352,4 +358,55 @@ void process_tables(demo_table1_entry * table1, int rows1, demo_table2_entry * t
 			FREE_LINKED_LIST(voter_addrs);
 		}
 	}
+}
+
+
+int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
+{
+	// Make sure it is a host address
+	if (route->p->prefixlen == 128)
+	{
+		char addr[INET6_ADDRSTRLEN];
+		if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), addr, INET6_ADDRSTRLEN) != 1)
+		{
+			// Parse components
+			uint64_t prefix, sisis_version, process_type, process_version, sys_id, pid, ts;
+			if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &pid, &ts) == 0)
+			{
+				// Check that this is an SIS-IS address
+				if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
+				{
+					printf("New process\n\tProcess: %u v%u\n\tSystem Id: %u\n\tPID: %u\n\tTimestamp: %u\n", process_type, process_version, sys_id, pid, ts);
+				}
+			}
+		}
+	}
+	
+	// Free memory
+	free(route);
+}
+
+int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
+{
+	// Make sure it is a host address
+	if (route->p->prefixlen == 128)
+	{
+		char addr[INET6_ADDRSTRLEN];
+		if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), addr, INET6_ADDRSTRLEN) != 1)
+		{
+			// Parse components
+			uint64_t prefix, sisis_version, process_type, process_version, sys_id, pid, ts;
+			if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &pid, &ts) == 0)
+			{
+				// Check that this is an SIS-IS address
+				if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
+				{
+					printf("Removed process\n\tProcess: %u v%u\n\tSystem Id: %u\n\tPID: %u\n\tTimestamp: %u\n", process_type, process_version, sys_id, pid, ts);
+				}
+			}
+		}
+	}
+	
+	// Free memory
+	free(route);
 }
