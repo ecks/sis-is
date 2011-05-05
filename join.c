@@ -130,16 +130,16 @@ int main (int argc, char ** argv)
 	signal(SIGINT, terminate);
 	
 	// Check redundancy
-	printf("Checking redundancy...\n");
 	check_redundancy();
 	
-	// TODO: Thread to be sure that there are enough processes
 	// Subscribe to RIB changes
 	struct subscribe_to_rib_changes_info info;
 	memset(&info, 0, sizeof info);
 	info.rib_add_ipv6_route = rib_monitor_add_ipv6_route;
 	info.rib_remove_ipv6_route = rib_monitor_remove_ipv6_route;
 	subscribe_to_rib_changes(&info);
+	
+	// TODO: Have a way to unsubscribe to RIB changes to stop redundancy
 	
 	// Setup list of tables
 	int num_tables = 0;
@@ -288,6 +288,15 @@ int main (int argc, char ** argv)
 	
 	// Close socket
 	close_listener();
+}
+
+/** Get list of processes of a given type.  Caller should call FREE_LINKED_LIST on result after. */
+struct list * get_processes_by_type(uint64_t process_type)
+{
+	char addr[INET6_ADDRSTRLEN+1];
+	sisis_create_addr(addr, process_type, (uint64_t)0, (uint64_t)0, (uint64_t)0, (uint64_t)0);
+	struct prefix_ipv6 prefix = sisis_make_ipv6_prefix(addr, 37);
+	return get_sisis_addrs_for_prefix(&prefix);
 }
 
 /** Count number of processes of a given type */
@@ -457,8 +466,6 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 /** Checks if there is an appropriate number of join processes running in the system. */
 void check_redundancy()
 {
-	// TODO: Maybe only have the leader do this (or a leader and spare)
-	
 	// Get total number of machines (by looking for machine monitors)
 	int num_machines = get_process_type_count((uint64_t)SISIS_PTYPE_MACHINE_MONITOR);
 	
@@ -472,6 +479,8 @@ void check_redundancy()
 	// Too few
 	if (num_join_processes < num_procs)
 	{
+		// TODO: Maybe only have the leader do this (or a leader and spare)
+		
 		// Number of processes to start
 		int num_start = num_procs - num_join_processes;
 		// TODO: Add logic to spread across machines and check CPU/memory usage
@@ -516,6 +525,35 @@ void check_redundancy()
 	// Too many
 	else if (num_join_processes > num_procs)
 	{
-		// TODO:
+		// Exit if not one of first num_procs processes
+		int younger_procs = 0;
+		struct list * addrs = get_processes_by_type((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
+		if (addrs)
+		{
+			LIST_FOREACH(addrs, node)
+			{
+				struct in6_addr * remote_addr = (struct in6_addr *)node->data;
+				
+				// Parse components
+				char addr[INET6_ADDRSTRLEN];
+				uint64_t prefix, sisis_version, process_type, process_version, sys_id, pid, ts;
+				if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != 1)
+					if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &pid, &ts) == 0)
+						if (ts < timestamp || (ts == timestamp && sys_id < host_num)) // Use System ID as tie breaker
+							if (++younger_procs == num_procs)
+								break;
+			}
+			
+			// Should process terminate
+			if (younger_procs >= num_procs)
+			{
+				printf("Terminating...\n");
+				close_listener();
+				exit(0);
+			}
+			
+			// Free memory
+			FREE_LINKED_LIST(addrs);
+		}
 	}
 }
