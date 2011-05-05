@@ -484,6 +484,7 @@ void check_redundancy()
 	{
 		// TODO: Maybe only have the leader do this (or a leader and spare)
 		// Only have youngest process start new processes
+		int do_startup = 1;
 		if (join_addrs)
 		{
 			struct listnode * node;
@@ -493,54 +494,61 @@ void check_redundancy()
 				
 				// Parse components
 				char addr[INET6_ADDRSTRLEN];
-				uint64_t prefix, sisis_version, process_type, process_version, sys_id, pid, ts;
+				uint64_t prefix, sisis_version, process_type, process_version, sys_id, other_pid, ts;
 				if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != 1)
-					if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &pid, &ts) == 0)
-						if (ts < timestamp)
-							return;
+					if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &other_pid, &ts) == 0)
+						if (ts < timestamp || (ts == timestamp && (sys_id < host_num || other_pid < pid)) // Use System ID and PID as tie breakers
+						{
+							do_startup = 0;
+							break;
+						}
 			}
 		}
 		
-		// Number of processes to start
-		int num_start = num_procs - num_join_processes;
-		// TODO: Add logic to spread across machines and check CPU/memory usage
-		
-		// Check if the spawn process is running
-		char spawn_addr[INET6_ADDRSTRLEN+1];
-		sisis_create_addr(spawn_addr, (uint64_t)SISIS_PTYPE_REMOTE_SPAWN, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
-		struct prefix_ipv6 spawn_prefix = sisis_make_ipv6_prefix(spawn_addr, 42);
-		struct list * spawn_addrs = get_sisis_addrs_for_prefix(&spawn_prefix);
-		if (spawn_addrs && spawn_addrs->size)
+		// Are we starting up processes?
+		if (do_startup)
 		{
-			struct listnode * node;
-			LIST_FOREACH(spawn_addrs, node)
+			// Number of processes to start
+			int num_start = num_procs - num_join_processes;
+			// TODO: Add logic to spread across machines and check CPU/memory usage
+			
+			// Check if the spawn process is running
+			char spawn_addr[INET6_ADDRSTRLEN+1];
+			sisis_create_addr(spawn_addr, (uint64_t)SISIS_PTYPE_REMOTE_SPAWN, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
+			struct prefix_ipv6 spawn_prefix = sisis_make_ipv6_prefix(spawn_addr, 42);
+			struct list * spawn_addrs = get_sisis_addrs_for_prefix(&spawn_prefix);
+			if (spawn_addrs && spawn_addrs->size)
 			{
-				struct in6_addr * remote_addr = (struct in6_addr *)node->data;
-				
-				// Set up socket info
-				struct sockaddr_in6 sockaddr;
-				int sockaddr_size = sizeof(sockaddr);
-				memset(&sockaddr, 0, sockaddr_size);
-				sockaddr.sin6_family = AF_INET6;
-				sockaddr.sin6_port = htons(JOIN_PORT);
-				sockaddr.sin6_addr = *remote_addr;
-				
-				// Send request
-				char req[32];
-				sprintf(req, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_DEMO1_JOIN);
-				if (sendto(sockfd, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
-					printf("Failed to send message.  Error: %i\n", errno);
-				else
-					num_start--;
-				
-				// Have we started enough?
-				if (num_start == 0)
-					break;
+				struct listnode * node;
+				LIST_FOREACH(spawn_addrs, node)
+				{
+					struct in6_addr * remote_addr = (struct in6_addr *)node->data;
+					
+					// Set up socket info
+					struct sockaddr_in6 sockaddr;
+					int sockaddr_size = sizeof(sockaddr);
+					memset(&sockaddr, 0, sockaddr_size);
+					sockaddr.sin6_family = AF_INET6;
+					sockaddr.sin6_port = htons(JOIN_PORT);
+					sockaddr.sin6_addr = *remote_addr;
+					
+					// Send request
+					char req[32];
+					sprintf(req, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_DEMO1_JOIN);
+					if (sendto(sockfd, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
+						printf("Failed to send message.  Error: %i\n", errno);
+					else
+						num_start--;
+					
+					// Have we started enough?
+					if (num_start == 0)
+						break;
+				}
 			}
+			// Free memory
+			if (spawn_addrs)
+				FREE_LINKED_LIST(spawn_addrs);
 		}
-		// Free memory
-		if (spawn_addrs)
-			FREE_LINKED_LIST(spawn_addrs);
 	}
 	// Too many
 	else if (num_join_processes > num_procs)
@@ -556,10 +564,10 @@ void check_redundancy()
 				
 				// Parse components
 				char addr[INET6_ADDRSTRLEN];
-				uint64_t prefix, sisis_version, process_type, process_version, sys_id, pid, ts;
+				uint64_t prefix, sisis_version, process_type, process_version, sys_id, other_pid, ts;
 				if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != 1)
-					if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &pid, &ts) == 0)
-						if (ts < timestamp || (ts == timestamp && sys_id < host_num)) // Use System ID as tie breaker
+					if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &other_pid, &ts) == 0)
+						if (ts < timestamp || (ts == timestamp && (sys_id < host_num || other_pid < pid)) // Use System ID and PID as tie breakers
 							if (++younger_procs == num_procs)
 							{
 								printf("Terminating...\n");
