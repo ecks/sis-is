@@ -520,30 +520,33 @@ void check_redundancy()
 			if (spawn_addrs && spawn_addrs->size)
 			{
 				struct listnode * node;
-				LIST_FOREACH(spawn_addrs, node)
+				do
 				{
-					struct in6_addr * remote_addr = (struct in6_addr *)node->data;
-					
-					// Set up socket info
-					struct sockaddr_in6 sockaddr;
-					int sockaddr_size = sizeof(sockaddr);
-					memset(&sockaddr, 0, sockaddr_size);
-					sockaddr.sin6_family = AF_INET6;
-					sockaddr.sin6_port = htons(JOIN_PORT);
-					sockaddr.sin6_addr = *remote_addr;
-					
-					// Send request
-					char req[32];
-					sprintf(req, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_DEMO1_JOIN);
-					if (sendto(sockfd, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
-						printf("Failed to send message.  Error: %i\n", errno);
-					else
-						num_start--;
-					
-					// Have we started enough?
-					if (num_start == 0)
-						break;
-				}
+					LIST_FOREACH(spawn_addrs, node)
+					{
+						struct in6_addr * remote_addr = (struct in6_addr *)node->data;
+						
+						// Set up socket info
+						struct sockaddr_in6 sockaddr;
+						int sockaddr_size = sizeof(sockaddr);
+						memset(&sockaddr, 0, sockaddr_size);
+						sockaddr.sin6_family = AF_INET6;
+						sockaddr.sin6_port = htons(JOIN_PORT);
+						sockaddr.sin6_addr = *remote_addr;
+						
+						// Send request
+						char req[32];
+						sprintf(req, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_DEMO1_JOIN);
+						if (sendto(sockfd, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
+							printf("Failed to send message.  Error: %i\n", errno);
+						else
+							num_start--;
+						
+						// Have we started enough?
+						if (num_start == 0)
+							break;
+					}
+				}while (num_start > 0);
 			}
 			// Free memory
 			if (spawn_addrs)
