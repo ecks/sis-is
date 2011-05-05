@@ -143,6 +143,10 @@ sisis_netlink_parse_info (int (*filter) (struct sockaddr_nl *, struct nlmsghdr *
       struct nlmsghdr *h;
 
       status = recvmsg (nl->sock, &msg, 0);
+			// Check if the socket closed
+			if (nl->sock == -1)
+				return -1;
+			
       if (status < 0)
         {
           if (errno == EINTR)
@@ -418,12 +422,6 @@ int sisis_netlink_subscribe_to_rib_changes(struct sisis_netlink_routing_table_in
 	int rtn = sisis_netlink_socket (netlink_rib, groups);
 	if (rtn < 0)
 		return rtn;
-	
-struct linger linger_info;
-getsockopt(netlink_rib->sock, SOL_SOCKET, SO_LINGER, &linger_info, sizeof(linger_info));
-printf("Linger: %d\t%d\n", linger_info.l_onoff, linger_info.l_linger);
-
-
 
 	// Start thread
 	pthread_t * thread = malloc(sizeof(pthread_t));
