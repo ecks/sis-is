@@ -497,7 +497,7 @@ void check_redundancy()
 				uint64_t prefix, sisis_version, process_type, process_version, sys_id, other_pid, ts;
 				if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != 1)
 					if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &other_pid, &ts) == 0)
-						if (ts < timestamp || (ts == timestamp && (sys_id < host_num || other_pid < pid)) // Use System ID and PID as tie breakers
+						if (ts < timestamp || (ts == timestamp && (sys_id < host_num || other_pid < pid))) // Use System ID and PID as tie breakers
 						{
 							do_startup = 0;
 							break;
@@ -567,7 +567,7 @@ void check_redundancy()
 				uint64_t prefix, sisis_version, process_type, process_version, sys_id, other_pid, ts;
 				if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != 1)
 					if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &other_pid, &ts) == 0)
-						if (ts < timestamp || (ts == timestamp && (sys_id < host_num || other_pid < pid)) // Use System ID and PID as tie breakers
+						if (ts < timestamp || (ts == timestamp && (sys_id < host_num || other_pid < pid))) // Use System ID and PID as tie breakers
 							if (++younger_procs == num_procs)
 							{
 								printf("Terminating...\n");
