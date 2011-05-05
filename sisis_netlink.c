@@ -419,6 +419,12 @@ int sisis_netlink_subscribe_to_rib_changes(struct sisis_netlink_routing_table_in
 	if (rtn < 0)
 		return rtn;
 	
+struct linger linger_info;
+getsockopt(netlink_rib->sock, SOL_SOCKET, SO_LINGER, &linger_info, sizeof(linger_info));
+printf("Linger: %d\t%d\n", linger_info.l_onoff, linger_info.l_linger);
+
+
+
 	// Start thread
 	pthread_t * thread = malloc(sizeof(pthread_t));
 	info->nl_info = malloc(sizeof(struct sisis_netlink_wait_for_rib_changes_info * ));
@@ -436,7 +442,6 @@ int sisis_netlink_unsubscribe_to_rib_changes(struct sisis_netlink_routing_table_
 		return -1;
 	if (info->nl_info->netlink_rib->sock == -1)
 		return -2;
-	shutdown(info->nl_info->netlink_rib->sock, SHUT_RDWR);
 	if (close(info->nl_info->netlink_rib->sock) == -1)
 		return -3;
 	info->nl_info->netlink_rib->sock = -1;
