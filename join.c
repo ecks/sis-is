@@ -364,16 +364,20 @@ void process_tables(demo_table1_entry * table1, int rows1, demo_table2_entry * t
 
 int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 {
+	printf("Here1\n");
 	// Make sure it is a host address
 	if (route->p->prefixlen == 128)
 	{
+		printf("Here2\n");
 		char addr[INET6_ADDRSTRLEN];
 		if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), addr, INET6_ADDRSTRLEN) != 1)
 		{
+			printf("Here3\n");
 			// Parse components
 			uint64_t prefix, sisis_version, process_type, process_version, sys_id, pid, ts;
 			if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &pid, &ts) == 0)
 			{
+				printf("New process: %llu v%llu\n\tProcess: %llu v%llu\n\tSystem Id: %llu\n\tPID: %llu\n\tTimestamp: %llu\n", prefix, sisis_version, process_type, process_version, sys_id, pid, ts);
 				// Check that this is an SIS-IS address
 				if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
 				{
