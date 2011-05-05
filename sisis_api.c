@@ -787,8 +787,16 @@ int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
 	
 	// Subscribe to changes
 	sisis_netlink_subscribe_to_rib_changes(subscribe_info);
+	info->subscribe_info = subscribe_info;
 	
 	return rtn;
+}
+
+/** Unsubscribe to route add/remove messages */
+int unsubscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
+{
+	// Subscribe to changes
+	sisis_netlink_unsubscribe_to_rib_changes(info->subscribe_info);
 }
 
 #ifdef USE_IPV6

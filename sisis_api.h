@@ -133,10 +133,14 @@ struct subscribe_to_rib_changes_info
 	int (*rib_add_ipv6_route)(struct route_ipv6 *);
 	int (*rib_remove_ipv6_route)(struct route_ipv6 *);
 	#endif /* HAVE_IPV6 */
+	struct sisis_netlink_routing_table_info * subscribe_info;
 };
 
 /** Subscribe to route add/remove messages */
 int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info);
+
+/** Unsubscribe to route add/remove messages */
+int unsubscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info);
 
 #ifdef USE_IPV6
 /**

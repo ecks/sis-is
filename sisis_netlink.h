@@ -56,6 +56,7 @@ struct sisis_netlink_routing_table_info
 	int (*rib_add_ipv6_route)(struct route_ipv6 *);
 	int (*rib_remove_ipv6_route)(struct route_ipv6 *);
 	#endif /* HAVE_IPV6 */
+	struct sisis_netlink_wait_for_rib_changes_info * nl_info;
 };
 
 /* Make socket for Linux netlink interface. */
@@ -92,5 +93,8 @@ void * sisis_netlink_wait_for_rib_changes(void *);
 
 /* Subscribe to routing table using netlink interface. */
 int sisis_netlink_subscribe_to_rib_changes(struct sisis_netlink_routing_table_info * info);
+
+/* Unsubscribe to routing table using netlink interface. */
+int sisis_netlink_unsubscribe_to_rib_changes(struct sisis_netlink_routing_table_info * info);
 
 #endif

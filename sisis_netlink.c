@@ -421,10 +421,23 @@ int sisis_netlink_subscribe_to_rib_changes(struct sisis_netlink_routing_table_in
 	
 	// Start thread
 	pthread_t * thread = malloc(sizeof(pthread_t));
-	struct sisis_netlink_wait_for_rib_changes_info * thread_info = malloc(sizeof(struct sisis_netlink_wait_for_rib_changes_info * ));
-	thread_info->netlink_rib = netlink_rib;
-	thread_info->info = info;
-	pthread_create(thread, NULL, sisis_netlink_wait_for_rib_changes, thread_info);
+	info->nl_info = malloc(sizeof(struct sisis_netlink_wait_for_rib_changes_info * ));
+	info->nl_info->netlink_rib = netlink_rib;
+	info->nl_info->info = info;
+	pthread_create(thread, NULL, sisis_netlink_wait_for_rib_changes, info->nl_info);
 	
+	return 0;
+}
+
+/* Unsubscribe to routing table using netlink interface. */
+int sisis_netlink_unsubscribe_to_rib_changes(struct sisis_netlink_routing_table_info * info)
+{
+	if (info->nl_info->netlink_rib == NULL)
+		return -1;
+	if (info->nl_info->netlink_rib->sock == -1)
+		return -2;
+	if (close(info->nl_info->netlink_rib->sock) == -1)
+		return -3;
+	info->nl_info->netlink_rib->sock = -1;
 	return 0;
 }
