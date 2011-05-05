@@ -2,6 +2,7 @@
 #define SORT_H
 
 #include "table.h"
+#include "../tests/sisis_api.h"
 
 /** Count number of sort processes */
 int get_sort_process_count();
