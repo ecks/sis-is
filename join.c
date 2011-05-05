@@ -534,6 +534,11 @@ void check_redundancy()
 						sockaddr.sin6_port = htons(JOIN_PORT);
 						sockaddr.sin6_addr = *remote_addr;
 						
+						// Debugging info
+						char tmp_addr[INET6_ADDRSTRLEN];
+						if (inet_ntop(AF_INET6, remote_addr, tmp_addr, INET6_ADDRSTRLEN) != 1)
+							printf("Starting process via %s.\n", tmp_addr);
+						
 						// Send request
 						char req[32];
 						sprintf(req, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_DEMO1_JOIN);
