@@ -436,6 +436,7 @@ int sisis_netlink_unsubscribe_to_rib_changes(struct sisis_netlink_routing_table_
 		return -1;
 	if (info->nl_info->netlink_rib->sock == -1)
 		return -2;
+	shutdown(info->nl_info->netlink_rib->sock, SHUT_RDWR);
 	if (close(info->nl_info->netlink_rib->sock) == -1)
 		return -3;
 	info->nl_info->netlink_rib->sock = -1;
