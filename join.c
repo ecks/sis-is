@@ -130,6 +130,7 @@ int main (int argc, char ** argv)
 	signal(SIGINT, terminate);
 	
 	// Check redundancy
+	printf("Checking redundancy...\n");
 	check_redundancy();
 	
 	// TODO: Thread to be sure that there are enough processes
