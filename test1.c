@@ -226,6 +226,22 @@ int main (int argc, char ** argv)
 			sleep(600);
 	}
 	
+	// Monitor rib changes
+	if (argc == 2 && strcmp(argv[1], "--rib-mon-test") == 0)
+	{
+		struct subscribe_to_rib_changes_info info;
+		info.rib_add_ipv4_route = rib_monitor_add_ipv4_route;
+		info.rib_remove_ipv4_route = rib_monitor_remove_ipv4_route;
+		info.rib_add_ipv6_route = rib_monitor_add_ipv6_route;
+		info.rib_remove_ipv6_route = rib_monitor_remove_ipv6_route;
+		subscribe_to_rib_changes(&info);
+		
+		// Do nothing
+		sleep(10);
+		
+		unsubscribe_to_rib_changes(&info);
+	}
+	
 	struct addrinfo hints, *addr;
 	
 	// Check if the IP address and port are set
