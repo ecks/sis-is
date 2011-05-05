@@ -472,6 +472,9 @@ void check_redundancy()
 	// Determine number of processes we should have
 	int num_procs = MAX(num_machines*REDUNDANCY_PERCENTAGE/100, 3);
 	
+	// Get list of all join processes
+	struct list * join_addrs = get_processes_by_type((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
+	
 	// Check current number of processes
 	if (num_join_processes == -1)
 		num_join_processes = get_process_type_count((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
@@ -480,6 +483,23 @@ void check_redundancy()
 	if (num_join_processes < num_procs)
 	{
 		// TODO: Maybe only have the leader do this (or a leader and spare)
+		// Only have youngest process start new processes
+		if (join_addrs)
+		{
+			struct listnode * node;
+			LIST_FOREACH(join_addrs, node)
+			{
+				struct in6_addr * remote_addr = (struct in6_addr *)node->data;
+				
+				// Parse components
+				char addr[INET6_ADDRSTRLEN];
+				uint64_t prefix, sisis_version, process_type, process_version, sys_id, pid, ts;
+				if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != 1)
+					if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &pid, &ts) == 0)
+						if (ts < timestamp)
+							return;
+			}
+		}
 		
 		// Number of processes to start
 		int num_start = num_procs - num_join_processes;
@@ -527,11 +547,10 @@ void check_redundancy()
 	{
 		// Exit if not one of first num_procs processes
 		int younger_procs = 0;
-		struct list * addrs = get_processes_by_type((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
-		if (addrs)
+		if (join_addrs)
 		{
 			struct listnode * node;
-			LIST_FOREACH(addrs, node)
+			LIST_FOREACH(join_addrs, node)
 			{
 				struct in6_addr * remote_addr = (struct in6_addr *)node->data;
 				
@@ -542,19 +561,16 @@ void check_redundancy()
 					if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &pid, &ts) == 0)
 						if (ts < timestamp || (ts == timestamp && sys_id < host_num)) // Use System ID as tie breaker
 							if (++younger_procs == num_procs)
-								break;
+							{
+								printf("Terminating...\n");
+								close_listener();
+								exit(0);
+							}
 			}
-			
-			// Should process terminate
-			if (younger_procs >= num_procs)
-			{
-				printf("Terminating...\n");
-				close_listener();
-				exit(0);
-			}
-			
-			// Free memory
-			FREE_LINKED_LIST(addrs);
 		}
 	}
+	
+	// Free memory
+	if (join_addrs)
+		FREE_LINKED_LIST(join_addrs);
 }
