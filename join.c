@@ -27,7 +27,7 @@
 #include "../tests/sisis_process_types.h"
 #include "../tests/sisis_addr_format.h"
 
-#ifndef MAX(a,b)
+#ifndef MAX
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
 
