@@ -474,10 +474,14 @@ void check_redundancy()
 	
 	// Get list of all join processes
 	struct list * join_addrs = get_processes_by_type((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
+	struct listnode * node;
+	num_join_processes = 0;
+	LIST_FOREACH(join_addrs, node)
+		num_join_processes++;
 	
 	// Check current number of processes
-	if (num_join_processes == -1)
-		num_join_processes = get_process_type_count((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
+	/*if (num_join_processes == -1)
+		num_join_processes = get_process_type_count((uint64_t)SISIS_PTYPE_DEMO1_JOIN);*/
 	printf("Need %d processes... Have %d.\n", num_procs, num_join_processes);
 	// Too few
 	if (num_join_processes < num_procs)
@@ -487,7 +491,6 @@ void check_redundancy()
 		int do_startup = 1;
 		if (join_addrs)
 		{
-			struct listnode * node;
 			LIST_FOREACH(join_addrs, node)
 			{
 				struct in6_addr * remote_addr = (struct in6_addr *)node->data;
@@ -519,7 +522,6 @@ void check_redundancy()
 			struct list * spawn_addrs = get_sisis_addrs_for_prefix(&spawn_prefix);
 			if (spawn_addrs && spawn_addrs->size)
 			{
-				struct listnode * node;
 				do
 				{
 					LIST_FOREACH(spawn_addrs, node)
@@ -567,7 +569,6 @@ void check_redundancy()
 		int younger_procs = 0;
 		if (join_addrs)
 		{
-			struct listnode * node;
 			LIST_FOREACH(join_addrs, node)
 			{
 				struct in6_addr * remote_addr = (struct in6_addr *)node->data;
