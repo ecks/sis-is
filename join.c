@@ -475,13 +475,15 @@ void check_redundancy()
 	// Get list of all join processes
 	struct list * join_addrs = get_processes_by_type((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
 	struct listnode * node;
+	/*
 	num_join_processes = 0;
 	LIST_FOREACH(join_addrs, node)
 		num_join_processes++;
+	*/
 	
 	// Check current number of processes
-	/*if (num_join_processes == -1)
-		num_join_processes = get_process_type_count((uint64_t)SISIS_PTYPE_DEMO1_JOIN);*/
+	if (num_join_processes == -1)
+		num_join_processes = get_process_type_count((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
 	printf("Need %d processes... Have %d.\n", num_procs, num_join_processes);
 	// Too few
 	if (num_join_processes < num_procs)
@@ -502,7 +504,7 @@ void check_redundancy()
 					if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &other_pid, &ts) == 0)
 						if (ts < timestamp || (ts == timestamp && (sys_id < host_num || other_pid < pid))) // Use System ID and PID as tie breakers
 						{
-							//do_startup = 0;
+							do_startup = 0;
 							break;
 						}
 			}
