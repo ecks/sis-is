@@ -586,6 +586,9 @@ void check_redundancy()
 						if (ts < timestamp || (ts == timestamp && (sys_id < host_num || other_pid < pid))) // Use System ID and PID as tie breakers
 							if (++younger_procs == num_procs)
 							{
+								// TODO: Maybe wait a second to avoid OSPF issue
+								sleep(1);
+								
 								printf("Terminating...\n");
 								close_listener();
 								exit(0);
