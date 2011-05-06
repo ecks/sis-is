@@ -537,7 +537,9 @@ void check_redundancy()
 						// Debugging info
 						char tmp_addr[INET6_ADDRSTRLEN];
 						if (inet_ntop(AF_INET6, remote_addr, tmp_addr, INET6_ADDRSTRLEN) != 1)
-							printf("Starting process via %s.\n", tmp_addr);
+							printf("Starting new process via %s.\n", tmp_addr);
+						else
+							printf("Starting new process.\n");
 						
 						// Send request
 						char req[32];
