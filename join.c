@@ -481,6 +481,8 @@ void check_redundancy()
 		num_join_processes++;
 	*/
 	
+	// TODO: Why are there defunct join processes?
+	
 	// Check current number of processes
 	if (num_join_processes == -1)
 		num_join_processes = get_process_type_count((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
@@ -504,6 +506,7 @@ void check_redundancy()
 					if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &other_pid, &ts) == 0)
 						if (ts < timestamp || (ts == timestamp && (sys_id < host_num || other_pid < pid))) // Use System ID and PID as tie breakers
 						{
+							// TODO: Fix - Sometimes doesn't start new process when you kill the initial process
 							do_startup = 0;
 							break;
 						}
