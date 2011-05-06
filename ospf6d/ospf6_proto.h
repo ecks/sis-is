@@ -37,7 +37,7 @@
 /* Architectural Constants */
 #define LS_REFRESH_TIME                1800  /* 30 min */
 #define MIN_LS_INTERVAL                   5
-#define MIN_LS_ARRIVAL                    1
+#define MIN_LS_ARRIVAL                    0
 #define MAXAGE                         3600  /* 1 hour */
 #define CHECK_AGE                       300  /* 5 min */
 #define MAX_AGE_DIFF                    900  /* 15 min */
