@@ -534,7 +534,7 @@ void check_redundancy()
 			sisis_create_addr(spawn_addr, (uint64_t)SISIS_PTYPE_REMOTE_SPAWN, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
 			struct prefix_ipv6 spawn_prefix = sisis_make_ipv6_prefix(spawn_addr, 42);
 			struct list * spawn_addrs = get_sisis_addrs_for_prefix(&spawn_prefix);
-			if (spawn_addrs && spawn_addrs->size)
+			if (spawn_addrs != NULL && spawn_addrs->size)
 			{
 				// Determine most desirable hosts
 				desirable_host_t * desirable_hosts = malloc(sizeof(desirable_host_t) * spawn_addrs->size);
