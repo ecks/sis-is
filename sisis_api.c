@@ -854,7 +854,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 	
 	// Create list of relevant SIS-IS addresses
 	struct list * rtn = malloc(sizeof(struct list));
-	if (rtn != NULL)
+	if (ipv6_rib_routes != NULL && rtn != NULL)
 	{
 		memset(rtn, 0, sizeof(*rtn));
 		struct listnode * node;
@@ -873,7 +873,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 				struct listnode * new_node = malloc(sizeof(struct listnode));
 				if (new_node != NULL)
 				{
-					if ((new_node->data = malloc(sizeof(*new_node->data))) != NULL)
+					if ((new_node->data = malloc(sizeof(route->p->prefix))) != NULL)
 					{
 						memcpy(new_node->data, &route->p->prefix, sizeof(route->p->prefix));
 						LIST_APPEND(rtn, new_node);
@@ -917,7 +917,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv4 * p)
 	
 	// Create list of relevant SIS-IS addresses
 	struct list * rtn = malloc(sizeof(struct list));
-	if (rtn != NULL)
+	if (ipv4_rib_routes != NULL && rtn != NULL)
 	{
 		memset(rtn, 0, sizeof(*rtn));
 		struct listnode * node;
@@ -932,7 +932,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv4 * p)
 				struct listnode * new_node = malloc(sizeof(struct listnode));
 				if (new_node != NULL)
 				{
-					if ((new_node->data = malloc(sizeof(*new_node->data))) != NULL)
+					if ((new_node->data = malloc(sizeof(route->p->prefix))) != NULL)
 					{
 						memcpy(new_node->data, &route->p->prefix, sizeof(route->p->prefix));
 						LIST_APPEND(rtn,new_node);
