@@ -316,11 +316,6 @@ int get_process_type_count(uint64_t process_type)
 	{
 		cnt = addrs->size;
 		
-		struct listnode * node;
-		LIST_FOREACH(addrs, node)
-			printf("Here\n");
-		printf("Size: %d\n", cnt);
-		
 		// Free memory
 		FREE_LINKED_LIST(addrs);
 	}
