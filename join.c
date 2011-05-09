@@ -31,7 +31,7 @@
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
 
-#define DEBUG
+//#define DEBUG
 
 #define VERSION 1
 int sockfd = -1, con = -1;
@@ -810,8 +810,9 @@ void check_redundancy()
 									break;
 								}
 								
-								
+#ifdef DEBUG
 								printf("Terminating...\n");
+#endif
 								close_listener();
 								exit(0);
 							}
