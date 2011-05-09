@@ -33,6 +33,9 @@ typedef struct
 	struct in6_addr * remote_spawn_addr;
 } desirable_host_t;
 
+/** Compare desirable hosts. */
+int compare_desirable_hosts(const void * a_ptr, const void * b_ptr);
+
 /** Creates a new socket. */
 int make_socket(char * port);
 

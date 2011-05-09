@@ -587,8 +587,7 @@ void check_redundancy()
 							else
 							{
 								// Make new socket
-								//int tmp_sock = make_socket(NULL);
-								int tmp_sock = sockfd;
+								int tmp_sock = make_socket(NULL);
 								if (tmp_sock == -1)
 									desirable_hosts[i].priority += 200;	// Error... penalize
 								else
@@ -643,6 +642,7 @@ void check_redundancy()
 											printf("\tFailed to receive machine monitor response.\n");
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
+										/* TODO: Make sure it is from the correct host.
 										else if (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0)
 										{
 											inet_ntop(AF_INET6, &((struct sockaddr_in6 *)&fromaddr)->sin6_addr, tmp_addr_str, INET6_ADDRSTRLEN);
@@ -653,10 +653,9 @@ void check_redundancy()
 											
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
+										*/
 										else
 										{
-											printf("\tReceived message.\n");
-											
 											// Terminate if needed
 											if (len == 65536)
 												buf[len-1] = '\0';
@@ -710,14 +709,14 @@ void check_redundancy()
 				}
 				
 				// TODO: Sort and use desirable hosts
-				//desirable_hosts
+				qsort(desirable_hosts, spawn_addrs->size, sizeof(desirable_hosts[0]), compare_desirable_hosts);
 				
-				/*
 				do
 				{
-					LIST_FOREACH(spawn_addrs, node)
+					int desirable_host_idx = 0;
+					for (; desirable_host_idx < spawn_addrs->size; desirable_host_idx++)
 					{
-						struct in6_addr * remote_addr = (struct in6_addr *)node->data;
+						struct in6_addr * remote_addr = compare_desirable_hosts[desirable_host_idx].remote_spawn_addr;
 						
 						// Set up socket info
 						struct sockaddr_in6 sockaddr;
@@ -733,7 +732,7 @@ void check_redundancy()
 							printf("Starting new process via %s.\n", tmp_addr);
 						else
 							printf("Starting new process.\n");
-						
+						/*
 						// Send request
 						char req[32];
 						sprintf(req, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_DEMO1_JOIN);
@@ -741,13 +740,17 @@ void check_redundancy()
 							printf("Failed to send message.  Error: %i\n", errno);
 						else
 							num_start--;
+						*/
+						num_start--;
 						
 						// Have we started enough?
 						if (num_start == 0)
 							break;
 					}
 				}while (num_start > 0);
-				*/
+				
+				// Free desirable hosts
+				free(desirable_hosts);
 			}
 			// Free memory
 			if (spawn_addrs)
@@ -815,4 +818,15 @@ int make_socket(char * port)
 	}
 	
 	return fd;
+}
+
+/** Compare desirable hosts. */
+int compare_desirable_hosts(const void * a_ptr, const void * b_ptr)
+{
+	desirable_host_t * a = a_ptr, * b = b_ptr;
+	if (a->priority < b->priority)
+		return -1;
+	else if (a->priority > b->priority)
+		return 1;
+	return 0;
 }
