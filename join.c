@@ -552,26 +552,30 @@ void check_redundancy()
 							desirable_hosts[i].priority = (sys_id == host_num ? 10000 : 0);
 							
 							// Try to find machine monitor for this host
-							printf("Looking for machine monitor: ");
+							printf("Looking for machine monitor...\n");
 							struct in6_addr * mm_remote_addr = NULL;
 							if (monitor_addrs == NULL || monitor_addrs->size == 0)
 							{
-								LIST_FOREACH(monitor_addrs, node)
+								struct listnode * mm_node;
+								LIST_FOREACH(monitor_addrs, mm_node)
 								{
-									struct in6_addr * remote_addr2 = (struct in6_addr *)node->data;
+									struct in6_addr * remote_addr2 = (struct in6_addr *)mm_node->data;
 									
 									// TODO: Use a common function
 									uint64_t mm_sys_id;
 									if (inet_ntop(AF_INET6, remote_addr2, addr, INET6_ADDRSTRLEN) != 1)
 										if (get_sisis_addr_components(addr, NULL, NULL, NULL, NULL, &mm_sys_id, NULL, NULL) == 0)
+										{
+											printf("\t\tComparing %llu and %llu.\n", mm_sys_id, sys_id);
 											if (mm_sys_id == sys_id)
 											{
 												mm_remote_addr = remote_addr2;
 												break;
 											}
+										}
 								}
 							}
-							printf("%sFound\n", (mm_remote_addr == NULL) ? "Not " : "");
+							printf("\t%sFound\n", (mm_remote_addr == NULL) ? "Not " : "");
 							
 							// If there is no machine monitor, it is les desirable
 							if (mm_remote_addr == NULL)
