@@ -873,7 +873,6 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 				struct listnode * new_node = malloc(sizeof(struct listnode));
 				if (new_node != NULL)
 				{
-					memset(new_node, 0, sizeof(*new_node));
 					if ((new_node->data = malloc(sizeof(*new_node->data))) != NULL)
 					{
 						memcpy(new_node->data, &route->p->prefix, sizeof(route->p->prefix));
