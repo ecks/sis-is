@@ -121,6 +121,9 @@ int main (int argc, char ** argv)
 		exit(2);
 	}
 	
+	// Short sleep while address propagates
+	usleep(50000);	// 50ms
+	
 	// Status message
 	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)(addr->ai_addr))->sin6_addr, sisis_addr, INET6_ADDRSTRLEN);
 	printf("Socket opened at %s on port %u.\n", sisis_addr, ntohs(((struct sockaddr_in *)(addr->ai_addr))->sin_port));
@@ -639,7 +642,6 @@ void check_redundancy()
 											printf("\tFailed to receive machine monitor response.\n");
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
-										#if 0
 										else if (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0)
 										{
 											/*
@@ -656,7 +658,6 @@ void check_redundancy()
 											
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
-										#endif
 										else
 										{
 											printf("\tReceived message.\n");
