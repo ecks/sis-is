@@ -538,14 +538,12 @@ void check_redundancy()
 			if (spawn_addrs && spawn_addrs->size)
 			{
 				// Determine most desirable hosts
-				printf("Allocating %u bytes...\n", sizeof(desirable_host_t) * spawn_addrs->size);
 				desirable_host_t * desirable_hosts = malloc(sizeof(desirable_host_t) * spawn_addrs->size);
 				if (desirable_hosts == NULL)
 				{
 					printf("Malloc failed...\n");
 					exit(1);
 				}
-				printf("Memory allocated.\n");
 				
 				int i;
 				LIST_FOREACH(spawn_addrs, node)
@@ -771,13 +769,13 @@ void check_redundancy()
 				}while (num_start > 0);
 				
 				// Free desirable hosts
-				free(desirable_hosts);
+				//free(desirable_hosts);
 			}
 			// Free memory
-			if (spawn_addrs)
+			/*if (spawn_addrs)
 				FREE_LINKED_LIST(spawn_addrs);
 			if (monitor_addrs)
-				FREE_LINKED_LIST(monitor_addrs);
+				FREE_LINKED_LIST(monitor_addrs);*/
 		}
 	}
 	// Too many
