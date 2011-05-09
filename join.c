@@ -647,7 +647,7 @@ void check_redundancy()
 											inet_ntop(AF_INET6, &((struct sockaddr_in6 *)&fromaddr)->sin6_addr, tmp_addr_str, INET6_ADDRSTRLEN);
 											printf("\tFailed to receive machine monitor response.  Response from wrong host (%s).\n", tmp_addr_str);
 											uint64_t tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
-											if (get_sisis_addr_components(addr, &tmp1, &tmp2, &tmp3, &tmp4, &tmp5, &tmp6, &tmp7) == 0)
+											if (get_sisis_addr_components(tmp_addr_str, &tmp1, &tmp2, &tmp3, &tmp4, &tmp5, &tmp6, &tmp7) == 0)
 												printf("SIS-IS Info: %d\t %d\t %d\t %d\t %d\t %d\t %d\n", tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7);
 											
 											desirable_hosts[i].priority += 200;	// Error... penalize
