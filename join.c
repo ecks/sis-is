@@ -37,6 +37,7 @@
 int sockfd = -1, con = -1;
 uint64_t ptype, host_num, pid;
 uint64_t timestamp;
+struct timeval timestamp_precise;
 
 char sisis_addr[INET6_ADDRSTRLEN];
 
@@ -73,6 +74,7 @@ int main (int argc, char ** argv)
 {
 	// Get start time
 	timestamp = time(NULL);
+	gettimeofday(&timestamp_precise, NULL);	// More precise
 	
 	// Check number of args
 	if (argc != 2)
@@ -795,8 +797,19 @@ void check_redundancy()
 						if (ts < timestamp || (ts == timestamp && (sys_id < host_num || other_pid < pid))) // Use System ID and PID as tie breakers
 							if (++younger_procs == num_procs)
 							{
-								// TODO: Maybe wait a second to avoid OSPF issue
-								sleep(1);
+								// TODO: In first second, give second chance to avoid OSPF issues
+								struct timeval tv;
+								gettimeofday(&tv, NULL);
+								if ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000) < 10)
+								{
+									sleep(1);
+									
+									// Recheck
+									check_redundancy();
+									
+									break;
+								}
+								
 								
 								printf("Terminating...\n");
 								close_listener();
