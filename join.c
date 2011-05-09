@@ -643,7 +643,7 @@ void check_redundancy()
 											{
 												int i;
 												for (i = 0; i < fromaddr_size; i++)
-													printf("\t\t%02x =? %02x\n", ((char *)&sockaddr)+i, ((char *)&fromaddr)+i);
+													printf("\t\t%02x =? %02x\n", *(((char *)&sockaddr)+i), *(((char *)&fromaddr)+i));
 											}
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
