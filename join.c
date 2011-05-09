@@ -471,14 +471,16 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 void check_redundancy()
 {
 	// Get total number of machines (by looking for machine monitors)
+	printf("Here1\n");
 	int num_machines = get_process_type_count((uint64_t)SISIS_PTYPE_MACHINE_MONITOR);
-	
+	printf("Here2\n");
 	// Determine number of processes we should have
 	int num_procs = MAX(num_machines*REDUNDANCY_PERCENTAGE/100, 3);
 	
 	// Get list of all join processes
 	struct list * join_addrs = get_processes_by_type((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
 	struct listnode * node;
+	printf("Here3\n");
 	/*
 	num_join_processes = 0;
 	LIST_FOREACH(join_addrs, node)
