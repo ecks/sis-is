@@ -439,7 +439,7 @@ int sisis_netlink_subscribe_to_rib_changes(struct sisis_netlink_routing_table_in
 
 	// Start thread
 	pthread_t * thread = malloc(sizeof(pthread_t));
-	info->nl_info = malloc(sizeof(struct sisis_netlink_wait_for_rib_changes_info));
+	info->nl_info = malloc(*info->nl_info);
 	if (thread == NULL || info->nl_info == NULL)
 		return -1;
 	info->nl_info->netlink_rib = netlink_rib;

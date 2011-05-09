@@ -721,14 +721,14 @@ int sisis_dump_kernel_routes()
 	// Set up list of IPv4 rib entries
 	if (ipv4_rib_routes)
 		FREE_LINKED_LIST(ipv4_rib_routes);
-	if ((ipv4_rib_routes = malloc(sizeof(struct list))) != NULL)
+	if ((ipv4_rib_routes = malloc(sizeof(*ipv4_rib_routes))) != NULL)
 		memset(ipv4_rib_routes, 0, sizeof(*ipv4_rib_routes));
 
 #ifdef HAVE_IPV6
 	// Set up list of IPv6 rib entries
 	if (ipv6_rib_routes)
 		FREE_LINKED_LIST(ipv6_rib_routes);
-	if ((ipv6_rib_routes = malloc(sizeof(struct list))) != NULL)
+	if ((ipv6_rib_routes = malloc(sizeof(*ipv6_rib_routes))) != NULL)
 		memset(ipv6_rib_routes, 0, sizeof(*ipv6_rib_routes));
 #endif /* HAVE_IPV6 */
 
@@ -873,7 +873,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 				struct listnode * new_node = malloc(sizeof(struct listnode));
 				if (new_node != NULL)
 				{
-					if ((new_node->data = malloc(sizeof(route->p->prefix))) != NULL)
+					if ((new_node->data = malloc(sizeof(*new_node->data))) != NULL)
 					{
 						memcpy(new_node->data, &route->p->prefix, sizeof(route->p->prefix));
 						LIST_APPEND(rtn, new_node);
@@ -932,7 +932,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv4 * p)
 				struct listnode * new_node = malloc(sizeof(struct listnode));
 				if (new_node != NULL)
 				{
-					if ((new_node->data = malloc(sizeof(route->p->prefix))) != NULL)
+					if ((new_node->data = malloc(sizeof(*new_node->data))) != NULL)
 					{
 						memcpy(new_node->data, &route->p->prefix, sizeof(route->p->prefix));
 						LIST_APPEND(rtn,new_node);
