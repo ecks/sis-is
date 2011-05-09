@@ -29,7 +29,7 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route);
 // Information for deciding most desirable host to start
 typedef struct
 {
-	int priority; // Low # = High Priority
+	uint64_t priority; // Low # = High Priority
 	struct in6_addr * remote_spawn_addr;
 } desirable_host_t;
 
