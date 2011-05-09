@@ -273,20 +273,20 @@ int main (int argc, char ** argv)
 		table1_group.first = NULL;
 		while (cur_table1_item != NULL)
 		{
-			//free(cur_table1_item->table);
+			free(cur_table1_item->table);
 			tmp = cur_table1_item;
 			cur_table1_item = cur_table1_item->next;
-			//free(tmp);
+			free(tmp);
 		}
 		// Free table2_group
 		cur_table2_item = table2_group.first;
 		table2_group.first = NULL;
 		while (cur_table2_item != NULL)
 		{
-			//free(cur_table2_item->table);
+			free(cur_table2_item->table);
 			tmp = cur_table2_item;
 			cur_table2_item = cur_table2_item->next;
-			//free(tmp);
+			free(tmp);
 		}
 	}
 	
@@ -317,8 +317,8 @@ int get_process_type_count(uint64_t process_type)
 		cnt = addrs->size;
 		
 		// Free memory
-		/*if (addrs)
-			FREE_LINKED_LIST(addrs);*/
+		if (addrs)
+			FREE_LINKED_LIST(addrs);
 	}
 	
 	return cnt;
@@ -387,7 +387,7 @@ void process_tables(demo_table1_entry * table1, int rows1, demo_table2_entry * t
 			}
 			
 			// Free memory
-			//FREE_LINKED_LIST(voter_addrs);
+			FREE_LINKED_LIST(voter_addrs);
 		}
 	}
 }
@@ -427,7 +427,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 	}
 	
 	// Free memory
-	//free(route);
+	free(route);
 }
 
 int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
@@ -464,7 +464,7 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 	}
 	
 	// Free memory
-	//free(route);
+	free(route);
 }
 
 /** Checks if there is an appropriate number of join processes running in the system. */
@@ -523,7 +523,6 @@ void check_redundancy()
 			// Number of processes to start
 			int num_start = num_procs - num_join_processes;
 			
-			// TODO: Add logic to spread across machines and check CPU/memory usage
 			// Get machine monitors
 			char mm_addr[INET6_ADDRSTRLEN+1];
 			sisis_create_addr(mm_addr, (uint64_t)SISIS_PTYPE_MACHINE_MONITOR, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
@@ -538,12 +537,16 @@ void check_redundancy()
 			if (spawn_addrs && spawn_addrs->size)
 			{
 				// Determine most desirable hosts
+				desirable_host_t desirable_hosts[10];
+				// TODO:
+				/*
 				desirable_host_t * desirable_hosts = malloc(sizeof(desirable_host_t) * spawn_addrs->size);
 				if (desirable_hosts == NULL)
 				{
 					printf("Malloc failed...\n");
 					exit(1);
 				}
+				*/
 				
 				int i;
 				LIST_FOREACH(spawn_addrs, node)
@@ -768,14 +771,14 @@ void check_redundancy()
 					}
 				}while (num_start > 0);
 				
-				// Free desirable hosts
+				// TODO: Free desirable hosts
 				//free(desirable_hosts);
 			}
 			// Free memory
-			/*if (spawn_addrs)
+			if (spawn_addrs)
 				FREE_LINKED_LIST(spawn_addrs);
 			if (monitor_addrs)
-				FREE_LINKED_LIST(monitor_addrs);*/
+				FREE_LINKED_LIST(monitor_addrs);
 		}
 	}
 	// Too many
@@ -809,8 +812,8 @@ void check_redundancy()
 	}
 	
 	// Free memory
-	//if (join_addrs)
-		//FREE_LINKED_LIST(join_addrs);
+	if (join_addrs)
+		FREE_LINKED_LIST(join_addrs);
 }
 
 /** Creates a new socket. */
