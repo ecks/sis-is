@@ -543,6 +543,7 @@ void check_redundancy()
 				LIST_FOREACH(spawn_addrs, node)
 				{
 					struct in6_addr * remote_addr = (struct in6_addr *)node->data;
+					desirable_hosts[i].remote_spawn_addr = remote_addr;
 					
 					// Get priority
 					desirable_hosts[i].priority = UINT64_MAX;
