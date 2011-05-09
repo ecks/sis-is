@@ -6,7 +6,7 @@
 #include "table.h"
 #include "../tests/sisis_api.h"
 
-#define MACHINE_MONITOR_REQUEST_TIMEOUT 500000 // usec
+#define MACHINE_MONITOR_REQUEST_TIMEOUT 2000000 // usec
 
 /** Count number of processes of a given type */
 int get_process_type_count(uint64_t process_type);
