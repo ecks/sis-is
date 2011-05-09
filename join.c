@@ -650,7 +650,7 @@ void check_redundancy()
 													printf("\t\t%02x =? %02x\n", *(((char *)&sockaddr)+i) & 0xff, *(((char *)&fromaddr)+i) & 0xff);
 											}
 											*/
-											inet_ntop(AF_INET6, &((struct sockaddr_in6 *)fromaddr)->sin6_addr, tmp_addr_str, INET6_ADDRSTRLEN);
+											inet_ntop(AF_INET6, &((struct sockaddr_in6 *)&fromaddr)->sin6_addr, tmp_addr_str, INET6_ADDRSTRLEN);
 											printf("\tFailed to receive machine monitor response.  Response from wrong host (%s).\n", tmp_addr_str);
 											
 											desirable_hosts[i].priority += 200;	// Error... penalize
