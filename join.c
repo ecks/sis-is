@@ -604,8 +604,8 @@ void check_redundancy()
 									int sockaddr_size = sizeof(sockaddr);
 									memset(&sockaddr, 0, sockaddr_size);
 									sockaddr.sin6_family = AF_INET6;
-									sockaddr.sin6_port = htons(JOIN_PORT);
-									sockaddr.sin6_addr = *remote_addr;
+									sockaddr.sin6_port = htons(MACHINE_MONITOR_PORT);
+									sockaddr.sin6_addr = *mm_remote_addr;
 									
 									// Get memory stats
 									char * req = "data\n";
