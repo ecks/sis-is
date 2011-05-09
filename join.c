@@ -617,6 +617,8 @@ void check_redundancy()
 									}
 									else
 									{
+										printf("\tSent machine monitor request.  Waiting for response...\n");
+										
 										struct sockaddr_in fromaddr;
 										int fromaddr_size = sizeof(fromaddr);
 										memset(&fromaddr, 0, fromaddr_size);
@@ -629,7 +631,7 @@ void check_redundancy()
 											printf("\tMachine monitor request timed out.\n");
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
-										else if ((len = recvfrom(sockfd, buf, 65536, 0, (struct sockaddr *)&fromaddr, &fromaddr_size)) < 1)
+										else if ((len = recvfrom(tmp_sock, buf, 65536, 0, (struct sockaddr *)&fromaddr, &fromaddr_size)) < 1)
 										{
 											printf("\tFailed to receive machine monitor response.\n");
 											desirable_hosts[i].priority += 200;	// Error... penalize
