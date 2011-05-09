@@ -616,22 +616,25 @@ void check_redundancy()
 									sockaddr.sin6_family = AF_INET6;
 									sockaddr.sin6_port = htons(MACHINE_MONITOR_PORT);
 									sockaddr.sin6_addr = *mm_remote_addr;
-									
+#ifdef DEBUG
 									char tmp_addr_str[INET6_ADDRSTRLEN];
 									inet_ntop(AF_INET6, mm_remote_addr, tmp_addr_str, INET6_ADDRSTRLEN);
 									printf("Sending machine monitor request to %s.\n", tmp_addr_str);
-									
+#endif
 									// Get memory stats
 									char * req = "data\n";
 									if (sendto(tmp_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
 									{
+#ifdef DEBUG
 										printf("\tFailed to send machine monitor request.\n");
+#endif
 										desirable_hosts[i].priority += 200;	// Error... penalize
 									}
 									else
 									{
+#ifdef DEBUG
 										printf("\tSent machine monitor request.  Waiting for response...\n");
-										
+#endif
 										struct sockaddr_in fromaddr;
 										int fromaddr_size = sizeof(fromaddr);
 										memset(&fromaddr, 0, fromaddr_size);
@@ -641,12 +644,16 @@ void check_redundancy()
 										// Wait for response
 										if (select(tmp_sock+1, &socks, NULL, NULL, &select_timeout) <= 0)
 										{
+#ifdef DEBUG
 											printf("\tMachine monitor request timed out.\n");
+#endif
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
 										else if ((len = recvfrom(tmp_sock, buf, 65536, 0, (struct sockaddr *)&fromaddr, &fromaddr_size)) < 1)
 										{
+#ifdef DEBUG
 											printf("\tFailed to receive machine monitor response.\n");
+#endif
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
 										/* TODO: Make sure it is from the correct host.
@@ -680,7 +687,9 @@ void check_redundancy()
 												int usage;
 												if (sscanf(match+strlen(mem_usage_str), "%d%%", &usage))
 												{
+#ifdef DEBUG
 													printf("\tMemory Usage = %d%%\n", usage);
+#endif
 													desirable_hosts[i].priority += usage;
 												}
 												else
@@ -697,7 +706,9 @@ void check_redundancy()
 												int usage;
 												if (sscanf(match+strlen(cpu_usage_str), "%d%%", &usage))
 												{
+#ifdef DEBUG
 													printf("\tCPU Usage = %d%%\n", usage);
+#endif
 													desirable_hosts[i].priority += usage;
 												}
 												else
@@ -715,13 +726,14 @@ void check_redundancy()
 					i++;
 				}
 				
-				// TODO: Sort and use desirable hosts
+				// Sort desirable hosts
+#ifdef DEBUG
 				printf("Sorting hosts according to desirability.\n");
+#endif
 				qsort(desirable_hosts, spawn_addrs->size, sizeof(desirable_hosts[0]), compare_desirable_hosts);
 				
 				do
 				{
-					printf("Starting new processes.\n");
 					int desirable_host_idx = 0;
 					for (; desirable_host_idx < spawn_addrs->size; desirable_host_idx++)
 					{
@@ -734,14 +746,14 @@ void check_redundancy()
 						sockaddr.sin6_family = AF_INET6;
 						sockaddr.sin6_port = htons(JOIN_PORT);
 						sockaddr.sin6_addr = *remote_addr;
-						
+#ifdef DEBUG
 						// Debugging info
 						char tmp_addr[INET6_ADDRSTRLEN];
 						if (inet_ntop(AF_INET6, remote_addr, tmp_addr, INET6_ADDRSTRLEN) != 1)
 							printf("Starting new process via %s.\n", tmp_addr);
 						else
 							printf("Starting new process.\n");
-						/*
+#endif
 						// Send request
 						char req[32];
 						sprintf(req, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_DEMO1_JOIN);
@@ -749,8 +761,6 @@ void check_redundancy()
 							printf("Failed to send message.  Error: %i\n", errno);
 						else
 							num_start--;
-						*/
-						num_start--;
 						
 						// Have we started enough?
 						if (num_start == 0)
