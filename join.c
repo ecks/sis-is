@@ -273,20 +273,20 @@ int main (int argc, char ** argv)
 		table1_group.first = NULL;
 		while (cur_table1_item != NULL)
 		{
-			free(cur_table1_item->table);
+			//free(cur_table1_item->table);
 			tmp = cur_table1_item;
 			cur_table1_item = cur_table1_item->next;
-			free(tmp);
+			//free(tmp);
 		}
 		// Free table2_group
 		cur_table2_item = table2_group.first;
 		table2_group.first = NULL;
 		while (cur_table2_item != NULL)
 		{
-			free(cur_table2_item->table);
+			//free(cur_table2_item->table);
 			tmp = cur_table2_item;
 			cur_table2_item = cur_table2_item->next;
-			free(tmp);
+			//free(tmp);
 		}
 	}
 	
@@ -317,8 +317,8 @@ int get_process_type_count(uint64_t process_type)
 		cnt = addrs->size;
 		
 		// Free memory
-		if (addrs)
-			FREE_LINKED_LIST(addrs);
+		/*if (addrs)
+			FREE_LINKED_LIST(addrs);*/
 	}
 	
 	return cnt;
@@ -387,7 +387,7 @@ void process_tables(demo_table1_entry * table1, int rows1, demo_table2_entry * t
 			}
 			
 			// Free memory
-			FREE_LINKED_LIST(voter_addrs);
+			//FREE_LINKED_LIST(voter_addrs);
 		}
 	}
 }
@@ -427,7 +427,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 	}
 	
 	// Free memory
-	free(route);
+	//free(route);
 }
 
 int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
@@ -464,7 +464,7 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 	}
 	
 	// Free memory
-	free(route);
+	//free(route);
 }
 
 /** Checks if there is an appropriate number of join processes running in the system. */
@@ -809,8 +809,8 @@ void check_redundancy()
 	}
 	
 	// Free memory
-	if (join_addrs)
-		FREE_LINKED_LIST(join_addrs);
+	//if (join_addrs)
+		//FREE_LINKED_LIST(join_addrs);
 }
 
 /** Creates a new socket. */
