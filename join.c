@@ -639,6 +639,7 @@ void check_redundancy()
 											printf("\tFailed to receive machine monitor response.\n");
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
+										#if 0
 										else if (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0)
 										{
 											/*
@@ -655,6 +656,7 @@ void check_redundancy()
 											
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
+										#endif
 										else
 										{
 											printf("\tReceived message.\n");
