@@ -538,7 +538,13 @@ void check_redundancy()
 			if (spawn_addrs && spawn_addrs->size)
 			{
 				// Determine most desirable hosts
-				desirable_host_t desirable_hosts[spawn_addrs->size];
+				desirable_host_t * desirable_hosts = malloc(sizeof(desirable_host_t) * spawn_addrs->size);
+				if (desirable_hosts == NULL)
+				{
+					printf("Malloc failed...\n");
+					exit(1);
+				}
+				
 				int i;
 				LIST_FOREACH(spawn_addrs, node)
 				{
