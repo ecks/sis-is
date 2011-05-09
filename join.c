@@ -592,7 +592,6 @@ void check_redundancy()
 								desirable_hosts[i].priority += 200;
 							else
 							{
-#if 0
 								// Make new socket
 								int tmp_sock = make_socket(NULL);
 								if (tmp_sock == -1)
@@ -635,6 +634,7 @@ void check_redundancy()
 #ifdef DEBUG
 										printf("\tSent machine monitor request.  Waiting for response...\n");
 #endif
+#if 0
 										struct sockaddr_in fromaddr;
 										int fromaddr_size = sizeof(fromaddr);
 										memset(&fromaddr, 0, fromaddr_size);
@@ -715,12 +715,12 @@ void check_redundancy()
 													desirable_hosts[i].priority += 100;	// Error... penalize
 											}
 										}
+#endif
 									}
 									
 									// Close socket
 									close(tmp_sock);
 								}
-#endif
 							}
 						}
 					
