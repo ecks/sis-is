@@ -587,7 +587,8 @@ void check_redundancy()
 							else
 							{
 								// Make new socket
-								int tmp_sock = make_socket(NULL);
+								//int tmp_sock = make_socket(NULL);
+								int tmp_sock = sockfd;
 								if (tmp_sock == -1)
 									desirable_hosts[i].priority += 200;	// Error... penalize
 								else
