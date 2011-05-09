@@ -314,13 +314,11 @@ int get_process_type_count(uint64_t process_type)
 	struct list * addrs = get_sisis_addrs_for_prefix(&prefix);
 	if (addrs != NULL)
 	{
-		printf("Here1\n");
 		cnt = addrs->size;
-		printf("Here2\n");
+		
 		// Free memory
 		if (addrs)
 			FREE_LINKED_LIST(addrs);
-		printf("Here3\n");
 	}
 	
 	return cnt;
