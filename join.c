@@ -554,7 +554,7 @@ void check_redundancy()
 							// Try to find machine monitor for this host
 							printf("Looking for machine monitor...\n");
 							struct in6_addr * mm_remote_addr = NULL;
-							if (monitor_addrs == NULL || monitor_addrs->size == 0)
+							if (monitor_addrs != NULL && monitor_addrs->size > 0)
 							{
 								struct listnode * mm_node;
 								LIST_FOREACH(monitor_addrs, mm_node)
