@@ -552,6 +552,7 @@ void check_redundancy()
 							desirable_hosts[i].priority = (sys_id == host_num ? 10000 : 0);
 							
 							// Try to find machine monitor for this host
+							printf("Looking for machine monitor: ");
 							struct in6_addr * mm_remote_addr = NULL;
 							if (monitor_addrs == NULL || monitor_addrs->size == 0)
 							{
@@ -570,6 +571,7 @@ void check_redundancy()
 											}
 								}
 							}
+							printf("%sFound\n", (mm_remote_addr == NULL) ? "Not " : "");
 							
 							// If there is no machine monitor, it is les desirable
 							if (mm_remote_addr == NULL)
