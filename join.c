@@ -677,7 +677,6 @@ void check_redundancy()
 											char * match;
 											
 											// Get memory usage
-											/*
 											char * mem_usage_str = "MemoryUsage: ";
 											if ((match = strstr(buf, mem_usage_str)) == NULL)
 												desirable_hosts[i].priority += 100;	// Error... penalize
@@ -714,7 +713,6 @@ void check_redundancy()
 												else
 													desirable_hosts[i].priority += 100;	// Error... penalize
 											}
-											*/
 										}
 									}
 									
