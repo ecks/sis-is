@@ -31,7 +31,7 @@
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
 
-//#define DEBUG
+#define DEBUG
 
 #define VERSION 1
 int sockfd = -1, con = -1;
@@ -620,6 +620,7 @@ void check_redundancy()
 									inet_ntop(AF_INET6, mm_remote_addr, tmp_addr_str, INET6_ADDRSTRLEN);
 									printf("Sending machine monitor request to %s.\n", tmp_addr_str);
 #endif
+#if 0
 									// Get memory stats
 									char * req = "data\n";
 									if (sendto(tmp_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
@@ -634,7 +635,6 @@ void check_redundancy()
 #ifdef DEBUG
 										printf("\tSent machine monitor request.  Waiting for response...\n");
 #endif
-#if 0
 										struct sockaddr_in fromaddr;
 										int fromaddr_size = sizeof(fromaddr);
 										memset(&fromaddr, 0, fromaddr_size);
@@ -715,8 +715,8 @@ void check_redundancy()
 													desirable_hosts[i].priority += 100;	// Error... penalize
 											}
 										}
-#endif
 									}
+#endif
 									
 									// Close socket
 									close(tmp_sock);
