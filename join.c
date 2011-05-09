@@ -38,6 +38,8 @@ int sockfd = -1, con = -1;
 uint64_t ptype, host_num, pid;
 uint64_t timestamp;
 
+char sisis_addr[INET6_ADDRSTRLEN];
+
 // Current number of join processes (-1 for invalid)
 int num_join_processes = -1;
 
@@ -81,7 +83,6 @@ int main (int argc, char ** argv)
 	
 	// Get host number
 	sscanf (argv[1], "%llu", &host_num);
-	char sisis_addr[INET6_ADDRSTRLEN+1];
 	
 	// Get pid
 	pid = getpid();
@@ -518,7 +519,13 @@ void check_redundancy()
 		{
 			// Number of processes to start
 			int num_start = num_procs - num_join_processes;
+			
 			// TODO: Add logic to spread across machines and check CPU/memory usage
+			// Get machine monitors
+			char mm_addr[INET6_ADDRSTRLEN+1];
+			sisis_create_addr(mm_addr, (uint64_t)SISIS_PTYPE_MACHINE_MONITOR, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
+			struct prefix_ipv6 mm_prefix = sisis_make_ipv6_prefix(mm_addr, 42);
+			struct list * monitor_addrs = get_sisis_addrs_for_prefix(&mm_prefix);
 			
 			// Check if the spawn process is running
 			char spawn_addr[INET6_ADDRSTRLEN+1];
@@ -527,6 +534,149 @@ void check_redundancy()
 			struct list * spawn_addrs = get_sisis_addrs_for_prefix(&spawn_prefix);
 			if (spawn_addrs && spawn_addrs->size)
 			{
+				// Determine most desirable hosts
+				desirable_host_t desirable_hosts[spawn_addrs->size];
+				int i;
+				LIST_FOREACH(spawn_addrs, node)
+				{
+					struct in6_addr * remote_addr = (struct in6_addr *)node->data;
+					
+					// Get priority
+					desirable_hosts[i].priority = UINT64_MAX;
+					// Parse components
+					char addr[INET6_ADDRSTRLEN];
+					uint64_t prefix, sisis_version, process_type, process_version, sys_id, other_pid, ts;
+					if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != 1)
+						if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &other_pid, &ts) == 0)
+						{
+							desirable_hosts[i].priority = (sys_id == host_num ? 10000 : 0);
+							
+							// Try to find machine monitor for this host
+							struct in6_addr * mm_remote_addr = NULL;
+							if (monitor_addrs == NULL || monitor_addrs->size == 0)
+							{
+								LIST_FOREACH(monitor_addrs, node)
+								{
+									struct in6_addr * remote_addr2 = (struct in6_addr *)node->data;
+									
+									// TODO: Use a common function
+									uint64_t mm_sys_id;
+									if (inet_ntop(AF_INET6, remote_addr2, addr, INET6_ADDRSTRLEN) != 1)
+										if (get_sisis_addr_components(addr, NULL, NULL, NULL, NULL, &mm_sys_id, NULL, NULL) == 0)
+											if (mm_sys_id == sys_id)
+											{
+												mm_remote_addr = remote_addr2;
+												break;
+											}
+								}
+							}
+							
+							// If there is no machine monitor, it is les desirable
+							if (mm_remote_addr == NULL)
+								desirable_hosts[i].priority += 200;
+							else
+							{
+								// Make new socket
+								int tmp_sock = make_socket(NULL);
+								if (!tmp_sock)
+									desirable_hosts[i].priority += 200;	// Error... penalize
+								else
+								{
+									// Set of sockets for select call
+									fd_set socks;
+									FD_ZERO(&socks);
+									FD_SET(tmp_sock, &socks);
+									
+									// Timeout information for select call
+									struct timeval select_timeout;
+									select_timeout.tv_sec = MACHINE_MONITOR_REQUEST_TIMEOUT / 1000000;
+									select_timeout.tv_usec = MACHINE_MONITOR_REQUEST_TIMEOUT % 1000000;
+									
+									// Set up socket info
+									struct sockaddr_in6 sockaddr;
+									int sockaddr_size = sizeof(sockaddr);
+									memset(&sockaddr, 0, sockaddr_size);
+									sockaddr.sin6_family = AF_INET6;
+									sockaddr.sin6_port = htons(JOIN_PORT);
+									sockaddr.sin6_addr = *remote_addr;
+									
+									// Get memory stats
+									char * req = "data\n";
+									if (sendto(tmp_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
+										desirable_hosts[i].priority += 200;	// Error... penalize
+									else
+									{
+										struct sockaddr_in fromaddr;
+										int fromaddr_size = sizeof(fromaddr);
+										memset(&fromaddr, 0, fromaddr_size);
+										char buf[65536];
+										int len;
+										
+										// Wait for response
+										if (select(tmp_sock+1, &socks, NULL, NULL, &select_timeout) <= 0)
+											desirable_hosts[i].priority += 200;	// Error... penalize
+										else if ((len = recvfrom(sockfd, buf, 65536, 0, (struct sockaddr *)&fromaddr, &fromaddr_size)) < 1)
+											desirable_hosts[i].priority += 200;	// Error... penalize
+										else if (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0)
+											desirable_hosts[i].priority += 200;	// Error... penalize
+										else
+										{
+											// Terminate if needed
+											if (len == 65536)
+												buf[len-1] = '\0';
+											
+											// Parse response
+											char * match;
+											
+											// Get memory usage
+											char * mem_usage_str = "MemoryUsage: ";
+											if ((match = strstr(buf, mem_usage_str)) == NULL)
+												desirable_hosts[i].priority += 100;	// Error... penalize
+											else
+											{
+												// Get usage
+												int usage;
+												if (sscanf(match+strlen(mem_usage_str), "%d%%", &usage))
+												{
+													printf("Memory Usage = %d%%\n", usage);
+													desirable_hosts[i].priority += usage;
+												}
+												else
+													desirable_hosts[i].priority += 100;	// Error... penalize
+											}
+											
+											// Get CPU usage
+											char * cpu_usage_str = "CPU: ";
+											if ((match = strstr(buf, cpu_usage_str)) == NULL)
+												desirable_hosts[i].priority += 100;	// Error... penalize
+											else
+											{
+												// Get usage
+												int usage;
+												if (sscanf(match+strlen(cpu_usage_str), "%d%%", &usage))
+												{
+													printf("CPU Usage = %d%%\n", usage);
+													desirable_hosts[i].priority += usage;
+												}
+												else
+													desirable_hosts[i].priority += 100;	// Error... penalize
+											}
+										}
+									}
+									
+									// Close socket
+									close(tmp_sock);
+								}
+							}
+						}
+					
+					i++;
+				}
+				
+				// TODO: Sort and use desirable hosts
+				//desirable_hosts
+				
+				/*
 				do
 				{
 					LIST_FOREACH(spawn_addrs, node)
@@ -561,10 +711,13 @@ void check_redundancy()
 							break;
 					}
 				}while (num_start > 0);
+				*/
 			}
 			// Free memory
 			if (spawn_addrs)
 				FREE_LINKED_LIST(spawn_addrs);
+			if (monitor_addrs)
+				FREE_LINKED_LIST(monitor_addrs);
 		}
 	}
 	// Too many
@@ -600,4 +753,30 @@ void check_redundancy()
 	// Free memory
 	if (join_addrs)
 		FREE_LINKED_LIST(join_addrs);
+}
+
+/** Creates a new socket. */
+int make_socket(char * port)
+{
+	int fd;
+	
+	// Set up socket address info
+	struct addrinfo hints, *addr;
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_INET6;	// IPv6
+	hints.ai_socktype = SOCK_DGRAM;
+	getaddrinfo(sisis_addr, port, &hints, &addr);
+	
+	// Create socket
+	if ((fd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)) == -1)
+		return -1;
+	
+	// Bind to port
+	if (bind(fd, addr->ai_addr, addr->ai_addrlen) == -1)
+	{
+		close(fd);
+		return -1;
+	}
+	
+	return fd;
 }

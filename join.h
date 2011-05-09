@@ -6,6 +6,8 @@
 #include "table.h"
 #include "../tests/sisis_api.h"
 
+#define MACHINE_MONITOR_REQUEST_TIMEOUT 500000 // usec
+
 /** Count number of processes of a given type */
 int get_process_type_count(uint64_t process_type);
 
@@ -23,5 +25,15 @@ void check_redundancy();
 
 int rib_monitor_add_ipv6_route(struct route_ipv6 * route);
 int rib_monitor_remove_ipv6_route(struct route_ipv6 * route);
+
+// Information for deciding most desirable host to start
+typedef struct
+{
+	int priority; // Low # = High Priority
+	struct in6_addr * remote_spawn_addr;
+} desirable_host_t;
+
+/** Creates a new socket. */
+int make_socket(char * port);
 
 #endif
