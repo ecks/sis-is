@@ -820,9 +820,10 @@ int unsubscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
  */
 struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 {
+	printf("Here1\n");
 	// Update kernel routes
 	sisis_dump_kernel_routes();
-	
+	printf("Here2\n");
 	// IPv6 version
 	// Create prefix mask IPv6 addr
 	char prefix_addr_str[INET6_ADDRSTRLEN+1] = "";
@@ -851,7 +852,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 	// Create struct
 	struct in6_addr prefix_mask;
 	inet_pton(AF_INET6, prefix_addr_str, &prefix_mask);
-	
+	printf("Here3\n");
 	// Create list of relevant SIS-IS addresses
 	struct list * rtn = malloc(sizeof(struct list));
 	if (rtn != NULL)
@@ -860,12 +861,13 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 		struct listnode * node;
 		LIST_FOREACH(ipv6_rib_routes, node)
 		{
+			printf("Here4\n");
 			struct route_ipv6 * route = (struct route_ipv6 *)node->data;
 			
 			int match = 1;
 			for (i = 0; match && i < 16; i++)
 				match = ((route->p->prefix.s6_addr[i] & prefix_mask.s6_addr[i]) == (p->prefix.s6_addr[i] & prefix_mask.s6_addr[i]));
-			
+			printf("Here5\n");
 			// Check if the route matches the prefix
 			if (route->p->prefixlen == 128 && match)
 			{
@@ -880,9 +882,10 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 					}
 				}
 			}
+			printf("Here6\n");
 		}
 	}
-	
+	printf("Here7\n");
 	return rtn;
 }
 
