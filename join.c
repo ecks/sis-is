@@ -185,10 +185,10 @@ int main (int argc, char ** argv)
 				if (num_tables == 0)
 				{
 					// Table 1
-					cur_table1_item = malloc(sizeof(table_group_item_t));
+					cur_table1_item = malloc(sizeof(*cur_table1_item));
 					table1_group.first = cur_table1_item;
 					// Table 2
-					cur_table2_item = malloc(sizeof(table_group_item_t));
+					cur_table2_item = malloc(sizeof(*cur_table2_item));
 					table2_group.first = cur_table2_item;
 					
 					// Set socket select timeout
@@ -201,10 +201,10 @@ int main (int argc, char ** argv)
 				else
 				{
 					// Table 1
-					cur_table1_item->next = malloc(sizeof(table_group_item_t));
+					cur_table1_item->next = malloc(sizeof(*cur_table1_item->next));
 					cur_table1_item = cur_table1_item->next;
 					// Table 2
-					cur_table2_item->next = malloc(sizeof(table_group_item_t));
+					cur_table2_item->next = malloc(sizeof(*cur_table2_item->next));
 					cur_table2_item = cur_table2_item->next;
 					
 					// Determine new socket select timeout
@@ -544,7 +544,7 @@ void check_redundancy()
 					exit(1);
 				}
 				
-				int i;
+				int i = 0;
 				LIST_FOREACH(spawn_addrs, node)
 				{
 					struct in6_addr * remote_addr = (struct in6_addr *)node->data;
