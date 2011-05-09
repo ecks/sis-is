@@ -716,7 +716,7 @@ void check_redundancy()
 					int desirable_host_idx = 0;
 					for (; desirable_host_idx < spawn_addrs->size; desirable_host_idx++)
 					{
-						struct in6_addr * remote_addr = compare_desirable_hosts[desirable_host_idx].remote_spawn_addr;
+						struct in6_addr * remote_addr = desirable_hosts[desirable_host_idx].remote_spawn_addr;
 						
 						// Set up socket info
 						struct sockaddr_in6 sockaddr;
@@ -823,7 +823,8 @@ int make_socket(char * port)
 /** Compare desirable hosts. */
 int compare_desirable_hosts(const void * a_ptr, const void * b_ptr)
 {
-	desirable_host_t * a = a_ptr, * b = b_ptr;
+	desirable_host_t * a = (desirable_host_t *)a_ptr;
+	desirable_host_t * b = (desirable_host_t *)b_ptr;
 	if (a->priority < b->priority)
 		return -1;
 	else if (a->priority > b->priority)
