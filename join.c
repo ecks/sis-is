@@ -552,7 +552,9 @@ void check_redundancy()
 							desirable_hosts[i].priority = (sys_id == host_num ? 10000 : 0);
 							
 							// Try to find machine monitor for this host
-							printf("Looking for machine monitor...\n");
+#ifdef DEBUG
+							printf("Looking for machine monitor: ");
+#endif
 							struct in6_addr * mm_remote_addr = NULL;
 							if (monitor_addrs != NULL && monitor_addrs->size > 0)
 							{
@@ -565,17 +567,16 @@ void check_redundancy()
 									uint64_t mm_sys_id;
 									if (inet_ntop(AF_INET6, remote_addr2, addr, INET6_ADDRSTRLEN) != 1)
 										if (get_sisis_addr_components(addr, NULL, NULL, NULL, NULL, &mm_sys_id, NULL, NULL) == 0)
-										{
-											printf("\t\tComparing %llu and %llu.\n", mm_sys_id, sys_id);
 											if (mm_sys_id == sys_id)
 											{
 												mm_remote_addr = remote_addr2;
 												break;
 											}
-										}
 								}
 							}
-							printf("\t%sFound\n", (mm_remote_addr == NULL) ? "Not " : "");
+#ifdef DEBUG
+							printf("%sFound\n", (mm_remote_addr == NULL) ? "Not " : "");
+#endif
 							
 							// If there is no machine monitor, it is les desirable
 							if (mm_remote_addr == NULL)
@@ -608,8 +609,12 @@ void check_redundancy()
 									
 									// Get memory stats
 									char * req = "data\n";
+									printf("Sending machine monitor request.\n");
 									if (sendto(tmp_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
+									{
+										printf("\tFailed to send machine monitor request.\n");
 										desirable_hosts[i].priority += 200;	// Error... penalize
+									}
 									else
 									{
 										struct sockaddr_in fromaddr;
@@ -620,13 +625,24 @@ void check_redundancy()
 										
 										// Wait for response
 										if (select(tmp_sock+1, &socks, NULL, NULL, &select_timeout) <= 0)
+										{
+											printf("\tMachine monitor request timed out.\n");
 											desirable_hosts[i].priority += 200;	// Error... penalize
+										}
 										else if ((len = recvfrom(sockfd, buf, 65536, 0, (struct sockaddr *)&fromaddr, &fromaddr_size)) < 1)
+										{
+											printf("\tFailed to receive machine monitor response.\n");
 											desirable_hosts[i].priority += 200;	// Error... penalize
+										}
 										else if (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0)
+										{
+											printf("\tFailed to receive machine monitor response.  Response from wrong host.\n");
 											desirable_hosts[i].priority += 200;	// Error... penalize
+										}
 										else
 										{
+											printf("\tReceived message.\n");
+											
 											// Terminate if needed
 											if (len == 65536)
 												buf[len-1] = '\0';
