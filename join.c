@@ -639,11 +639,12 @@ void check_redundancy()
 										else if (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0)
 										{
 											printf("\tFailed to receive machine monitor response.  Response from wrong host.\n");
+											printf("Sizes: %d\t%d\n", sockaddr_size, fromaddr_size);
 											if (sockaddr_size == fromaddr_size)
 											{
 												int i;
 												for (i = 0; i < fromaddr_size; i++)
-													printf("\t\t%02x =? %02x\n", *(((char *)&sockaddr)+i), *(((char *)&fromaddr)+i));
+													printf("\t\t%02x =? %02x\n", *(((char *)&sockaddr)+i) & 0xff, *(((char *)&fromaddr)+i) & 0xff);
 											}
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
