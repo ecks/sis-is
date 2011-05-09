@@ -673,7 +673,7 @@ void check_redundancy()
 												int usage;
 												if (sscanf(match+strlen(mem_usage_str), "%d%%", &usage))
 												{
-													printf("Memory Usage = %d%%\n", usage);
+													printf("\tMemory Usage = %d%%\n", usage);
 													desirable_hosts[i].priority += usage;
 												}
 												else
@@ -690,7 +690,7 @@ void check_redundancy()
 												int usage;
 												if (sscanf(match+strlen(cpu_usage_str), "%d%%", &usage))
 												{
-													printf("CPU Usage = %d%%\n", usage);
+													printf("\tCPU Usage = %d%%\n", usage);
 													desirable_hosts[i].priority += usage;
 												}
 												else
@@ -709,10 +709,12 @@ void check_redundancy()
 				}
 				
 				// TODO: Sort and use desirable hosts
+				printf("Sorting hosts according to desirability.\n");
 				qsort(desirable_hosts, spawn_addrs->size, sizeof(desirable_hosts[0]), compare_desirable_hosts);
 				
 				do
 				{
+					printf("Starting new processes.\n");
 					int desirable_host_idx = 0;
 					for (; desirable_host_idx < spawn_addrs->size; desirable_host_idx++)
 					{
