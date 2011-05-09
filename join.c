@@ -620,7 +620,6 @@ void check_redundancy()
 									inet_ntop(AF_INET6, mm_remote_addr, tmp_addr_str, INET6_ADDRSTRLEN);
 									printf("Sending machine monitor request to %s.\n", tmp_addr_str);
 #endif
-#if 0
 									// Get memory stats
 									char * req = "data\n";
 									if (sendto(tmp_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
@@ -716,7 +715,6 @@ void check_redundancy()
 											}
 										}
 									}
-#endif
 									
 									// Close socket
 									close(tmp_sock);
