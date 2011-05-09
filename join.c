@@ -592,6 +592,7 @@ void check_redundancy()
 								desirable_hosts[i].priority += 200;
 							else
 							{
+#if 0
 								// Make new socket
 								int tmp_sock = make_socket(NULL);
 								if (tmp_sock == -1)
@@ -719,6 +720,7 @@ void check_redundancy()
 									// Close socket
 									close(tmp_sock);
 								}
+#endif
 							}
 						}
 					
