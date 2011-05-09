@@ -607,9 +607,12 @@ void check_redundancy()
 									sockaddr.sin6_port = htons(MACHINE_MONITOR_PORT);
 									sockaddr.sin6_addr = *mm_remote_addr;
 									
+									char tmp_addr_str[INET6_ADDRSTRLEN];
+									inet_ntop(AF_INET6, mm_remote_addr, tmp_addr_str, INET6_ADDRSTRLEN);
+									printf("Sending machine monitor request to %s.\n", tmp_addr_str);
+									
 									// Get memory stats
 									char * req = "data\n";
-									printf("Sending machine monitor request.\n");
 									if (sendto(tmp_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
 									{
 										printf("\tFailed to send machine monitor request.\n");
@@ -638,7 +641,7 @@ void check_redundancy()
 										}
 										else if (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0)
 										{
-											printf("\tFailed to receive machine monitor response.  Response from wrong host.\n");
+											/*
 											printf("Sizes: %d\t%d\n", sockaddr_size, fromaddr_size);
 											if (sockaddr_size == fromaddr_size)
 											{
@@ -646,6 +649,10 @@ void check_redundancy()
 												for (i = 0; i < fromaddr_size; i++)
 													printf("\t\t%02x =? %02x\n", *(((char *)&sockaddr)+i) & 0xff, *(((char *)&fromaddr)+i) & 0xff);
 											}
+											*/
+											inet_ntop(AF_INET6, &((struct sockaddr_in6 *)fromaddr)->sin6_addr, tmp_addr_str, INET6_ADDRSTRLEN);
+											printf("\tFailed to receive machine monitor response.  Response from wrong host (%s).\n", tmp_addr_str);
+											
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
 										else
