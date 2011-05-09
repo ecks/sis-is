@@ -320,22 +320,28 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h, void *
 			{
 				// Construct route info
 				struct route_ipv4 * route = malloc(sizeof(struct route_ipv4));
-				route->type = 1;	// Means nothing right now
-				route->flags = flags;
-				route->p = malloc(sizeof(struct prefix_ipv4));
-				route->p->family = AF_INET;
-				memcpy (&route->p->prefix, dest, 4);
-				route->p->prefixlen = rtm->rtm_dst_len;
-				route->gate = gate;
-				route->src = src;
-				route->ifindex = index;
-				route->vrf_id = table;
-				route->metric = metric;
-				route->distance = 0;
-				
-				// Note: Receivers responsibilty to free memory for route
-				
-				(h->nlmsg_type == RTM_NEWROUTE) ? real_info->rib_add_ipv4_route(route) : real_info->rib_remove_ipv4_route(route);
+				if (route != NULL)
+				{
+					route->p = malloc(sizeof(struct prefix_ipv4));
+					if (route->p != NULL)
+					{
+						route->type = 1;	// Means nothing right now
+						route->flags = flags;
+						route->p->family = AF_INET;
+						memcpy (&route->p->prefix, dest, 4);
+						route->p->prefixlen = rtm->rtm_dst_len;
+						route->gate = gate;
+						route->src = src;
+						route->ifindex = index;
+						route->vrf_id = table;
+						route->metric = metric;
+						route->distance = 0;
+						
+						// Note: Receivers responsibilty to free memory for route
+						
+						(h->nlmsg_type == RTM_NEWROUTE) ? real_info->rib_add_ipv4_route(route) : real_info->rib_remove_ipv4_route(route);
+					}
+				}
 			}
     }
 #ifdef HAVE_IPV6
@@ -346,21 +352,27 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h, void *
 			{
 				// Construct route info
 				struct route_ipv6 * route = malloc(sizeof(struct route_ipv6));
-				route->type = 1;	// Means nothing right now
-				route->flags = flags;
-				route->p = malloc(sizeof(struct prefix_ipv6));
-				route->p->family = AF_INET6;
-				memcpy (&route->p->prefix, dest, 16);
-				route->p->prefixlen = rtm->rtm_dst_len;
-				route->gate = gate;
-				route->ifindex = index;
-				route->vrf_id = table;
-				route->metric = metric;
-				route->distance = 0;
-				
-				// Note: Receivers responsibilty to free memory for route
-				
-				(h->nlmsg_type == RTM_NEWROUTE) ? real_info->rib_add_ipv6_route(route) : real_info->rib_remove_ipv6_route(route);
+				if (route != NULL)
+				{
+					route->p = malloc(sizeof(struct prefix_ipv6));
+					if (route->p != NULL)
+					{
+						route->type = 1;	// Means nothing right now
+						route->flags = flags;
+						route->p->family = AF_INET6;
+						memcpy (&route->p->prefix, dest, 16);
+						route->p->prefixlen = rtm->rtm_dst_len;
+						route->gate = gate;
+						route->ifindex = index;
+						route->vrf_id = table;
+						route->metric = metric;
+						route->distance = 0;
+						
+						// Note: Receivers responsibilty to free memory for route
+						
+						(h->nlmsg_type == RTM_NEWROUTE) ? real_info->rib_add_ipv6_route(route) : real_info->rib_remove_ipv6_route(route);
+					}
+				}
 			}
     }
 #endif /* HAVE_IPV6 */
@@ -409,6 +421,8 @@ int sisis_netlink_subscribe_to_rib_changes(struct sisis_netlink_routing_table_in
 {
 	// Set up kernel socket
 	struct nlsock * netlink_rib  = malloc(sizeof(struct nlsock));
+	if (netlink_rib == NULL)
+		return -1;
 	netlink_rib->sock = -1;
   netlink_rib->seq = 0;
   memset(&netlink_rib->snl, 0, sizeof(netlink_rib->snl));
@@ -425,7 +439,9 @@ int sisis_netlink_subscribe_to_rib_changes(struct sisis_netlink_routing_table_in
 
 	// Start thread
 	pthread_t * thread = malloc(sizeof(pthread_t));
-	info->nl_info = malloc(sizeof(struct sisis_netlink_wait_for_rib_changes_info * ));
+	info->nl_info = malloc(sizeof(struct sisis_netlink_wait_for_rib_changes_info));
+	if (thread == NULL || info->nl_info == NULL)
+		return -1;
 	info->nl_info->netlink_rib = netlink_rib;
 	info->nl_info->info = info;
 	pthread_create(thread, NULL, sisis_netlink_wait_for_rib_changes, info->nl_info);

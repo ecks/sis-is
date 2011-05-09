@@ -204,6 +204,8 @@ int sisis_construct_message(char ** buf, unsigned short version, unsigned int re
 {
 	unsigned int buf_len = data_len + 8;
 	*buf = malloc(sizeof(char) * buf_len);
+	if (*buf == NULL)
+		return 0;
 	version = htons(version);
 	request_id = htonl(request_id);
 	cmd = htons(cmd);
@@ -579,7 +581,8 @@ int sisis_register(char * sisis_addr, ...)
 		return 2;
 	if ((reregistrations[idx] = malloc(sizeof(*reregistrations[idx]))) == NULL)
 		return 3;
-	reregistrations[idx]->addr = malloc(sizeof(char) * (strlen(sisis_addr)+1));
+	if ((reregistrations[idx]->addr = malloc(sizeof(char) * (strlen(sisis_addr)+1))) == NULL)
+		return 4;
 	strcpy(reregistrations[idx]->addr, sisis_addr);
 	reregistrations[idx]->active = 1;
 	reregistrations[idx]->idx = idx;
@@ -664,7 +667,8 @@ int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, 
 		return 2;
 	if ((reregistrations[idx] = malloc(sizeof(*reregistrations[idx]))) == NULL)
 		return 3;
-	reregistrations[idx]->addr = malloc(sizeof(char) * (strlen(sisis_addr)+1));
+	if ((reregistrations[idx]->addr = malloc(sizeof(char) * (strlen(sisis_addr)+1))) == NULL)
+		return 4;
 	strcpy(reregistrations[idx]->addr, sisis_addr);
 	reregistrations[idx]->active = 1;
 	reregistrations[idx]->idx = idx;
@@ -717,15 +721,15 @@ int sisis_dump_kernel_routes()
 	// Set up list of IPv4 rib entries
 	if (ipv4_rib_routes)
 		FREE_LINKED_LIST(ipv4_rib_routes);
-	ipv4_rib_routes = malloc(sizeof(struct list));
-	memset(ipv4_rib_routes, 0, sizeof(*ipv4_rib_routes));
+	if ((ipv4_rib_routes = malloc(sizeof(struct list))) != NULL)
+		memset(ipv4_rib_routes, 0, sizeof(*ipv4_rib_routes));
 
 #ifdef HAVE_IPV6
 	// Set up list of IPv6 rib entries
 	if (ipv6_rib_routes)
 		FREE_LINKED_LIST(ipv6_rib_routes);
-	ipv6_rib_routes = malloc(sizeof(struct list));
-	memset(ipv6_rib_routes, 0, sizeof(*ipv6_rib_routes));
+	if ((ipv6_rib_routes = malloc(sizeof(struct list))) != NULL)
+		memset(ipv6_rib_routes, 0, sizeof(*ipv6_rib_routes));
 #endif /* HAVE_IPV6 */
 
 	// Set up callbacks
@@ -746,8 +750,11 @@ int sisis_dump_kernel_routes()
 int sisis_rib_add_ipv4 (struct route_ipv4 * route)
 {
 	struct listnode * node = malloc(sizeof(struct listnode));
-	node->data = (void *)route;
-	LIST_APPEND(ipv4_rib_routes,node);
+	if (ipv4_rib_routes != NULL && node != NULL)
+	{
+		node->data = (void *)route;
+		LIST_APPEND(ipv4_rib_routes, node);
+	}
 	
 	/*
 	// Set up prefix
@@ -763,8 +770,11 @@ int sisis_rib_add_ipv4 (struct route_ipv4 * route)
 int sisis_rib_add_ipv6 (struct route_ipv6 * route)
 {
 	struct listnode * node = malloc(sizeof(struct listnode));
-	node->data = (void *)route;
-	LIST_APPEND(ipv6_rib_routes,node);
+	if (ipv6_rib_routes != NULL && node != NULL)
+	{
+		node->data = (void *)route;
+		LIST_APPEND(ipv6_rib_routes, node);
+	}
 	
 	return 0;
 }
@@ -777,6 +787,8 @@ int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
 	
 	// Set up callbacks
 	struct sisis_netlink_routing_table_info * subscribe_info = malloc(sizeof(struct sisis_netlink_routing_table_info));
+	if (subscribe_info == NULL)
+		return -1;
 	memset(subscribe_info, 0, sizeof(*subscribe_info));
 	subscribe_info->rib_add_ipv4_route = info->rib_add_ipv4_route;
 	subscribe_info->rib_remove_ipv4_route = info->rib_remove_ipv4_route;
@@ -797,6 +809,8 @@ int unsubscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
 {
 	// Subscribe to changes
 	sisis_netlink_unsubscribe_to_rib_changes(info->subscribe_info);
+	free(info->subscribe_info);
+	info->subscribe_info = NULL;
 }
 
 #ifdef USE_IPV6
@@ -840,24 +854,32 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 	
 	// Create list of relevant SIS-IS addresses
 	struct list * rtn = malloc(sizeof(struct list));
-	memset(rtn, 0, sizeof(*rtn));
-	struct listnode * node;
-	LIST_FOREACH(ipv6_rib_routes, node)
+	if (rtn != NULL)
 	{
-		struct route_ipv6 * route = (struct route_ipv6 *)node->data;
-		
-		int match = 1;
-		for (i = 0; match && i < 16; i++)
-			match = ((route->p->prefix.s6_addr[i] & prefix_mask.s6_addr[i]) == (p->prefix.s6_addr[i] & prefix_mask.s6_addr[i]));
-		
-		// Check if the route matches the prefix
-		if (route->p->prefixlen == 128 && match)
+		memset(rtn, 0, sizeof(*rtn));
+		struct listnode * node;
+		LIST_FOREACH(ipv6_rib_routes, node)
 		{
-			// Add to list
-			struct listnode * new_node = malloc(sizeof(struct listnode));
-			new_node->data = malloc(sizeof(route->p->prefix));
-			memcpy(new_node->data, &route->p->prefix, sizeof(route->p->prefix));
-			LIST_APPEND(rtn,new_node);
+			struct route_ipv6 * route = (struct route_ipv6 *)node->data;
+			
+			int match = 1;
+			for (i = 0; match && i < 16; i++)
+				match = ((route->p->prefix.s6_addr[i] & prefix_mask.s6_addr[i]) == (p->prefix.s6_addr[i] & prefix_mask.s6_addr[i]));
+			
+			// Check if the route matches the prefix
+			if (route->p->prefixlen == 128 && match)
+			{
+				// Add to list
+				struct listnode * new_node = malloc(sizeof(struct listnode));
+				if (new_node != NULL)
+				{
+					if ((new_node->data = malloc(sizeof(route->p->prefix))) != NULL)
+					{
+						memcpy(new_node->data, &route->p->prefix, sizeof(route->p->prefix));
+						LIST_APPEND(rtn, new_node);
+					}
+				}
+			}
 		}
 	}
 	
@@ -895,20 +917,28 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv4 * p)
 	
 	// Create list of relevant SIS-IS addresses
 	struct list * rtn = malloc(sizeof(struct list));
-	memset(rtn, 0, sizeof(*rtn));
-	struct listnode * node;
-	LIST_FOREACH(ipv4_rib_routes, node)
+	if (rtn != NULL)
 	{
-		struct route_ipv4 * route = (struct route_ipv4 *)node->data;
-		
-		// Check if the route matches the prefix
-		if (route->p->prefixlen == 32 && (route->p->prefix.s_addr & prefix_mask) == (p->prefix.s_addr & prefix_mask))
+		memset(rtn, 0, sizeof(*rtn));
+		struct listnode * node;
+		LIST_FOREACH(ipv4_rib_routes, node)
 		{
-			// Add to list
-			struct listnode * new_node = malloc(sizeof(struct listnode));
-			new_node->data = malloc(sizeof(route->p->prefix));
-			memcpy(new_node->data, &route->p->prefix, sizeof(route->p->prefix));
-			LIST_APPEND(rtn,new_node);
+			struct route_ipv4 * route = (struct route_ipv4 *)node->data;
+			
+			// Check if the route matches the prefix
+			if (route->p->prefixlen == 32 && (route->p->prefix.s_addr & prefix_mask) == (p->prefix.s_addr & prefix_mask))
+			{
+				// Add to list
+				struct listnode * new_node = malloc(sizeof(struct listnode));
+				if (new_node != NULL)
+				{
+					if ((new_node->data = malloc(sizeof(route->p->prefix))) != NULL)
+					{
+						memcpy(new_node->data, &route->p->prefix, sizeof(route->p->prefix));
+						LIST_APPEND(rtn,new_node);
+					}
+				}
+			}
 		}
 	}
 	
