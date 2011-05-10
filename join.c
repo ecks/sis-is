@@ -730,43 +730,53 @@ void check_redundancy()
 #endif
 				qsort(desirable_hosts, spawn_addrs->size, sizeof(desirable_hosts[0]), compare_desirable_hosts);
 				
-				do
+				// Make new socket
+				int spawn_sock = make_socket(NULL);
+				if (spawn_sock == -1)
+					printf("Failed to open spawn socket.\n");
+				else
 				{
-					int desirable_host_idx = 0;
-					for (; desirable_host_idx < spawn_addrs->size; desirable_host_idx++)
+					do
 					{
-						struct in6_addr * remote_addr = desirable_hosts[desirable_host_idx].remote_spawn_addr;
-						
-						// Set up socket info
-						struct sockaddr_in6 sockaddr;
-						int sockaddr_size = sizeof(sockaddr);
-						memset(&sockaddr, 0, sockaddr_size);
-						sockaddr.sin6_family = AF_INET6;
-						sockaddr.sin6_port = htons(JOIN_PORT);
-						sockaddr.sin6_addr = *remote_addr;
-#ifdef DEBUG
-						// Debugging info
-						char tmp_addr[INET6_ADDRSTRLEN];
-						if (inet_ntop(AF_INET6, remote_addr, tmp_addr, INET6_ADDRSTRLEN) != 1)
-							printf("Starting new process via %s.\n", tmp_addr);
-						else
-							printf("Starting new process.\n");
-#endif
-						// Send request
-						char req[32];
-						sprintf(req, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_DEMO1_JOIN);
-						if (sendto(sockfd, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
-							printf("Failed to send message.  Error: %i\n", errno);
-						else
-							num_start--;
-						
-						// TODO: Have a thread or something to check that the process was actually started
-						
-						// Have we started enough?
-						if (num_start == 0)
-							break;
-					}
-				}while (num_start > 0);
+						int desirable_host_idx = 0;
+						for (; desirable_host_idx < spawn_addrs->size; desirable_host_idx++)
+						{
+							struct in6_addr * remote_addr = desirable_hosts[desirable_host_idx].remote_spawn_addr;
+							
+							// Set up socket info
+							struct sockaddr_in6 sockaddr;
+							int sockaddr_size = sizeof(sockaddr);
+							memset(&sockaddr, 0, sockaddr_size);
+							sockaddr.sin6_family = AF_INET6;
+							sockaddr.sin6_port = htons(JOIN_PORT);
+							sockaddr.sin6_addr = *remote_addr;
+	#ifdef DEBUG
+							// Debugging info
+							char tmp_addr[INET6_ADDRSTRLEN];
+							if (inet_ntop(AF_INET6, remote_addr, tmp_addr, INET6_ADDRSTRLEN) != 1)
+								printf("Starting new process via %s.\n", tmp_addr);
+							else
+								printf("Starting new process.\n");
+	#endif
+							// Send request
+							char req[32];
+							sprintf(req, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_DEMO1_JOIN);
+							if (sendto(spawn_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
+								printf("Failed to send message.  Error: %i\n", errno);
+							else
+								num_start--;
+							
+							// TODO: Have a thread or something to check that the process was actually started
+							
+							// Have we started enough?
+							if (num_start == 0)
+								break;
+						}
+					}while (num_start > 0);
+					
+					// Close spawn socket
+					close(spawn_sock);
+				}
 				
 				// Free desirable hosts
 				free(desirable_hosts);
