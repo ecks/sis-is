@@ -637,6 +637,7 @@ void check_redundancy()
 #endif
 										struct sockaddr_in fromaddr;
 										int fromaddr_size = sizeof(fromaddr);
+										printf("From size: %d\n", fromaddr_size);
 										memset(&fromaddr, 0, fromaddr_size);
 										char buf[65536];
 										int len;
@@ -658,12 +659,13 @@ void check_redundancy()
 										}
 										else if (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0)
 										{
+#ifdef DEBUG
 											inet_ntop(AF_INET6, &((struct sockaddr_in6 *)&fromaddr)->sin6_addr, tmp_addr_str, INET6_ADDRSTRLEN);
 											printf("\tFailed to receive machine monitor response.  Response from wrong host (%s).\n", tmp_addr_str);
 											uint64_t tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
 											if (get_sisis_addr_components(tmp_addr_str, &tmp1, &tmp2, &tmp3, &tmp4, &tmp5, &tmp6, &tmp7) == 0)
 												printf("SIS-IS Info: %llu\t %llu\t %llu\t %llu\t %llu\t %llu\t %llu\n", tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7);
-											
+#endif
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
 										else
