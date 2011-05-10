@@ -31,7 +31,7 @@
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
 
-//#define DEBUG
+#define DEBUG
 
 #define VERSION 1
 int sockfd = -1, con = -1;
@@ -656,7 +656,6 @@ void check_redundancy()
 #endif
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
-										/* TODO: Make sure it is from the correct host.
 										else if (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0)
 										{
 											inet_ntop(AF_INET6, &((struct sockaddr_in6 *)&fromaddr)->sin6_addr, tmp_addr_str, INET6_ADDRSTRLEN);
@@ -667,7 +666,6 @@ void check_redundancy()
 											
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
-										*/
 										else
 										{
 											// Terminate if needed
@@ -761,6 +759,8 @@ void check_redundancy()
 							printf("Failed to send message.  Error: %i\n", errno);
 						else
 							num_start--;
+						
+						// TODO: Have a thread or something to check that the process was actually started
 						
 						// Have we started enough?
 						if (num_start == 0)
