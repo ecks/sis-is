@@ -31,7 +31,7 @@
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
 
-#define DEBUG
+//#define DEBUG
 
 #define VERSION 1
 int sockfd = -1, con = -1;
@@ -68,6 +68,12 @@ void terminate(int signal)
 		close(con);
 	}
 	exit(0);
+}
+
+void recheck_redundance_alarm_handler(int signal)
+{
+	printf("Timeout expired... Rechecking redundancy.\n");
+	check_redundancy();
 }
 
 int main (int argc, char ** argv)
@@ -134,6 +140,9 @@ int main (int argc, char ** argv)
 	signal(SIGABRT, terminate);
 	signal(SIGTERM, terminate);
 	signal(SIGINT, terminate);
+	
+	// Set up signal handling for alarm
+	signal(SIGALRM, recheck_redundance_alarm_handler);
 	
 	// Check redundancy
 	check_redundancy();
@@ -764,8 +773,6 @@ void check_redundancy()
 							else
 								num_start--;
 							
-							// TODO: Have a thread or something to check that the process was actually started
-							
 							// Have we started enough?
 							if (num_start == 0)
 								break;
@@ -778,6 +785,9 @@ void check_redundancy()
 				
 				// Free desirable hosts
 				free(desirable_hosts);
+				
+				// Set alarm to recheck redundancy in a little bit
+				ualarm(RECHECK_PROCS_ALARM_DELAY, 0);
 			}
 			// Free memory
 			if (spawn_addrs)
