@@ -207,9 +207,12 @@ int main (int argc, char ** argv)
 		{
 			if ((buflen = recvfrom(selected_sock, buf, RECV_BUFFER_SIZE, 0, NULL, NULL)) != -1)
 			{
+				printf("RECEIVED MESSAGE TO STOP REDUNDANCY.\n");
 				// Very primative security
 				if (buflen == strlen(PASSWORD) && memcmp(buf, PASSWORD, buflen) == 0)
 				{
+					printf("STOPPING REDUNDANCY.\n");
+					
 					// Unsubscribe to RIB changes
 					subscribe_to_rib_changes(&info);
 					redundancy_flag = 0;
@@ -773,6 +776,10 @@ void check_redundancy()
 				printf("Sorting hosts according to desirability.\n");
 #endif
 				qsort(desirable_hosts, spawn_addrs->size, sizeof(desirable_hosts[0]), compare_desirable_hosts);
+				
+				// Recheck whether we should duplicate
+				if (!redundancy_flag)
+					return;
 				
 				// Make new socket
 				int spawn_sock = make_socket(NULL);
