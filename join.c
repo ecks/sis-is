@@ -200,11 +200,12 @@ int main (int argc, char ** argv)
 	while (1)
 	{
 		// Wait for message on either socket
-		int selected_sock = select(main_socks_max_fd, &main_socks, NULL, NULL, &select_timeout);
+		int selected_sock = select(main_socks_max_fd, &main_socks, NULL, NULL, NULL);
 		
 		// Stop redundancy socket
 		if (selected_sock == stop_redundancy_socket)
 		{
+			printf("Redundancy socket selected.\n");
 			if ((buflen = recvfrom(selected_sock, buf, RECV_BUFFER_SIZE, 0, NULL, NULL)) != -1)
 			{
 				printf("RECEIVED MESSAGE TO STOP REDUNDANCY.\n");
