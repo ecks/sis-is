@@ -175,8 +175,8 @@ int main (int argc, char ** argv)
 	// Set of sockets for main select call
 	fd_set main_socks;
 	FD_ZERO(&main_socks);
-	FD_SET(sockfd, &main_socks);
 	FD_SET(stop_redundancy_socket, &main_socks);
+	FD_SET(sockfd, &main_socks);
 	int main_socks_max_fd = MAX(stop_redundancy_socket, sockfd)+1;
 	
 	// Set of sockets for select call when waiting for other inputs
@@ -201,7 +201,7 @@ int main (int argc, char ** argv)
 	{
 		// Wait for message on either socket
 		int selected_sock = select(main_socks_max_fd, &main_socks, NULL, NULL, NULL);
-		
+		printf("Selected socket: %d\n", selected_sock);
 		// Stop redundancy socket
 		if (selected_sock == stop_redundancy_socket)
 		{
