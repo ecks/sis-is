@@ -59,7 +59,7 @@ void stop_redundancy_for_process_type(uint64_t proc_type)
 		}
 		
 		// Free memory
-		FREE_LINKED_LIST(sort_addrs);
+		FREE_LINKED_LIST(addrs);
 	}
 }
 
