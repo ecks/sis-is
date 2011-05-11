@@ -191,6 +191,7 @@ int main (int argc, char ** argv)
 	// Number of sort processes
 	int sort_count;
 	
+	printf("Sockets: %d\t%d\n", sockfd, stop_redundancy_socket);
 	
 	// Wait for message
 	struct sockaddr_in6 remote_addr;
@@ -201,7 +202,7 @@ int main (int argc, char ** argv)
 	{
 		// Wait for message on either socket
 		int selected_sock = select(main_socks_max_fd, &main_socks, NULL, NULL, NULL);
-		printf("Selected socket: %d\n", selected_sock);
+		
 		// Stop redundancy socket
 		if (selected_sock == stop_redundancy_socket)
 		{
