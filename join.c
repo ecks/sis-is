@@ -191,8 +191,6 @@ int main (int argc, char ** argv)
 	// Number of sort processes
 	int sort_count;
 	
-	printf("Sockets: %d\t%d\n", sockfd, stop_redundancy_socket);
-	
 	// Wait for message
 	struct sockaddr_in6 remote_addr;
 	int buflen;
@@ -201,140 +199,141 @@ int main (int argc, char ** argv)
 	while (1)
 	{
 		// Wait for message on either socket
-		int selected_sock = select(main_socks_max_fd, &main_socks, NULL, NULL, NULL);
-		
-		// Stop redundancy socket
-		if (selected_sock == stop_redundancy_socket)
+		if (select(main_socks_max_fd, &main_socks, NULL, NULL, NULL) > 0)
 		{
-			printf("Redundancy socket selected.\n");
-			if ((buflen = recvfrom(selected_sock, buf, RECV_BUFFER_SIZE, 0, NULL, NULL)) != -1)
+			// Stop redundancy socket
+			if (FD_ISSET(stop_redundancy_socket, &main_socks))
 			{
-				printf("RECEIVED MESSAGE TO STOP REDUNDANCY.\n");
-				// Very primative security
-				if (buflen == strlen(PASSWORD) && memcmp(buf, PASSWORD, buflen) == 0)
+				printf("Redundancy socket selected.\n");
+				if ((buflen = recvfrom(selected_sock, buf, RECV_BUFFER_SIZE, 0, NULL, NULL)) != -1)
 				{
-					printf("STOPPING REDUNDANCY.\n");
-					
-					// Unsubscribe to RIB changes
-					subscribe_to_rib_changes(&info);
-					redundancy_flag = 0;
+					printf("RECEIVED MESSAGE TO STOP REDUNDANCY.\n");
+					// Very primative security
+					if (buflen == strlen(PASSWORD) && memcmp(buf, PASSWORD, buflen) == 0)
+					{
+						printf("STOPPING REDUNDANCY.\n");
+						
+						// Unsubscribe to RIB changes
+						subscribe_to_rib_changes(&info);
+						redundancy_flag = 0;
+					}
 				}
 			}
-		}
-		// Input socket
-		else if (selected_sock == sockfd)
-		{
-			do
+			// Input socket
+			else if (FD_ISSET(sockfd, &main_socks))
 			{
-				// Read from socket
-				if ((buflen = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
+				do
 				{
-					// Setup table
-					if (num_tables == 0)
+					// Read from socket
+					if ((buflen = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
 					{
-						// Table 1
-						cur_table1_item = malloc(sizeof(*cur_table1_item));
-						table1_group.first = cur_table1_item;
-						// Table 2
-						cur_table2_item = malloc(sizeof(*cur_table2_item));
-						table2_group.first = cur_table2_item;
+						// Setup table
+						if (num_tables == 0)
+						{
+							// Table 1
+							cur_table1_item = malloc(sizeof(*cur_table1_item));
+							table1_group.first = cur_table1_item;
+							// Table 2
+							cur_table2_item = malloc(sizeof(*cur_table2_item));
+							table2_group.first = cur_table2_item;
+							
+							// Set socket select timeout
+							select_timeout.tv_sec = GATHER_RESULTS_TIMEOUT_USEC / 1000000;
+							select_timeout.tv_usec = GATHER_RESULTS_TIMEOUT_USEC % 1000000;
+							
+							// Get start time
+							gettimeofday(&start_time, NULL);
+						}
+						else
+						{
+							// Table 1
+							cur_table1_item->next = malloc(sizeof(*cur_table1_item->next));
+							cur_table1_item = cur_table1_item->next;
+							// Table 2
+							cur_table2_item->next = malloc(sizeof(*cur_table2_item->next));
+							cur_table2_item = cur_table2_item->next;
+							
+							// Determine new socket select timeout
+							gettimeofday(&cur_time, NULL);
+							timersub(&cur_time, &start_time, &tmp1);
+							timersub(&select_timeout, &tmp1, &tmp2);
+							select_timeout.tv_sec = tmp2.tv_sec;
+							select_timeout.tv_usec = tmp2.tv_usec;
+						}
+						// Check memory
+						if (cur_table1_item == NULL || cur_table2_item == NULL)
+						{ printf("Out of memory.\n"); exit(0); }
+						cur_table1_item->table = malloc(sizeof(demo_table1_entry)*MAX_TABLE_SIZE);
+						cur_table1_item->next = NULL;
+						cur_table2_item->table = malloc(sizeof(demo_table2_entry)*MAX_TABLE_SIZE);
+						cur_table2_item->next = NULL;
+						// Check memory
+						if (cur_table1_item->table == NULL || cur_table2_item->table == NULL)
+						{ printf("Out of memory.\n"); exit(0); }
+						num_tables++;
 						
-						// Set socket select timeout
-						select_timeout.tv_sec = GATHER_RESULTS_TIMEOUT_USEC / 1000000;
-						select_timeout.tv_usec = GATHER_RESULTS_TIMEOUT_USEC % 1000000;
-						
-						// Get start time
-						gettimeofday(&start_time, NULL);
-					}
-					else
-					{
-						// Table 1
-						cur_table1_item->next = malloc(sizeof(*cur_table1_item->next));
-						cur_table1_item = cur_table1_item->next;
-						// Table 2
-						cur_table2_item->next = malloc(sizeof(*cur_table2_item->next));
-						cur_table2_item = cur_table2_item->next;
-						
-						// Determine new socket select timeout
-						gettimeofday(&cur_time, NULL);
-						timersub(&cur_time, &start_time, &tmp1);
-						timersub(&select_timeout, &tmp1, &tmp2);
-						select_timeout.tv_sec = tmp2.tv_sec;
-						select_timeout.tv_usec = tmp2.tv_usec;
-					}
-					// Check memory
-					if (cur_table1_item == NULL || cur_table2_item == NULL)
-					{ printf("Out of memory.\n"); exit(0); }
-					cur_table1_item->table = malloc(sizeof(demo_table1_entry)*MAX_TABLE_SIZE);
-					cur_table1_item->next = NULL;
-					cur_table2_item->table = malloc(sizeof(demo_table2_entry)*MAX_TABLE_SIZE);
-					cur_table2_item->next = NULL;
-					// Check memory
-					if (cur_table1_item->table == NULL || cur_table2_item->table == NULL)
-					{ printf("Out of memory.\n"); exit(0); }
-					num_tables++;
-					
-					// Deserialize
-					int bytes_used;
-					cur_table1_item->table_size = deserialize_table1(cur_table1_item->table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
-					cur_table2_item->table_size = deserialize_table2(cur_table2_item->table, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
-	#ifdef DEBUG
-					printf("Table 1 Rows: %d\n", cur_table1_item->table_size);
-					printf("Table 2 Rows: %d\n", cur_table2_item->table_size);
-	#endif
-		
-					// Check how many sort processes there are
-					sort_count = get_sort_process_count();
-	#ifdef DEBUG
-					printf("# inputs: %d\n", num_tables);
-					printf("# sort processes: %d\n", sort_count);
-					printf("Waiting %d.%06d seconds for more results.\n", (long)select_timeout.tv_sec, (long)select_timeout.tv_usec);
-	#endif
-				}
-			} while(num_tables < sort_count && select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
+						// Deserialize
+						int bytes_used;
+						cur_table1_item->table_size = deserialize_table1(cur_table1_item->table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
+						cur_table2_item->table_size = deserialize_table2(cur_table2_item->table, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
+		#ifdef DEBUG
+						printf("Table 1 Rows: %d\n", cur_table1_item->table_size);
+						printf("Table 2 Rows: %d\n", cur_table2_item->table_size);
+		#endif
 			
-			// Check that at least 1/2 of the processes sent inputs
-			if (num_tables <= sort_count/2)
-				printf("Not enough inputs for a vote.\n");
-			else
-			{
-				// Vote
-	#ifdef DEBUG
-				printf("Voting...\n");
-	#endif
-				table_group_item_t * cur_item_table1 = table1_vote(&table1_group);
-				table_group_item_t * cur_item_table2 = table2_vote(&table2_group);
-				if (!cur_item_table1 || !cur_item_table2)
-					printf("Failed to vote on tables.\n");
+						// Check how many sort processes there are
+						sort_count = get_sort_process_count();
+		#ifdef DEBUG
+						printf("# inputs: %d\n", num_tables);
+						printf("# sort processes: %d\n", sort_count);
+						printf("Waiting %d.%06d seconds for more results.\n", (long)select_timeout.tv_sec, (long)select_timeout.tv_usec);
+		#endif
+					}
+				} while(num_tables < sort_count && select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
+				
+				// Check that at least 1/2 of the processes sent inputs
+				if (num_tables <= sort_count/2)
+					printf("Not enough inputs for a vote.\n");
 				else
 				{
-					// Process tables
-					process_tables(cur_item_table1->table, cur_item_table1->table_size, cur_item_table2->table, cur_item_table2->table_size);
+					// Vote
+		#ifdef DEBUG
+					printf("Voting...\n");
+		#endif
+					table_group_item_t * cur_item_table1 = table1_vote(&table1_group);
+					table_group_item_t * cur_item_table2 = table2_vote(&table2_group);
+					if (!cur_item_table1 || !cur_item_table2)
+						printf("Failed to vote on tables.\n");
+					else
+					{
+						// Process tables
+						process_tables(cur_item_table1->table, cur_item_table1->table_size, cur_item_table2->table, cur_item_table2->table_size);
+					}
 				}
-			}
-			
-			// Reset
-			num_tables = 0;
-			// Free table1_group
-			table_group_item_t * tmp;
-			cur_table1_item = table1_group.first;
-			table1_group.first = NULL;
-			while (cur_table1_item != NULL)
-			{
-				free(cur_table1_item->table);
-				tmp = cur_table1_item;
-				cur_table1_item = cur_table1_item->next;
-				free(tmp);
-			}
-			// Free table2_group
-			cur_table2_item = table2_group.first;
-			table2_group.first = NULL;
-			while (cur_table2_item != NULL)
-			{
-				free(cur_table2_item->table);
-				tmp = cur_table2_item;
-				cur_table2_item = cur_table2_item->next;
-				free(tmp);
+				
+				// Reset
+				num_tables = 0;
+				// Free table1_group
+				table_group_item_t * tmp;
+				cur_table1_item = table1_group.first;
+				table1_group.first = NULL;
+				while (cur_table1_item != NULL)
+				{
+					free(cur_table1_item->table);
+					tmp = cur_table1_item;
+					cur_table1_item = cur_table1_item->next;
+					free(tmp);
+				}
+				// Free table2_group
+				cur_table2_item = table2_group.first;
+				table2_group.first = NULL;
+				while (cur_table2_item != NULL)
+				{
+					free(cur_table2_item->table);
+					tmp = cur_table2_item;
+					cur_table2_item = cur_table2_item->next;
+					free(tmp);
+				}
 			}
 		}
 	}
