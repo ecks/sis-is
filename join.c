@@ -133,7 +133,7 @@ int main (int argc, char ** argv)
 	}
 	
 	// Open socket to stop redundancy
-	sprintf(port_str, "%u", JOIN_STOP_REDUNDANCY_PORT);
+	sprintf(port_str, "%u", STOP_REDUNDANCY_PORT);
 	stop_redundancy_socket = make_socket(port_str);
 	
 	// Short sleep while address propagates
@@ -160,8 +160,6 @@ int main (int argc, char ** argv)
 	info.rib_add_ipv6_route = rib_monitor_add_ipv6_route;
 	info.rib_remove_ipv6_route = rib_monitor_remove_ipv6_route;
 	subscribe_to_rib_changes(&info);
-	
-	// TODO: Have a way to unsubscribe to RIB changes to stop redundancy
 	
 	// Setup list of tables
 	int num_tables = 0;

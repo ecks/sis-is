@@ -27,8 +27,6 @@
 #define VERSION 1
 
 int sockfd = -1;
-uint64_t ptype, host_num, pid;
-uint64_t timestamp;
 
 void terminate(int signal)
 {
@@ -43,23 +41,6 @@ void terminate(int signal)
 
 int main (int argc, char ** argv)
 {
-	// Get start time
-	timestamp = time(NULL);
-	
-	// Check number of args
-	if (argc != 2)
-	{
-		printf("Usage: %s <host_num>\n", argv[0]);
-		exit(1);
-	}
-	
-	// Get host number
-	sscanf (argv[1], "%llu", &host_num);
-	char sisis_addr[INET6_ADDRSTRLEN+1];
-	
-	// Get pid
-	pid = getpid();
-	
 	printf("Opening socket...\n");
 	
 	// Create socket

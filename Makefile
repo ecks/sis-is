@@ -1,5 +1,5 @@
 CC = gcc
-EXECUTABLES = shim sort join voter
+EXECUTABLES = shim sort join voter stop_redundancy
 USER_OBJS   = shim.o voter.o sort.o join.o table.o
 SISIS_API_C = ../tests/sisis_*.c
 LIBS = -lrt -lpthread
@@ -20,6 +20,9 @@ join: join.o table.o
 
 voter: voter.o table.o
 	$(CC) $(CFLAGS) $(LIBS) -o voter voter.o table.o $(SISIS_API_C)
+
+stop_redundancy: stop_redundancy.o
+	$(CC) $(CFLAGS) $(LIBS) -o stop_redundancy stop_redundancy.o $(SISIS_API_C)
 
 .c.o: 
 	gcc -c $*.c
