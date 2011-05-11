@@ -67,9 +67,6 @@ int main (int argc, char ** argv)
 {
 	printf("Opening socket...\n");
 	
-	stop_redundancy_for_process_type((uint64_t)SISIS_PTYPE_DEMO1_SORT);
-	stop_redundancy_for_process_type((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
-	
 	// Create socket
 	if ((sockfd = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
 	{
@@ -77,7 +74,8 @@ int main (int argc, char ** argv)
 		exit(1);
 	}
 	
-	
+	stop_redundancy_for_process_type((uint64_t)SISIS_PTYPE_DEMO1_SORT);
+	stop_redundancy_for_process_type((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
 	
 	// Close socket
 	if (sockfd != -1)
