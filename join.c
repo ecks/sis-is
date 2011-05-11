@@ -204,14 +204,14 @@ int main (int argc, char ** argv)
 			// Stop redundancy socket
 			if (FD_ISSET(stop_redundancy_socket, &main_socks))
 			{
-				printf("Redundancy socket selected.\n");
 				if ((buflen = recvfrom(stop_redundancy_socket, buf, RECV_BUFFER_SIZE, 0, NULL, NULL)) != -1)
 				{
-					printf("RECEIVED MESSAGE TO STOP REDUNDANCY.\n");
 					// Very primative security
 					if (buflen == strlen(PASSWORD) && memcmp(buf, PASSWORD, buflen) == 0)
 					{
-						printf("STOPPING REDUNDANCY.\n");
+#ifdef DEBUG
+						printf("Stopping Redundancy.\n");
+#endif
 						
 						// Unsubscribe to RIB changes
 						subscribe_to_rib_changes(&info);
