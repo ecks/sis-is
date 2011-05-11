@@ -40,7 +40,7 @@ void stop_redundancy_for_process_type(uint64_t proc_type)
 	{
 		// Send message to all processes
 		struct listnode * node;
-		LIST_FOREACH(sort_addrs, node)
+		LIST_FOREACH(addrs, node)
 		{
 			// Get address
 			struct in6_addr * remote_addr = (struct in6_addr *)node->data;
