@@ -26,6 +26,8 @@
 
 #define VERSION 1
 
+#define SEND_BUF_SIZE 65536
+
 int sockfd = -1, con = -1;
 uint64_t ptype, host_num, pid;
 uint64_t timestamp;
@@ -472,21 +474,22 @@ int main (int argc, char ** argv)
 	socklen_t addr_size = sizeof remote_addr;
 	while ((len = recvfrom(sockfd, buf, 1024, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
 	{
-		char send_buf[16384];
+		char send_buf[SEND_BUF_SIZE];
+		int send_buf_written = 0;
 		
 		// Memory
 		struct memory_stats mem_stats = get_memory_usage();
-		sprintf(send_buf, "MemoryUsage: %hd.%hd%%\n", mem_stats.usage_percent/10, mem_stats.usage_percent%10);
-		sprintf(send_buf, "%sFreeMemory: %0.0lf\n", send_buf, mem_stats.free);
-		sprintf(send_buf, "%sTotalMemory: %0.0lf\n", send_buf, mem_stats.total);
+		snprintf(send_buf, SEND_BUF_SIZE - send_buf_written, "MemoryUsage: %hd.%hd%%\n", mem_stats.usage_percent/10, mem_stats.usage_percent%10);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "FreeMemory: %0.0lf\n", mem_stats.free);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "TotalMemory: %0.0lf\n", mem_stats.total);
 		
 		// CPU
 		short usage = get_cpu_usage();
-		sprintf(send_buf, "%sCPU: %hd.%hd%%\n", send_buf, usage/10, usage%10);
-		sprintf(send_buf, "%sCPUs: %hd\n", send_buf, get_cpu_count());
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "CPU: %hd.%hd%%\n", usage/10, usage%10);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "CPUs: %hd\n", get_cpu_count());
 		
 		// Number of processes
-		sprintf(send_buf, "%sProcesses: %ld\n", send_buf, get_num_processes());
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "Processes: %ld\n", get_num_processes());
 		
 		// Get file system info
 		struct statvfs statvfs_info;
@@ -502,13 +505,13 @@ int main (int argc, char ** argv)
 				total /= 1024;
 				unit_idx++;
 			}
-			sprintf(send_buf, "%sFreeDiskSpace: %0.02lf%s\nTotalDiskSpace: %0.02lf%s\n", send_buf, avail, units[unit_idx], total, units[unit_idx]);
+			snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "FreeDiskSpace: %0.02lf%s\nTotalDiskSpace: %0.02lf%s\n", avail, units[unit_idx], total, units[unit_idx]);
 		}
 		
 		// Get info from uname
 		struct utsname uname_info;
 		if (uname(&uname_info) == 0)
-			sprintf(send_buf, "%sunameSysname: %s\nunameNodename: %s\nunameRelease: %s\nunameVersion: %s\nunameMachine: %s\n", send_buf, uname_info.sysname, uname_info.nodename, uname_info.release, uname_info.version, uname_info.machine);
+			snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "unameSysname: %s\nunameNodename: %s\nunameRelease: %s\nunameVersion: %s\nunameMachine: %s\n", uname_info.sysname, uname_info.nodename, uname_info.release, uname_info.version, uname_info.machine);
 		
 		/* CPU Usage Vector */
 		// Lock mutex
@@ -516,28 +519,28 @@ int main (int argc, char ** argv)
 		
 		// Secondly history
 		int i, tmp;
-		sprintf(send_buf, "%ssecondlyCPUUsage: [", send_buf);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "secondlyCPUUsage: [");
 		for (i = cpu_usage_secondly_history_head, tmp = cpu_usage_secondly_history_items; tmp > 0; tmp--, i = (i+1)%MAX_CPU_USAGE_SECONDLY_HISTORY_ITEMS)
-			sprintf(send_buf, "%s%s%hd.%hd", send_buf, ((i == cpu_usage_secondly_history_head) ? "" : ","), cpu_usage_secondly_history[i]/10, cpu_usage_secondly_history[i]%10);
-		sprintf(send_buf, "%s]\n", send_buf);
+			snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "%s%hd.%hd", ((i == cpu_usage_secondly_history_head) ? "" : ","), cpu_usage_secondly_history[i]/10, cpu_usage_secondly_history[i]%10);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "]\n");
 		
 		// 30 Second history
-		sprintf(send_buf, "%s30secondCPUUsage: [", send_buf);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "30secondCPUUsage: [");
 		for (i = cpu_usage_30second_history_head, tmp = cpu_usage_30second_history_items; tmp > 0; tmp--, i = (i+1)%MAX_CPU_USAGE_30SECOND_HISTORY_ITEMS)
-			sprintf(send_buf, "%s%s%hd.%hd", send_buf, ((i == cpu_usage_30second_history_head) ? "" : ","), cpu_usage_30second_history[i]/10, cpu_usage_30second_history[i]%10);
-		sprintf(send_buf, "%s]\n", send_buf);
+			snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "%s%hd.%hd", ((i == cpu_usage_30second_history_head) ? "" : ","), cpu_usage_30second_history[i]/10, cpu_usage_30second_history[i]%10);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "]\n");
 		
 		// Minutely history
-		sprintf(send_buf, "%sminutelyCPUUsage: [", send_buf);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "minutelyCPUUsage: [");
 		for (i = cpu_usage_minutely_history_head, tmp = cpu_usage_minutely_history_items; tmp > 0; tmp--, i = (i+1)%MAX_CPU_USAGE_MINUTELY_HISTORY_ITEMS)
-			sprintf(send_buf, "%s%s%hd.%hd", send_buf, ((i == cpu_usage_minutely_history_head) ? "" : ","), cpu_usage_minutely_history[i]/10, cpu_usage_minutely_history[i]%10);
-		sprintf(send_buf, "%s]\n", send_buf);
+			snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "%s%hd.%hd", ((i == cpu_usage_minutely_history_head) ? "" : ","), cpu_usage_minutely_history[i]/10, cpu_usage_minutely_history[i]%10);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "]\n");
 		
 		// 30 Minute history
-		sprintf(send_buf, "%s30minuteCPUUsage: [", send_buf);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "30minuteCPUUsage: [");
 		for (i = cpu_usage_30minute_history_head, tmp = cpu_usage_30minute_history_items; tmp > 0; tmp--, i = (i+1)%MAX_CPU_USAGE_30MINUTE_HISTORY_ITEMS)
-			sprintf(send_buf, "%s%s%hd.%hd", send_buf, ((i == cpu_usage_30minute_history_head) ? "" : ","), cpu_usage_30minute_history[i]/10, cpu_usage_30minute_history[i]%10);
-		sprintf(send_buf, "%s]\n", send_buf);
+			snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "%s%hd.%hd", ((i == cpu_usage_30minute_history_head) ? "" : ","), cpu_usage_30minute_history[i]/10, cpu_usage_30minute_history[i]%10);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "]\n");
 		
 		// Unlock mutex
 		pthread_mutex_unlock(&cpu_usage_mutex);
@@ -548,28 +551,28 @@ int main (int argc, char ** argv)
 		pthread_mutex_lock(&memory_usage_mutex);
 		
 		// Secondly history
-		sprintf(send_buf, "%ssecondlyMemoryUsage: [", send_buf);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "secondlyMemoryUsage: [");
 		for (i = memory_usage_secondly_history_head, tmp = memory_usage_secondly_history_items; tmp > 0; tmp--, i = (i+1)%MAX_MEMORY_USAGE_SECONDLY_HISTORY_ITEMS)
-			sprintf(send_buf, "%s%s%hd.%hd", send_buf, ((i == memory_usage_secondly_history_head) ? "" : ","), memory_usage_secondly_history[i]/10, memory_usage_secondly_history[i]%10);
-		sprintf(send_buf, "%s]\n", send_buf);
+			snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "%s%hd.%hd", ((i == memory_usage_secondly_history_head) ? "" : ","), memory_usage_secondly_history[i]/10, memory_usage_secondly_history[i]%10);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "]\n");
 		
 		// 30 Second history
-		sprintf(send_buf, "%s30secondMemoryUsage: [", send_buf);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "30secondMemoryUsage: [");
 		for (i = memory_usage_30second_history_head, tmp = memory_usage_30second_history_items; tmp > 0; tmp--, i = (i+1)%MAX_MEMORY_USAGE_30SECOND_HISTORY_ITEMS)
-			sprintf(send_buf, "%s%s%hd.%hd", send_buf, ((i == memory_usage_30second_history_head) ? "" : ","), memory_usage_30second_history[i]/10, memory_usage_30second_history[i]%10);
-		sprintf(send_buf, "%s]\n", send_buf);
+			snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "%s%hd.%hd", ((i == memory_usage_30second_history_head) ? "" : ","), memory_usage_30second_history[i]/10, memory_usage_30second_history[i]%10);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "]\n");
 		
 		// Minutely history
-		sprintf(send_buf, "%sminutelyMemoryUsage: [", send_buf);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "minutelyMemoryUsage: [");
 		for (i = memory_usage_minutely_history_head, tmp = memory_usage_minutely_history_items; tmp > 0; tmp--, i = (i+1)%MAX_MEMORY_USAGE_MINUTELY_HISTORY_ITEMS)
-			sprintf(send_buf, "%s%s%hd.%hd", send_buf, ((i == memory_usage_minutely_history_head) ? "" : ","), memory_usage_minutely_history[i]/10, memory_usage_minutely_history[i]%10);
-		sprintf(send_buf, "%s]\n", send_buf);
+			snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "%s%hd.%hd", ((i == memory_usage_minutely_history_head) ? "" : ","), memory_usage_minutely_history[i]/10, memory_usage_minutely_history[i]%10);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "]\n");
 		
 		// 30 Minute history
-		sprintf(send_buf, "%s30minuteMemoryUsage: [", send_buf);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "30minuteMemoryUsage: [");
 		for (i = memory_usage_30minute_history_head, tmp = memory_usage_30minute_history_items; tmp > 0; tmp--, i = (i+1)%MAX_MEMORY_USAGE_30MINUTE_HISTORY_ITEMS)
-			sprintf(send_buf, "%s%s%hd.%hd", send_buf, ((i == memory_usage_30minute_history_head) ? "" : ","), memory_usage_30minute_history[i]/10, memory_usage_30minute_history[i]%10);
-		sprintf(send_buf, "%s]\n", send_buf);
+			snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "%s%hd.%hd", ((i == memory_usage_30minute_history_head) ? "" : ","), memory_usage_30minute_history[i]/10, memory_usage_30minute_history[i]%10);
+		snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "]\n");
 		
 		// Unlock mutex
 		pthread_mutex_unlock(&memory_usage_mutex);
