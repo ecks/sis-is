@@ -476,3 +476,22 @@ int merge_table_distance(demo_merge_table_entry * table1, int size1, demo_merge_
 	
 	return dist;
 }
+
+/** Free a group of tables and data inside */
+int table_group_free(table_group_t * tables)
+{
+	table_group_item_t * item = tables->first, item2;
+	tables->first = NULL;
+	while (item != NULL)
+	{
+		// Get next item
+		item2 = item->next;
+		
+		// Free memory
+		free(item->table);
+		free(item);
+		
+		// Set next item
+		item = item2;
+	}
+}

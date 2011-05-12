@@ -108,6 +108,10 @@ void vote_and_process()
 		// Process tables
 		process_tables(table1_item->table, table1_item->table_size, table2_item->table, table2_item->table_size);
 	}
+	
+	// Clear tables
+	table_group_free(&table1_group);
+	table_group_free(&table2_group);
 }
 
 /** Join tables and send result to voter processes. */

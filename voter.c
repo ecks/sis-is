@@ -93,4 +93,7 @@ void vote_and_process()
 				printf("User Id: %d\tName: %s\tGender: %c\n", join_table[i].user_id, join_table[i].name, join_table[i].gender);
 		}
 	}
+	
+	// Clear tables
+	table_group_free(&merge_table_group);
 }

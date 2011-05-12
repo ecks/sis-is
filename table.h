@@ -89,4 +89,7 @@ table_group_item_t * merge_table_vote(table_group_t * tables);
 /** Compute distance between 2 join tables. */
 int merge_table_distance(demo_merge_table_entry * table1, int size1, demo_merge_table_entry * table2, int size2);
 
+/** Free a group of tables and data inside */
+int table_group_free(table_group_t * tables);
+
 #endif
