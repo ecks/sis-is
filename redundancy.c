@@ -279,7 +279,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 				} while(!(flags & REDUNDANCY_MAIN_FLAG_SINGLE_INPUT) && num_input < num_input_processes && select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
 				
 				// Check that at least 1/2 of the processes sent inputs
-				if (!(flags & REDUNDANCY_MAIN_FLAG_SINGLE_INPUT) || num_input <= num_input_processes/2)
+				if (!(flags & REDUNDANCY_MAIN_FLAG_SINGLE_INPUT) && num_input <= num_input_processes/2)
 					printf("Not enough inputs for a vote.\n");
 				else
 				{
