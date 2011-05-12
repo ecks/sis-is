@@ -141,10 +141,7 @@ void process_tables(demo_table1_entry * table1, int rows1, demo_table2_entry * t
 	else
 	{
 		// Find all voter processes
-		char voter_addr[INET6_ADDRSTRLEN+1];
-		sisis_create_addr(voter_addr, (uint64_t)SISIS_PTYPE_DEMO1_VOTER, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
-		struct prefix_ipv6 voter_prefix = sisis_make_ipv6_prefix(voter_addr, 42);
-		struct list * voter_addrs = get_sisis_addrs_for_prefix(&voter_prefix);
+		struct list * voter_addrs = get_processes_by_type((uint64_t)SISIS_PTYPE_DEMO1_VOTER);
 		if (voter_addrs == NULL || voter_addrs->size == 0)
 			printf("No voter processes found.\n");
 		else
