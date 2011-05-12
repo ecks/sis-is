@@ -19,8 +19,7 @@
 #include <time.h>
 
 #include "demo.h"
-#include "join.h"
-#include "table.h"
+#include "redundancy.h"
 
 #include "../remote_spawn/remote_spawn.h"
 #include "../tests/sisis_api.h"
@@ -43,8 +42,8 @@ struct timeval timestamp_precise;
 
 char sisis_addr[INET6_ADDRSTRLEN];
 
-// Current number of join processes (-1 for invalid)
-int num_join_processes = -1;
+// Current number of processes (-1 for invalid)
+int num_processes = -1;
 
 void close_listener()
 {
@@ -58,7 +57,7 @@ void close_listener()
 		close(sockfd);
 		
 		// Unregister
-		sisis_unregister(NULL, (uint64_t)SISIS_PTYPE_DEMO1_JOIN, (uint64_t)VERSION, host_num, pid, timestamp);
+		sisis_unregister(NULL, ptype, (uint64_t)VERSION, host_num, pid, timestamp);
 		
 		sockfd = -1;
 	}
@@ -66,7 +65,9 @@ void close_listener()
 
 void terminate(int signal)
 {
+#ifdef DEBUG
 	printf("Terminating...\n");
+#endif
 	close_listener();
 	exit(0);
 }
@@ -79,7 +80,7 @@ void recheck_redundance_alarm_handler(int signal)
 	check_redundancy();
 }
 
-int main (int argc, char ** argv)
+int redundancy_main (uint64_t process_type, uint64_t process_type_version, int port, uint64_t input_process_type, void (*process_input)(char *, int), void (*vote_and_process)(), int argc, char ** argv)
 {
 	// Get start time
 	timestamp = time(NULL);
@@ -99,14 +100,14 @@ int main (int argc, char ** argv)
 	pid = getpid();
 	
 	// Register address
-	if (sisis_register(sisis_addr, (uint64_t)SISIS_PTYPE_DEMO1_JOIN, (uint64_t)VERSION, host_num, pid, timestamp) != 0)
+	if (sisis_register(sisis_addr, process_type, process_type_version, host_num, pid, timestamp) != 0)
 	{
 		printf("Failed to register SIS-IS address.\n");
 		exit(1);
 	}
 	
 	// Status
-	printf("Opening socket at %s on port %i.\n", sisis_addr, JOIN_PORT);
+	printf("Opening socket at %s on port %i.\n", sisis_addr, port);
 	
 	// Set up socket address info
 	struct addrinfo hints, *addr;
@@ -114,7 +115,7 @@ int main (int argc, char ** argv)
 	hints.ai_family = AF_INET6;	// IPv6
 	hints.ai_socktype = SOCK_DGRAM;
 	char port_str[8];
-	sprintf(port_str, "%u", JOIN_PORT);
+	sprintf(port_str, "%u", port);
 	getaddrinfo(sisis_addr, port_str, &hints, &addr);
 	
 	// Create socket
@@ -161,17 +162,6 @@ int main (int argc, char ** argv)
 	info.rib_remove_ipv6_route = rib_monitor_remove_ipv6_route;
 	subscribe_to_rib_changes(&info);
 	
-	// Setup list of tables
-	int num_tables = 0;
-	// Table 1
-	table_group_t table1_group;
-	table1_group.first = NULL;
-	table_group_item_t * cur_table1_item = NULL;
-	// Table 2
-	table_group_t table2_group;
-	table2_group.first = NULL;
-	table_group_item_t * cur_table2_item = NULL;
-	
 	// Set of sockets for main select call
 	fd_set main_socks;
 	FD_ZERO(&main_socks);
@@ -188,8 +178,9 @@ int main (int argc, char ** argv)
 	struct timeval select_timeout;
 	struct timeval start_time, cur_time, tmp1, tmp2;
 	
-	// Number of sort processes
-	int sort_count;
+	// Number of input processes
+	int num_input_processes;
+	int num_input = 0;
 	
 	// Wait for message
 	struct sockaddr_in6 remote_addr;
@@ -227,16 +218,9 @@ int main (int argc, char ** argv)
 					// Read from socket
 					if ((buflen = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
 					{
-						// Setup table
-						if (num_tables == 0)
+						// Setup input
+						if (num_input == 0)
 						{
-							// Table 1
-							cur_table1_item = malloc(sizeof(*cur_table1_item));
-							table1_group.first = cur_table1_item;
-							// Table 2
-							cur_table2_item = malloc(sizeof(*cur_table2_item));
-							table2_group.first = cur_table2_item;
-							
 							// Set socket select timeout
 							select_timeout.tv_sec = GATHER_RESULTS_TIMEOUT_USEC / 1000000;
 							select_timeout.tv_usec = GATHER_RESULTS_TIMEOUT_USEC % 1000000;
@@ -246,13 +230,6 @@ int main (int argc, char ** argv)
 						}
 						else
 						{
-							// Table 1
-							cur_table1_item->next = malloc(sizeof(*cur_table1_item->next));
-							cur_table1_item = cur_table1_item->next;
-							// Table 2
-							cur_table2_item->next = malloc(sizeof(*cur_table2_item->next));
-							cur_table2_item = cur_table2_item->next;
-							
 							// Determine new socket select timeout
 							gettimeofday(&cur_time, NULL);
 							timersub(&cur_time, &start_time, &tmp1);
@@ -260,80 +237,34 @@ int main (int argc, char ** argv)
 							select_timeout.tv_sec = tmp2.tv_sec;
 							select_timeout.tv_usec = tmp2.tv_usec;
 						}
-						// Check memory
-						if (cur_table1_item == NULL || cur_table2_item == NULL)
-						{ printf("Out of memory.\n"); exit(0); }
-						cur_table1_item->table = malloc(sizeof(demo_table1_entry)*MAX_TABLE_SIZE);
-						cur_table1_item->next = NULL;
-						cur_table2_item->table = malloc(sizeof(demo_table2_entry)*MAX_TABLE_SIZE);
-						cur_table2_item->next = NULL;
-						// Check memory
-						if (cur_table1_item->table == NULL || cur_table2_item->table == NULL)
-						{ printf("Out of memory.\n"); exit(0); }
-						num_tables++;
 						
-						// Deserialize
-						int bytes_used;
-						cur_table1_item->table_size = deserialize_table1(cur_table1_item->table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
-						cur_table2_item->table_size = deserialize_table2(cur_table2_item->table, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
-		#ifdef DEBUG
-						printf("Table 1 Rows: %d\n", cur_table1_item->table_size);
-						printf("Table 2 Rows: %d\n", cur_table2_item->table_size);
-		#endif
-			
-						// Check how many sort processes there are
-						sort_count = get_sort_process_count();
+						// Record input
+						num_input++;
+						
+						// Process the input
+						process_input(buf, buflen);
+						
+						// Check how many input processes there are
+						num_input_processes = get_process_type_count(input_process_type);
 		#ifdef DEBUG
 						printf("# inputs: %d\n", num_tables);
-						printf("# sort processes: %d\n", sort_count);
+						printf("# input processes: %d\n", num_input_processes);
 						printf("Waiting %d.%06d seconds for more results.\n", (long)select_timeout.tv_sec, (long)select_timeout.tv_usec);
 		#endif
 					}
-				} while(num_tables < sort_count && select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
+				} while(num_input < num_input_processes && select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
 				
 				// Check that at least 1/2 of the processes sent inputs
-				if (num_tables <= sort_count/2)
+				if (num_input <= sort_count/2)
 					printf("Not enough inputs for a vote.\n");
 				else
 				{
-					// Vote
-		#ifdef DEBUG
-					printf("Voting...\n");
-		#endif
-					table_group_item_t * cur_item_table1 = table1_vote(&table1_group);
-					table_group_item_t * cur_item_table2 = table2_vote(&table2_group);
-					if (!cur_item_table1 || !cur_item_table2)
-						printf("Failed to vote on tables.\n");
-					else
-					{
-						// Process tables
-						process_tables(cur_item_table1->table, cur_item_table1->table_size, cur_item_table2->table, cur_item_table2->table_size);
-					}
+					// Vote and process results
+					vote_and_process();
 				}
 				
 				// Reset
-				num_tables = 0;
-				// Free table1_group
-				table_group_item_t * tmp;
-				cur_table1_item = table1_group.first;
-				table1_group.first = NULL;
-				while (cur_table1_item != NULL)
-				{
-					free(cur_table1_item->table);
-					tmp = cur_table1_item;
-					cur_table1_item = cur_table1_item->next;
-					free(tmp);
-				}
-				// Free table2_group
-				cur_table2_item = table2_group.first;
-				table2_group.first = NULL;
-				while (cur_table2_item != NULL)
-				{
-					free(cur_table2_item->table);
-					tmp = cur_table2_item;
-					cur_table2_item = cur_table2_item->next;
-					free(tmp);
-				}
+				num_input = 0;
 			}
 		}
 	}
@@ -371,75 +302,6 @@ int get_process_type_count(uint64_t process_type)
 	return cnt;
 }
 
-/** Count number of sort processes */
-int get_sort_process_count()
-{
-	return get_process_type_count((uint64_t)SISIS_PTYPE_DEMO1_SORT);
-}
-
-/** Join tables and send result to voter processes. */
-void process_tables(demo_table1_entry * table1, int rows1, demo_table2_entry * table2, int rows2)
-{
-	int i;
-	
-	// Join
-	demo_merge_table_entry join_table[MAX_TABLE_SIZE];
-	int rows = merge_join(table1, rows1, table2, rows2, join_table, MAX_TABLE_SIZE);
-	
-#ifdef DEBUG
-	// Print
-	if (rows == -1)
-		printf("Join error.\n");
-	else
-	{
-		printf("Joined Rows: %d\n", rows);
-		//for (i = 0; i < rows; i++)
-			//printf("User Id: %d\tName: %s\tGender: %c\n", join_table[i].user_id, join_table[i].name, join_table[i].gender);
-	}
-#endif
-	
-	// Serialize
-	char buf[SEND_BUFFER_SIZE];
-	int buflen = serialize_join_table(join_table, rows, buf, SEND_BUFFER_SIZE);
-	if (buflen == -1)
-		printf("Failed to serialize table.\n");
-	else
-	{
-		// Find all voter processes
-		char voter_addr[INET6_ADDRSTRLEN+1];
-		sisis_create_addr(voter_addr, (uint64_t)SISIS_PTYPE_DEMO1_VOTER, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
-		struct prefix_ipv6 voter_prefix = sisis_make_ipv6_prefix(voter_addr, 42);
-		struct list * voter_addrs = get_sisis_addrs_for_prefix(&voter_prefix);
-		if (voter_addrs == NULL || voter_addrs->size == 0)
-			printf("No voter processes found.\n");
-		else
-		{
-			// Send to all join processes
-			struct listnode * node;
-			LIST_FOREACH(voter_addrs, node)
-			{
-				// Get address
-				struct in6_addr * remote_addr = (struct in6_addr *)node->data;
-				
-				// Set up socket info
-				struct sockaddr_in6 sockaddr;
-				int sockaddr_size = sizeof(sockaddr);
-				memset(&sockaddr, 0, sockaddr_size);
-				sockaddr.sin6_family = AF_INET6;
-				sockaddr.sin6_port = htons(JOIN_PORT);
-				sockaddr.sin6_addr = *remote_addr;
-				
-				if (sendto(sockfd, buf, buflen, 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
-					printf("Failed to send message.  Error: %i\n", errno);
-			}
-			
-			// Free memory
-			FREE_LINKED_LIST(voter_addrs);
-		}
-	}
-}
-
-
 int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 {
 	// Make sure it is a host address
@@ -455,19 +317,18 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 				// Check that this is an SIS-IS address
 				if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
 				{
-					// Check if this is a join process
-					if (process_type == (uint64_t)SISIS_PTYPE_DEMO1_JOIN)
+					// Check if this is the current process type
+					if (process_type == ptype)
 					{
-						// Update current number of join processes
-						if (num_join_processes == -1)
-							num_join_processes = get_process_type_count((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
+						// Update current number of processes
+						if (num_processes == -1)
+							num_processes = get_process_type_count(ptype);
 						else
-							num_join_processes++;
+							num_processes++;
 						
 						// Check redundancy
 						check_redundancy();
 					}
-					//printf("New process\n\tProcess: %llu v%llu\n\tSystem Id: %llu\n\tPID: %llu\n\tTimestamp: %llu\n", process_type, process_version, sys_id, pid, ts);
 				}
 			}
 		}
@@ -492,19 +353,18 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 				// Check that this is an SIS-IS address
 				if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
 				{
-					// Check if this is a join process
-					if (process_type == (uint64_t)SISIS_PTYPE_DEMO1_JOIN)
+					// Check if this is the current process type
+					if (process_type == ptype)
 					{
-						// Update current number of join processes
-						if (num_join_processes == -1)
-							num_join_processes = get_process_type_count((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
+						// Update current number of processes
+						if (num_processes == -1)
+							num_processes = get_process_type_count(ptype);
 						else
-							num_join_processes--;
+							num_processes--;
 						
 						// Check redundancy
 						check_redundancy();
 					}
-					//printf("Removed process\n\tProcess: %llu v%llu\n\tSystem Id: %llu\n\tPID: %llu\n\tTimestamp: %llu\n", process_type, process_version, sys_id, pid, ts);
 				}
 			}
 		}
@@ -514,7 +374,7 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 	free(route);
 }
 
-/** Checks if there is an appropriate number of join processes running in the system. */
+/** Checks if there is an appropriate number of processes running in the system. */
 void check_redundancy()
 {
 	// Make sure we are supposed to check
@@ -527,23 +387,23 @@ void check_redundancy()
 	// Determine number of processes we should have
 	int num_procs = MAX(num_machines*REDUNDANCY_PERCENTAGE/100, 3);
 	
-	// Get list of all join processes
-	struct list * join_addrs = get_processes_by_type((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
+	// Get list of all processes
+	struct list * proc_addrs = get_processes_by_type(ptype);
 	struct listnode * node;
 	
 	// Check current number of processes
-	if (num_join_processes == -1)
-		num_join_processes = get_process_type_count((uint64_t)SISIS_PTYPE_DEMO1_JOIN);
-	printf("Need %d processes... Have %d.\n", num_procs, num_join_processes);
+	if (num_processes == -1)
+		num_processes = get_process_type_count(ptype);
+	printf("Need %d processes... Have %d.\n", num_procs, num_processes);
 	// Too few
-	if (num_join_processes < num_procs)
+	if (num_processes < num_procs)
 	{
 		// TODO: Maybe only have the leader do this (or a leader and spare)
 		// Only have youngest process start new processes
 		int do_startup = 1;
-		if (join_addrs)
+		if (proc_addrs)
 		{
-			LIST_FOREACH(join_addrs, node)
+			LIST_FOREACH(proc_addrs, node)
 			{
 				struct in6_addr * remote_addr = (struct in6_addr *)node->data;
 				
@@ -564,7 +424,7 @@ void check_redundancy()
 		if (do_startup)
 		{
 			// Number of processes to start
-			int num_start = num_procs - num_join_processes;
+			int num_start = num_procs - num_processes;
 			
 			// Get machine monitors
 			char mm_addr[INET6_ADDRSTRLEN+1];
@@ -804,7 +664,7 @@ void check_redundancy()
 	#endif
 							// Send request
 							char req[32];
-							sprintf(req, "%d %d", REMOTE_SPAWN_REQ_START, SISIS_PTYPE_DEMO1_JOIN);
+							sprintf(req, "%d %d", REMOTE_SPAWN_REQ_START, ptype);
 							if (sendto(spawn_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
 								printf("Failed to send message.  Error: %i\n", errno);
 							else
@@ -834,13 +694,13 @@ void check_redundancy()
 		}
 	}
 	// Too many
-	else if (num_join_processes > num_procs)
+	else if (num_processes > num_procs)
 	{
 		// Exit if not one of first num_procs processes
 		int younger_procs = 0;
-		if (join_addrs)
+		if (proc_addrs)
 		{
-			LIST_FOREACH(join_addrs, node)
+			LIST_FOREACH(proc_addrs, node)
 			{
 				struct in6_addr * remote_addr = (struct in6_addr *)node->data;
 				
@@ -876,8 +736,8 @@ void check_redundancy()
 	}
 	
 	// Free memory
-	if (join_addrs)
-		FREE_LINKED_LIST(join_addrs);
+	if (proc_addrs)
+		FREE_LINKED_LIST(proc_addrs);
 }
 
 /** Creates a new socket. */

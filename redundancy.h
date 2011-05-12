@@ -1,13 +1,11 @@
-#ifndef JOIN_H
-#define JOIN_H
+#ifndef REDUNDANCY_H
+#define REDUNDANCY_H
 
 #include <sys/types.h>
 
-#include "table.h"
 #include "../tests/sisis_api.h"
 
 #define MACHINE_MONITOR_REQUEST_TIMEOUT 2000000 // in usec
-
 #define RECHECK_PROCS_ALARM_DELAY 500000 // in usec
 
 /** Count number of processes of a given type */
@@ -15,12 +13,6 @@ int get_process_type_count(uint64_t process_type);
 
 /** Get list of processes of a given type.  Caller should call FREE_LINKED_LIST on result after. */
 struct list * get_processes_by_type(uint64_t process_type);
-
-/** Count number of sort processes */
-int get_sort_process_count();
-
-/** Join tables and send result to voter processes. */
-void process_tables(demo_table1_entry * table1, int rows1, demo_table2_entry * table2, int rows2);
 
 /** Checks if there is an appropriate number of join processes running in the system. */
 void check_redundancy();
