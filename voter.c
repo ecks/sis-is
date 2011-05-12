@@ -89,7 +89,7 @@ void vote_and_process()
 			printf("Joined Rows: %d\n", merge_table_item->table_size);
 			int i;
 			for (i = 0; i < merge_table_item->table_size; i++)
-				printf("User Id: %d\tName: %s\tGender: %c\n", join_table[i]->user_id, join_table[i].name, join_table[i].gender);
+				printf("User Id: %d\tName: %s\tGender: %c\n", join_table[i].user_id, join_table[i].name, join_table[i].gender);
 		}
 	}
 }
