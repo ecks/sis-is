@@ -36,17 +36,17 @@
 
 // Setup list of tables
 table_group_t table1_group;
+table_group_item_t * cur_table1_item;
 table_group_t table2_group;
+table_group_item_t * cur_table2_item;
 
 int main (int argc, char ** argv)
 {
 	// Setup list of tables
 	// Table 1
 	table1_group.first = NULL;
-	table_group_item_t * cur_table1_item = NULL;
 	// Table 2
 	table2_group.first = NULL;
-	table_group_item_t * cur_table2_item = NULL;
 	
 	// Start main loop
 	redundancy_main((uint64_t)SISIS_PTYPE_DEMO1_JOIN, (uint64_t)VERSION, JOIN_PORT, (uint64_t)SISIS_PTYPE_DEMO1_SORT, process_input, vote_and_process, argc, argv);
@@ -101,14 +101,14 @@ void process_input(char * buf, int buflen)
 void vote_and_process()
 {
 	// Vote
-	table_group_item_t * cur_item_table1 = table1_vote(&table1_group);
-	table_group_item_t * cur_item_table2 = table2_vote(&table2_group);
-	if (!cur_item_table1 || !cur_item_table2)
+	table_group_item_t * table1_item = table1_vote(&table1_group);
+	table_group_item_t * table2_item = table2_vote(&table2_group);
+	if (!table1_item || !table2_item)
 		printf("Failed to vote on tables.\n");
 	else
 	{
 		// Process tables
-		process_tables(cur_item_table1->table, cur_item_table1->table_size, cur_item_table2->table, cur_item_table2->table_size);
+		process_tables(table1_item->table, table1_item->table_size, table2_item->table, table2_item->table_size);
 	}
 }
 
