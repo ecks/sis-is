@@ -1,6 +1,8 @@
 #ifndef JOIN_H
 #define JOIN_H
 
+#include "table.h"
+
 /** Process input from a single process. */
 void process_input(char * buf, int buflen);
 

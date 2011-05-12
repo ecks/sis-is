@@ -8,6 +8,9 @@
 #define MACHINE_MONITOR_REQUEST_TIMEOUT 2000000 // in usec
 #define RECHECK_PROCS_ALARM_DELAY 500000 // in usec
 
+// Socket
+extern int sockfd;
+
 /** Count number of processes of a given type */
 int get_process_type_count(uint64_t process_type);
 
