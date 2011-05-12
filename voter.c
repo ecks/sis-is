@@ -75,7 +75,7 @@ void process_input(char * buf, int buflen)
 void vote_and_process()
 {
 	// Vote
-	table_group_item_t * merge_table_item = table1_vote(&merge_table_group);
+	table_group_item_t * merge_table_item = merge_table_vote(&merge_table_group);
 	if (!merge_table_item)
 		printf("Failed to vote on tables.\n");
 	else
