@@ -176,20 +176,6 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 		subscribe_to_rib_changes(&info);
 	}
 	
-	// Set of sockets for main select call
-	int main_socks_max_fd;
-	fd_set main_socks;
-	FD_ZERO(&main_socks);
-	FD_SET(sockfd, &main_socks);
-	// Are we checking redundancy?
-	if (!(flags & REDUNDANCY_MAIN_FLAG_SKIP_REDUNDANCY))
-	{
-		FD_SET(stop_redundancy_socket, &main_socks);
-		main_socks_max_fd = MAX(stop_redundancy_socket, sockfd)+1;
-	}
-	else
-		main_socks_max_fd = sockfd+1;
-	
 	// Set of sockets for select call when waiting for other inputs
 	fd_set socks;
 	FD_ZERO(&socks);
@@ -210,6 +196,20 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	socklen_t addr_size = sizeof remote_addr;
 	while (1)
 	{
+		// Set of sockets for main select call
+		int main_socks_max_fd;
+		fd_set main_socks;
+		FD_ZERO(&main_socks);
+		FD_SET(sockfd, &main_socks);
+		// Are we checking redundancy?
+		if (!(flags & REDUNDANCY_MAIN_FLAG_SKIP_REDUNDANCY))
+		{
+			FD_SET(stop_redundancy_socket, &main_socks);
+			main_socks_max_fd = MAX(stop_redundancy_socket, sockfd)+1;
+		}
+		else
+			main_socks_max_fd = sockfd+1;
+		
 		// Wait for message on either socket
 		if (select(main_socks_max_fd, &main_socks, NULL, NULL, NULL) > 0)
 		{
