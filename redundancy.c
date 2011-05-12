@@ -83,6 +83,9 @@ void recheck_redundance_alarm_handler(int signal)
 /** Main loop for redundant processes */
 void redundancy_main(uint64_t process_type, uint64_t process_type_version, int port, uint64_t input_process_type, void (*process_input)(char *, int), void (*vote_and_process)(), int argc, char ** argv)
 {
+	// Store process type
+	ptype = process_type;
+	
 	// Get start time
 	timestamp = time(NULL);
 	gettimeofday(&timestamp_precise, NULL);	// More precise
