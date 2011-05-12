@@ -18,6 +18,7 @@
 
 #include "demo.h"
 #include "voter.h"
+#include "redundancy.h"
 #include "table.h"
 
 #include "../tests/sisis_api.h"
@@ -25,122 +26,69 @@
 
 #define VERSION 1
 
-int sockfd = -1, con = -1;
-uint64_t ptype, host_num, pid;
-uint64_t timestamp;
-
-void close_listener()
-{
-	if (sockfd != -1)
-	{
-		printf("Closing listening socket...\n");
-		close(sockfd);
-		
-		// Unregister
-		sisis_unregister(NULL, (uint64_t)SISIS_PTYPE_DEMO1_VOTER, (uint64_t)VERSION, host_num, pid, timestamp);
-		
-		sockfd = -1;
-	}
-}
-
-void terminate(int signal)
-{
-	printf("Terminating...\n");
-	close_listener();
-	if (con != -1)
-	{
-		printf("Closing remove connection socket...\n");
-		close(con);
-	}
-	exit(0);
-}
+// Setup list of tables
+table_group_t merge_table_group;
+table_group_item_t * cur_merge_table_item;
 
 int main (int argc, char ** argv)
 {
-	// Get start time
-	timestamp = time(NULL);
+	// Setup list of tables
+	merge_table_group.first = NULL;
 	
-	// Check number of args
-	if (argc != 2)
+	// Start main loop
+	redundancy_main((uint64_t)SISIS_PTYPE_DEMO1_VOTER, (uint64_t)VERSION, VOTER_PORT, (uint64_t)SISIS_PTYPE_DEMO1_JOIN, process_input, vote_and_process, REDUNDANCY_MAIN_FLAG_SKIP_REDUNDANCY, argc, argv);
+}
+
+/** Process input from a single process. */
+void process_input(char * buf, int buflen)
+{
+	// Allocate memory
+	if (merge_table_group.first == NULL)
 	{
-		printf("Usage: %s <host_num>\n", argv[0]);
-		exit(1);
+		// Table
+		cur_merge_table_item = malloc(sizeof(*cur_table1_item));
+		merge_table_group.first = cur_merge_table_item;
+	}
+	else
+	{
+		// Table 1
+		cur_merge_table_item->next = malloc(sizeof(*cur_merge_table_item->next));
+		cur_merge_table_item = cur_merge_table_item->next;
 	}
 	
-	// Get host number
-	sscanf (argv[1], "%llu", &host_num);
-	char sisis_addr[INET6_ADDRSTRLEN+1];
+	// Check memory
+	if (cur_merge_table_item == NULL)
+	{ printf("Out of memory.\n"); exit(0); }
+	cur_merge_table_item->table = malloc(sizeof(*cur_merge_table_item->table)*MAX_TABLE_SIZE);
+	cur_merge_table_item->next = NULL;
 	
-	// Get pid
-	pid = getpid();
+	// Check memory
+	if (cur_merge_table_item->table == NULL)
+	{ printf("Out of memory.\n"); exit(0); }
 	
-	// Register address
-	if (sisis_register(sisis_addr, (uint64_t)SISIS_PTYPE_DEMO1_VOTER, (uint64_t)VERSION, host_num, pid, timestamp) != 0)
+	// Deserialize
+	int bytes_used;
+	cur_merge_table_item->table_size = deserialize_join_table(cur_merge_table_item->table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
+}
+
+/** Vote on input and process */
+void vote_and_process()
+{
+	// Vote
+	table_group_item_t * merge_table_item = table1_vote(&merge_table_group);
+	if (!merge_table_item)
+		printf("Failed to vote on tables.\n");
+	else
 	{
-		printf("Failed to register SIS-IS address.\n");
-		exit(1);
-	}
-	
-	// Status
-	printf("Opening socket at %s on port %i.\n", sisis_addr, VOTER_PORT);
-	
-	// Set up socket address info
-	struct addrinfo hints, *addr;
-	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_INET6;	// IPv6
-	hints.ai_socktype = SOCK_DGRAM;
-	char port_str[8];
-	sprintf(port_str, "%u", VOTER_PORT);
-	getaddrinfo(sisis_addr, port_str, &hints, &addr);
-	
-	// Create socket
-	if ((sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)) == -1)
-	{
-		printf("Failed to open socket.\n");
-		exit(1);
-	}
-	
-	// Bind to port
-	if (bind(sockfd, addr->ai_addr, addr->ai_addrlen) == -1)
-	{
-		printf("Failed to bind socket to port.\n");
-		close_listener();
-		exit(2);
-	}
-	
-	// Status message
-	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)(addr->ai_addr))->sin6_addr, sisis_addr, INET6_ADDRSTRLEN);
-	printf("Socket opened at %s on port %u.\n", sisis_addr, ntohs(((struct sockaddr_in *)(addr->ai_addr))->sin_port));
-	
-	// Set up signal handling
-	signal(SIGABRT, terminate);
-	signal(SIGTERM, terminate);
-	signal(SIGINT, terminate);
-	
-	// Wait for message
-	struct sockaddr_in6 remote_addr;
-	int len;
-	char buf[RECV_BUFFER_SIZE];
-	socklen_t addr_size = sizeof remote_addr;
-	while ((len = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
-	{
-		// Deserialize
-		int bytes_used;
-		demo_merge_table_entry join_table[MAX_TABLE_SIZE];
-		int rows = deserialize_join_table(join_table, MAX_TABLE_SIZE, buf, RECV_BUFFER_SIZE, &bytes_used);
-		
 		// Print
-		if (rows == -1)
+		if (merge_table_item->table_size == -1)
 			printf("Join error.\n");
 		else
 		{
-			printf("Joined Rows: %d\n", rows);
+			printf("Joined Rows: %d\n", merge_table_item->table_size);
 			int i;
-			for (i = 0; i < rows; i++)
-				printf("User Id: %d\tName: %s\tGender: %c\n", join_table[i].user_id, join_table[i].name, join_table[i].gender);
+			for (i = 0; i < merge_table_item->table_size; i++)
+				printf("User Id: %d\tName: %s\tGender: %c\n", merge_table_item->table[i].user_id, merge_table_item->table[i].name, merge_table_item->table[i].gender);
 		}
 	}
-	
-	// Close socket
-	close_listener();
 }
