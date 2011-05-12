@@ -17,6 +17,9 @@ struct list * get_processes_by_type(uint64_t process_type);
 /** Checks if there is an appropriate number of join processes running in the system. */
 void check_redundancy();
 
+/** Main loop for redundant processes */
+void redundancy_main (uint64_t process_type, uint64_t process_type_version, int port, uint64_t input_process_type, void (*process_input)(char *, int), void (*vote_and_process)(), int argc, char ** argv);
+
 int rib_monitor_add_ipv6_route(struct route_ipv6 * route);
 int rib_monitor_remove_ipv6_route(struct route_ipv6 * route);
 

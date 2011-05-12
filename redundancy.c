@@ -80,7 +80,8 @@ void recheck_redundance_alarm_handler(int signal)
 	check_redundancy();
 }
 
-int redundancy_main (uint64_t process_type, uint64_t process_type_version, int port, uint64_t input_process_type, void (*process_input)(char *, int), void (*vote_and_process)(), int argc, char ** argv)
+/** Main loop for redundant processes */
+void redundancy_main(uint64_t process_type, uint64_t process_type_version, int port, uint64_t input_process_type, void (*process_input)(char *, int), void (*vote_and_process)(), int argc, char ** argv)
 {
 	// Get start time
 	timestamp = time(NULL);
@@ -259,6 +260,9 @@ int redundancy_main (uint64_t process_type, uint64_t process_type_version, int p
 					printf("Not enough inputs for a vote.\n");
 				else
 				{
+		#ifdef DEBUG
+					printf("Voting...\n");
+		#endif
 					// Vote and process results
 					vote_and_process();
 				}
