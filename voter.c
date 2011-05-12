@@ -24,7 +24,6 @@
 #include "../tests/sisis_api.h"
 #include "../tests/sisis_process_types.h"
 
-#define DEBUG
 #define VERSION 1
 
 // Setup list of tables
@@ -60,7 +59,7 @@ void process_input(char * buf, int buflen)
 	// Check memory
 	if (cur_merge_table_item == NULL)
 	{ printf("Out of memory.\n"); exit(0); }
-	cur_merge_table_item->table = malloc(sizeof(*cur_merge_table_item->table)*MAX_TABLE_SIZE);
+	cur_merge_table_item->table = malloc(sizeof(demo_merge_table_entry)*MAX_TABLE_SIZE);
 	cur_merge_table_item->next = NULL;
 	
 	// Check memory
@@ -76,6 +75,7 @@ void process_input(char * buf, int buflen)
 void vote_and_process()
 {
 	// Vote
+	printf("Voting.\n");
 	table_group_item_t * merge_table_item = merge_table_vote(&merge_table_group);
 	if (!merge_table_item)
 		printf("Failed to vote on tables.\n");
