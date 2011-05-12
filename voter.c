@@ -24,6 +24,7 @@
 #include "../tests/sisis_api.h"
 #include "../tests/sisis_process_types.h"
 
+#define DEBUG
 #define VERSION 1
 
 // Setup list of tables
