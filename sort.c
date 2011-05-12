@@ -36,10 +36,6 @@ int table2_size;
 
 int main (int argc, char ** argv)
 {
-	// Setup list of tables
-	table1_group.first = NULL;
-	table2_group.first = NULL;
-	
 	// Start main loop
 	redundancy_main((uint64_t)SISIS_PTYPE_DEMO1_SORT, (uint64_t)VERSION, SORT_PORT, 0, process_input, vote_and_process, REDUNDANCY_MAIN_FLAG_SINGLE_INPUT, argc, argv);
 }
@@ -49,8 +45,8 @@ void process_input(char * buf, int buflen)
 {
 	// Deserialize
 	int bytes_used;
-	table1_size = deserialize_table1(&table1, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
-	table2_size = deserialize_table2(&table2, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
+	table1_size = deserialize_table1(table1, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
+	table2_size = deserialize_table2(table2, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
 #ifdef DEBUG
 	printf("Table 1 Rows: %d\n", table1_size);
 	printf("Table 2 Rows: %d\n", table2_size);
