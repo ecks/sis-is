@@ -43,9 +43,7 @@ table_group_item_t * cur_table2_item;
 int main (int argc, char ** argv)
 {
 	// Setup list of tables
-	// Table 1
 	table1_group.first = NULL;
-	// Table 2
 	table2_group.first = NULL;
 	
 	// Start main loop

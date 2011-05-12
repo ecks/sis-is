@@ -19,131 +19,88 @@
 
 #include "demo.h"
 #include "sort.h"
+#include "redundancy.h"
 #include "table.h"
 
 #include "../tests/sisis_api.h"
 #include "../tests/sisis_process_types.h"
 
 #define VERSION 1
-int sockfd = -1, con = -1;
-uint64_t ptype, host_num, pid;
-uint64_t timestamp;
 
-void close_listener()
-{
-	if (sockfd != -1)
-	{
-		printf("Closing listening socket...\n");
-		close(sockfd);
-		
-		// Unregister
-		sisis_unregister(NULL, (uint64_t)SISIS_PTYPE_DEMO1_SORT, (uint64_t)VERSION, host_num, pid, timestamp);
-		
-		sockfd = -1;
-	}
-}
-
-void terminate(int signal)
-{
-	printf("Terminating...\n");
-	close_listener();
-	if (con != -1)
-	{
-		printf("Closing remove connection socket...\n");
-		close(con);
-	}
-	exit(0);
-}
+// Setup list of tables
+table_group_t table1_group;
+table_group_item_t * cur_table1_item;
+table_group_t table2_group;
+table_group_item_t * cur_table2_item;
 
 int main (int argc, char ** argv)
 {
-	// Get start time
-	timestamp = time(NULL);
+	// Setup list of tables
+	table1_group.first = NULL;
+	table2_group.first = NULL;
 	
-	// Check number of args
-	if (argc != 2)
+	// Start main loop
+	redundancy_main((uint64_t)SISIS_PTYPE_DEMO1_SORT, (uint64_t)VERSION, SORTPORT, (uint64_t)SISIS_PTYPE_DEMO1_SORT, process_input, vote_and_process, 0, argc, argv);
+}
+
+/** Process input from a single process. */
+void process_input(char * buf, int buflen)
+{
+	// Allocate memory
+	if (table1_group.first == NULL)
 	{
-		printf("Usage: %s <host_num>\n", argv[0]);
-		exit(1);
+		// Table 1
+		cur_table1_item = malloc(sizeof(*cur_table1_item));
+		table1_group.first = cur_table1_item;
+		// Table 2
+		cur_table2_item = malloc(sizeof(*cur_table2_item));
+		table2_group.first = cur_table2_item;
+	}
+	else
+	{
+		// Table 1
+		cur_table1_item->next = malloc(sizeof(*cur_table1_item->next));
+		cur_table1_item = cur_table1_item->next;
+		// Table 2
+		cur_table2_item->next = malloc(sizeof(*cur_table2_item->next));
+		cur_table2_item = cur_table2_item->next;
 	}
 	
-	// Get host number
-	sscanf (argv[1], "%llu", &host_num);
-	char sisis_addr[INET6_ADDRSTRLEN+1];
+	// Check memory
+	if (cur_table1_item == NULL || cur_table2_item == NULL)
+	{ printf("Out of memory.\n"); exit(0); }
+	cur_table1_item->table = malloc(sizeof(demo_table1_entry)*MAX_TABLE_SIZE);
+	cur_table1_item->next = NULL;
+	cur_table2_item->table = malloc(sizeof(demo_table2_entry)*MAX_TABLE_SIZE);
+	cur_table2_item->next = NULL;
 	
-	// Get pid
-	pid = getpid();
+	// Check memory
+	if (cur_table1_item->table == NULL || cur_table2_item->table == NULL)
+	{ printf("Out of memory.\n"); exit(0); }
 	
-	// Register address
-	if (sisis_register(sisis_addr, (uint64_t)SISIS_PTYPE_DEMO1_SORT, (uint64_t)VERSION, host_num, pid, timestamp) != 0)
-	{
-		printf("Failed to register SIS-IS address.\n");
-		exit(1);
-	}
-	
-	// Status
-	printf("Opening socket at %s on port %i.\n", sisis_addr, SORT_PORT);
-	
-	// Set up socket address info
-	struct addrinfo hints, *addr;
-	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_INET6;	// IPv6
-	hints.ai_socktype = SOCK_DGRAM;
-	char port_str[8];
-	sprintf(port_str, "%u", SORT_PORT);
-	getaddrinfo(sisis_addr, port_str, &hints, &addr);
-	
-	// Create socket
-	if ((sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)) == -1)
-	{
-		printf("Failed to open socket.\n");
-		exit(1);
-	}
-	
-	// Bind to port
-	if (bind(sockfd, addr->ai_addr, addr->ai_addrlen) == -1)
-	{
-		printf("Failed to bind socket to port.\n");
-		close_listener();
-		exit(2);
-	}
-	
-	// Status message
-	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)(addr->ai_addr))->sin6_addr, sisis_addr, INET6_ADDRSTRLEN);
-	printf("Socket opened at %s on port %u.\n", sisis_addr, ntohs(((struct sockaddr_in *)(addr->ai_addr))->sin_port));
-	
-	// Set up signal handling
-	signal(SIGABRT, terminate);
-	signal(SIGTERM, terminate);
-	signal(SIGINT, terminate);
-	
-	// TODO: Thread to be sure that there are enough processes
-	
-	// Wait for message
-	struct sockaddr_in6 remote_addr;
-	int i;
-	int buflen;
-	char buf[RECV_BUFFER_SIZE];
-	socklen_t addr_size = sizeof remote_addr;
-	while ((buflen = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
-	{
-		// Deserialize
-		demo_table1_entry table1[MAX_TABLE_SIZE];
-		int bytes_used;
-		int rows1 = deserialize_table1(table1, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
-		demo_table2_entry table2[MAX_TABLE_SIZE];
-		int rows2 = deserialize_table2(table2, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
+	// Deserialize
+	int bytes_used;
+	cur_table1_item->table_size = deserialize_table1(cur_table1_item->table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
+	cur_table2_item->table_size = deserialize_table2(cur_table2_item->table, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
 #ifdef DEBUG
-		printf("Table 1 Rows: %d\n", rows1);
-		printf("Table 2 Rows: %d\n", rows2);
+	printf("Table 1 Rows: %d\n", cur_table1_item->table_size);
+	printf("Table 2 Rows: %d\n", cur_table2_item->table_size);
 #endif
-		
+}
+
+/** Vote on input and process */
+void vote_and_process()
+{
+	// Vote
+	table_group_item_t * table1_item = table1_vote(&table1_group);
+	table_group_item_t * table2_item = table2_vote(&table2_group);
+	if (!table1_item || !table2_item)
+		printf("Failed to vote on tables.\n");
+	else
+	{
 		// Process tables
-		process_tables(table1, rows1, table2, rows2);
+		process_tables(table1_item->table, table1_item->table_size, table2_item->table, table2_item->table_size);
 	}
-	
-	// Close socket
-	close_listener();
 }
 
 /** Sort tables and send results to join processes. */
