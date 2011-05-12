@@ -27,11 +27,12 @@
 
 #define VERSION 1
 
-// Setup list of tables
-table_group_t table1_group;
-table_group_item_t * cur_table1_item;
-table_group_t table2_group;
-table_group_item_t * cur_table2_item;
+// Setup tables
+// We only need one set of tables since there is a single shim
+demo_table1_entry table1[MAX_TABLE_SIZE];
+int table1_size;
+demo_table2_entry table2[MAX_TABLE_SIZE];
+int table2_size;
 
 int main (int argc, char ** argv)
 {
@@ -40,67 +41,28 @@ int main (int argc, char ** argv)
 	table2_group.first = NULL;
 	
 	// Start main loop
-	redundancy_main((uint64_t)SISIS_PTYPE_DEMO1_SORT, (uint64_t)VERSION, SORTPORT, (uint64_t)SISIS_PTYPE_DEMO1_SORT, process_input, vote_and_process, 0, argc, argv);
+	redundancy_main((uint64_t)SISIS_PTYPE_DEMO1_SORT, (uint64_t)VERSION, SORT_PORT, 0, process_input, vote_and_process, REDUNDANCY_MAIN_FLAG_SINGLE_INPUT, argc, argv);
 }
 
 /** Process input from a single process. */
 void process_input(char * buf, int buflen)
 {
-	// Allocate memory
-	if (table1_group.first == NULL)
-	{
-		// Table 1
-		cur_table1_item = malloc(sizeof(*cur_table1_item));
-		table1_group.first = cur_table1_item;
-		// Table 2
-		cur_table2_item = malloc(sizeof(*cur_table2_item));
-		table2_group.first = cur_table2_item;
-	}
-	else
-	{
-		// Table 1
-		cur_table1_item->next = malloc(sizeof(*cur_table1_item->next));
-		cur_table1_item = cur_table1_item->next;
-		// Table 2
-		cur_table2_item->next = malloc(sizeof(*cur_table2_item->next));
-		cur_table2_item = cur_table2_item->next;
-	}
-	
-	// Check memory
-	if (cur_table1_item == NULL || cur_table2_item == NULL)
-	{ printf("Out of memory.\n"); exit(0); }
-	cur_table1_item->table = malloc(sizeof(demo_table1_entry)*MAX_TABLE_SIZE);
-	cur_table1_item->next = NULL;
-	cur_table2_item->table = malloc(sizeof(demo_table2_entry)*MAX_TABLE_SIZE);
-	cur_table2_item->next = NULL;
-	
-	// Check memory
-	if (cur_table1_item->table == NULL || cur_table2_item->table == NULL)
-	{ printf("Out of memory.\n"); exit(0); }
-	
 	// Deserialize
 	int bytes_used;
-	cur_table1_item->table_size = deserialize_table1(cur_table1_item->table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
-	cur_table2_item->table_size = deserialize_table2(cur_table2_item->table, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
+	table1_size = deserialize_table1(&table1, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
+	table2_size = deserialize_table2(&table2, MAX_TABLE_SIZE, buf+bytes_used, buflen-bytes_used, NULL);
 #ifdef DEBUG
-	printf("Table 1 Rows: %d\n", cur_table1_item->table_size);
-	printf("Table 2 Rows: %d\n", cur_table2_item->table_size);
+	printf("Table 1 Rows: %d\n", table1_size);
+	printf("Table 2 Rows: %d\n", table2_size);
 #endif
 }
 
 /** Vote on input and process */
 void vote_and_process()
 {
-	// Vote
-	table_group_item_t * table1_item = table1_vote(&table1_group);
-	table_group_item_t * table2_item = table2_vote(&table2_group);
-	if (!table1_item || !table2_item)
-		printf("Failed to vote on tables.\n");
-	else
-	{
-		// Process tables
-		process_tables(table1_item->table, table1_item->table_size, table2_item->table, table2_item->table_size);
-	}
+	// No need to vote since there is only one shim
+	// Process tables
+	process_tables(table1, table1_size, table2, table2_size);
 }
 
 /** Sort tables and send results to join processes. */

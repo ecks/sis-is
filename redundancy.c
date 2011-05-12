@@ -266,17 +266,20 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 						process_input(buf, buflen);
 						
 						// Check how many input processes there are
-						num_input_processes = get_process_type_count(input_process_type);
-		#ifdef DEBUG
-						printf("# inputs: %d\n", num_tables);
-						printf("# input processes: %d\n", num_input_processes);
-						printf("Waiting %d.%06d seconds for more results.\n", (long)select_timeout.tv_sec, (long)select_timeout.tv_usec);
-		#endif
+						if (!(flags & REDUNDANCY_MAIN_FLAG_SINGLE_INPUT))
+						{
+							num_input_processes = get_process_type_count(input_process_type);
+			#ifdef DEBUG
+							printf("# inputs: %d\n", num_tables);
+							printf("# input processes: %d\n", num_input_processes);
+							printf("Waiting %d.%06d seconds for more results.\n", (long)select_timeout.tv_sec, (long)select_timeout.tv_usec);
+			#endif
+						}
 					}
-				} while(num_input < num_input_processes && select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
+				} while(!(flags & REDUNDANCY_MAIN_FLAG_SINGLE_INPUT) && num_input < num_input_processes && select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
 				
 				// Check that at least 1/2 of the processes sent inputs
-				if (num_input <= num_input_processes/2)
+				if (!(flags & REDUNDANCY_MAIN_FLAG_SINGLE_INPUT) || num_input <= num_input_processes/2)
 					printf("Not enough inputs for a vote.\n");
 				else
 				{
