@@ -270,9 +270,9 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 						{
 							num_input_processes = get_process_type_count(input_process_type);
 			#ifdef DEBUG
-							printf("# inputs: %d\n", num_tables);
+							printf("# inputs: %d\n", num_input);
 							printf("# input processes: %d\n", num_input_processes);
-							printf("Waiting %d.%06d seconds for more results.\n", (long)select_timeout.tv_sec, (long)select_timeout.tv_usec);
+							printf("Waiting %ld.%06ld seconds for more results.\n", (long)(select_timeout.tv_sec), (long)(select_timeout.tv_usec));
 			#endif
 						}
 					}
