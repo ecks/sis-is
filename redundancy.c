@@ -81,7 +81,7 @@ void recheck_redundance_alarm_handler(int signal)
 }
 
 /** Main loop for redundant processes */
-void redundancy_main(uint64_t process_type, uint64_t process_type_version, int port, uint64_t input_process_type, void (*process_input)(char *, int), void (*vote_and_process)(), int argc, char ** argv)
+void redundancy_main(uint64_t process_type, uint64_t process_type_version, int port, uint64_t input_process_type, void (*process_input)(char *, int), void (*vote_and_process)(), int flags, int argc, char ** argv)
 {
 	// Store process type
 	ptype = process_type;
@@ -137,9 +137,13 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 		exit(2);
 	}
 	
-	// Open socket to stop redundancy
-	sprintf(port_str, "%u", STOP_REDUNDANCY_PORT);
-	stop_redundancy_socket = make_socket(port_str);
+	// Are we checking redundancy?
+	if (!(flags & REDUNDANCY_MAIN_FLAG_SKIP_REDUNDANCY))
+	{
+		// Open socket to stop redundancy
+		sprintf(port_str, "%u", STOP_REDUNDANCY_PORT);
+		stop_redundancy_socket = make_socket(port_str);
+	}
 	
 	// Short sleep while address propagates
 	usleep(50000);	// 50ms
@@ -153,25 +157,38 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	signal(SIGTERM, terminate);
 	signal(SIGINT, terminate);
 	
-	// Set up signal handling for alarm
-	signal(SIGALRM, recheck_redundance_alarm_handler);
-	
-	// Check redundancy
-	check_redundancy();
-	
-	// Subscribe to RIB changes
+	// Info to subscribe to RIB changes
 	struct subscribe_to_rib_changes_info info;
-	memset(&info, 0, sizeof info);
-	info.rib_add_ipv6_route = rib_monitor_add_ipv6_route;
-	info.rib_remove_ipv6_route = rib_monitor_remove_ipv6_route;
-	subscribe_to_rib_changes(&info);
+	
+	// Are we checking redundancy?
+	if (!(flags & REDUNDANCY_MAIN_FLAG_SKIP_REDUNDANCY))
+	{
+		// Set up signal handling for alarm
+		signal(SIGALRM, recheck_redundance_alarm_handler);
+		
+		// Check redundancy
+		check_redundancy();
+		
+		// Subscribe to RIB changes
+		memset(&info, 0, sizeof info);
+		info.rib_add_ipv6_route = rib_monitor_add_ipv6_route;
+		info.rib_remove_ipv6_route = rib_monitor_remove_ipv6_route;
+		subscribe_to_rib_changes(&info);
+	}
 	
 	// Set of sockets for main select call
+	int main_socks_max_fd;
 	fd_set main_socks;
 	FD_ZERO(&main_socks);
-	FD_SET(stop_redundancy_socket, &main_socks);
 	FD_SET(sockfd, &main_socks);
-	int main_socks_max_fd = MAX(stop_redundancy_socket, sockfd)+1;
+	// Are we checking redundancy?
+	if (!(flags & REDUNDANCY_MAIN_FLAG_SKIP_REDUNDANCY))
+	{
+		FD_SET(stop_redundancy_socket, &main_socks);
+		main_socks_max_fd = MAX(stop_redundancy_socket, sockfd)+1;
+	}
+	else
+		main_socks_max_fd = sockfd+1;
 	
 	// Set of sockets for select call when waiting for other inputs
 	fd_set socks;

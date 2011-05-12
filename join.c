@@ -49,7 +49,7 @@ int main (int argc, char ** argv)
 	table2_group.first = NULL;
 	
 	// Start main loop
-	redundancy_main((uint64_t)SISIS_PTYPE_DEMO1_JOIN, (uint64_t)VERSION, JOIN_PORT, (uint64_t)SISIS_PTYPE_DEMO1_SORT, process_input, vote_and_process, argc, argv);
+	redundancy_main((uint64_t)SISIS_PTYPE_DEMO1_JOIN, (uint64_t)VERSION, JOIN_PORT, (uint64_t)SISIS_PTYPE_DEMO1_SORT, process_input, vote_and_process, REDUNDANCY_MAIN_FLAG_SKIP_REDUNDANCY, argc, argv);
 }
 
 /** Process input from a single process. */
