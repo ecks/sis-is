@@ -30,12 +30,12 @@
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
 
-#define DEBUG
+//#define DEBUG
 
 #define VERSION 1
 int sockfd = -1;
 int stop_redundancy_socket = -1;
-short redundancy_flag = 1;
+volatile short redundancy_flag = 1;
 uint64_t ptype, host_num, pid;
 uint64_t timestamp;
 struct timeval timestamp_precise;
