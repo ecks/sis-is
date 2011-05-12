@@ -46,7 +46,7 @@ void process_input(char * buf, int buflen)
 	if (merge_table_group.first == NULL)
 	{
 		// Table
-		cur_merge_table_item = malloc(sizeof(*cur_table1_item));
+		cur_merge_table_item = malloc(sizeof(*cur_merge_table_item));
 		merge_table_group.first = cur_merge_table_item;
 	}
 	else
@@ -85,10 +85,11 @@ void vote_and_process()
 			printf("Join error.\n");
 		else
 		{
+			demo_merge_table_entry * join_table = (demo_merge_table_entry *)merge_table_item->table;
 			printf("Joined Rows: %d\n", merge_table_item->table_size);
 			int i;
 			for (i = 0; i < merge_table_item->table_size; i++)
-				printf("User Id: %d\tName: %s\tGender: %c\n", merge_table_item->table[i].user_id, merge_table_item->table[i].name, merge_table_item->table[i].gender);
+				printf("User Id: %d\tName: %s\tGender: %c\n", join_table[i]->user_id, join_table[i].name, join_table[i].gender);
 		}
 	}
 }
