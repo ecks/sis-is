@@ -256,7 +256,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 				} while(num_input < num_input_processes && select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
 				
 				// Check that at least 1/2 of the processes sent inputs
-				if (num_input <= sort_count/2)
+				if (num_input <= num_input_processes/2)
 					printf("Not enough inputs for a vote.\n");
 				else
 				{
@@ -668,7 +668,7 @@ void check_redundancy()
 	#endif
 							// Send request
 							char req[32];
-							sprintf(req, "%d %d", REMOTE_SPAWN_REQ_START, ptype);
+							sprintf(req, "%d %llu", REMOTE_SPAWN_REQ_START, ptype);
 							if (sendto(spawn_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
 								printf("Failed to send message.  Error: %i\n", errno);
 							else
