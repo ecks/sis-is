@@ -19,6 +19,7 @@
 
 #include "demo.h"
 #include "voter.h"
+#include "redundancy.h"
 #include "table.h"
 
 #include "../tests/sisis_api.h"
@@ -34,7 +35,7 @@ table_group_t merge_table_group;
 table_group_item_t * cur_merge_table_item;
 
 // Expected table
-demo_merge_table_entry excepted_table[MAX_TABLE_SIZE];
+demo_merge_table_entry expected_table[MAX_TABLE_SIZE];
 int expected_table_size = 0;
 
 int main (int argc, char ** argv)
@@ -72,7 +73,7 @@ void * validator(void * param)
 		{
 			// Deserialize
 			int bytes_used;
-			expected_table_size = deserialize_join_table(&excepted_table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
+			expected_table_size = deserialize_join_table(expected_table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
 		}
 	}
 	
