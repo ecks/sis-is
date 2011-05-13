@@ -148,7 +148,7 @@ void process_tables(demo_table1_entry * table1, int rows1, demo_table2_entry * t
 			printf("No voter processes found.\n");
 		else
 		{
-			// Send to all join processes
+			// Send to all voter processes
 			struct listnode * node;
 			LIST_FOREACH(voter_addrs, node)
 			{
@@ -160,7 +160,7 @@ void process_tables(demo_table1_entry * table1, int rows1, demo_table2_entry * t
 				int sockaddr_size = sizeof(sockaddr);
 				memset(&sockaddr, 0, sockaddr_size);
 				sockaddr.sin6_family = AF_INET6;
-				sockaddr.sin6_port = htons(JOIN_PORT);
+				sockaddr.sin6_port = htons(VOTER_PORT);
 				sockaddr.sin6_addr = *remote_addr;
 				
 				if (sendto(sockfd, buf, buflen, 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)

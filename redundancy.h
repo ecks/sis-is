@@ -11,6 +11,9 @@
 // Socket
 extern int sockfd;
 
+/** Get SIS-IS Address */
+void get_sisis_addr(char * buf);
+
 /** Count number of processes of a given type */
 int get_process_type_count(uint64_t process_type);
 

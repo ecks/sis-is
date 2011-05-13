@@ -101,6 +101,7 @@ int main (int argc, char ** argv)
 			table2[i].gender = (i % 3) ? 'M' : 'F';
 		}
 		
+		
 		// Serialize
 		printf("Serializing...\n");
 		char buf[RECV_BUFFER_SIZE];
@@ -154,4 +155,52 @@ int main (int argc, char ** argv)
 	// Close socket
 	if (sockfd != -1)
 		close(sockfd);
+}
+
+void send_real_result_to_voter(demo_table2_entry * table1, int rows1, demo_table2_entry * table2, int rows2)
+{
+	// Sort tables
+	sort_table1_by_user_id(table1, rows1);
+	sort_table2_by_user_id(table2, rows2);
+	
+	// Join
+	demo_merge_table_entry join_table[MAX_TABLE_SIZE];
+	int rows = merge_join(table1, rows1, table2, rows2, join_table, MAX_TABLE_SIZE);
+	
+	// Serialize
+	char buf[SEND_BUFFER_SIZE];
+	int buflen = serialize_join_table(join_table, rows, buf, SEND_BUFFER_SIZE);
+	if (buflen == -1)
+		printf("Failed to serialize table.\n");
+	else
+	{
+		// Find all voter processes
+		struct list * voter_addrs = get_processes_by_type((uint64_t)SISIS_PTYPE_DEMO1_VOTER);
+		if (voter_addrs == NULL || voter_addrs->size == 0)
+			printf("No voter processes found.\n");
+		else
+		{
+			// Send to all voter processes
+			struct listnode * node;
+			LIST_FOREACH(voter_addrs, node)
+			{
+				// Get address
+				struct in6_addr * remote_addr = (struct in6_addr *)node->data;
+				
+				// Set up socket info
+				struct sockaddr_in6 sockaddr;
+				int sockaddr_size = sizeof(sockaddr);
+				memset(&sockaddr, 0, sockaddr_size);
+				sockaddr.sin6_family = AF_INET6;
+				sockaddr.sin6_port = htons(VOTER_ANSWER_PORT);
+				sockaddr.sin6_addr = *remote_addr;
+				
+				if (sendto(sockfd, buf, buflen, 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
+					printf("Failed to send message.  Error: %i\n", errno);
+			}
+			
+			// Free memory
+			FREE_LINKED_LIST(voter_addrs);
+		}
+	}
 }

@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <pthread.h>
 
 #include <time.h>
 
@@ -26,17 +27,57 @@
 
 #define VERSION 1
 
+// Thread to validate processed output
+pthread_t validate_thread;
+
 // Setup list of tables
 table_group_t merge_table_group;
 table_group_item_t * cur_merge_table_item;
 
+// Expected table
+demo_merge_table_entry excepted_table[MAX_TABLE_SIZE];
+int expected_table_size = 0;
+
 int main (int argc, char ** argv)
 {
+	// Create thread to validate produced output
+	pthread_create(&validate_thread, NULL, validator, NULL);
+	
 	// Setup list of tables
 	merge_table_group.first = NULL;
 	
 	// Start main loop
 	redundancy_main((uint64_t)SISIS_PTYPE_DEMO1_VOTER, (uint64_t)VERSION, VOTER_PORT, (uint64_t)SISIS_PTYPE_DEMO1_JOIN, process_input, vote_and_process, REDUNDANCY_MAIN_FLAG_SKIP_REDUNDANCY, argc, argv);
+}
+
+/** Gets real answer from shim and validates results. */
+void * validator(void * param)
+{
+	// Wait until sisis address is set up
+	char tmp_addr[INET6_ADDRSTRLEN];
+	get_sisis_addr(tmp_addr);
+	
+	// Make socket
+	char port_str[16];
+	sprintf(port_str, "%u", VOTER_ANSWER_PORT);
+	int fd = make_socket(port_str);
+	
+	// Receive buffer
+	int buflen;
+	char buf[RECV_BUFFER_SIZE];
+	
+	// Receive message
+	while (1)
+	{
+		if ((buflen = recvfrom(fd, buf, RECV_BUFFER_SIZE, 0, NULL, NULL)) != -1)
+		{
+			// Deserialize
+			int bytes_used;
+			expected_table_size = deserialize_join_table(&excepted_table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
+		}
+	}
+	
+	return NULL;
 }
 
 /** Process input from a single process. */
@@ -89,8 +130,26 @@ void vote_and_process()
 			demo_merge_table_entry * join_table = (demo_merge_table_entry *)merge_table_item->table;
 			printf("Joined Rows: %d\n", merge_table_item->table_size);
 			int i;
+			/*
 			for (i = 0; i < merge_table_item->table_size; i++)
 				printf("User Id: %d\tName: %s\tGender: %c\n", join_table[i].user_id, join_table[i].name, join_table[i].gender);
+			*/
+			// Compare against expected table
+			short correct = 1;
+			if (expected_table_size != merge_table_item->table_size)
+				correct = 0;
+			else
+			{
+				for (i = 0; correct && i < expected_table_size; i++)
+					if (join_table[i].user_id != expected_table[i].user_id || strcmp(join_table[i].name, expected_table[i].name) != 0 || join_table[i].gender != expected_table[i].gender)
+						correct = 0;
+			}
+			
+			// Was this correct
+			if (correct)
+				printf("Correct result.\n");
+			else
+				printf("WRONG result.\n");
 		}
 	}
 	

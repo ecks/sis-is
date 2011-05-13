@@ -17,6 +17,7 @@
 #include <errno.h>
 
 #include <time.h>
+#include <pthread.h>
 
 #include "demo.h"
 #include "redundancy.h"
@@ -40,7 +41,8 @@ uint64_t ptype, host_num, pid;
 uint64_t timestamp;
 struct timeval timestamp_precise;
 
-char sisis_addr[INET6_ADDRSTRLEN];
+pthread_mutex_t sisis_addr_mutex = PTHREAD_MUTEX_INITIALIZER;
+char sisis_addr[INET6_ADDRSTRLEN] = { '\0' };
 
 // Current number of processes (-1 for invalid)
 int num_processes = -1;
@@ -80,6 +82,21 @@ void recheck_redundance_alarm_handler(int signal)
 	check_redundancy();
 }
 
+/** Get SIS-IS Address */
+void get_sisis_addr(char * buf)
+{
+	// TODO: This would be better with semaphores that actually block
+	pthread_mutex_lock(&sisis_addr_mutex);
+	while (*sisis_addr == '\0')
+	{
+		pthread_mutex_unlock(&sisis_addr_mutex);
+		sched_yield();
+		pthread_mutex_lock(&sisis_addr_mutex);
+	}
+	strcpy(buf, sisis_addr);
+	pthread_mutex_unlock(&sisis_addr_mutex);
+}
+
 /** Main loop for redundant processes */
 void redundancy_main(uint64_t process_type, uint64_t process_type_version, int port, uint64_t input_process_type, void (*process_input)(char *, int), void (*vote_and_process)(), int flags, int argc, char ** argv)
 {
@@ -104,11 +121,13 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	pid = getpid();
 	
 	// Register address
+	pthread_mutex_lock(&sisis_addr_mutex);
 	if (sisis_register(sisis_addr, process_type, process_type_version, host_num, pid, timestamp) != 0)
 	{
 		printf("Failed to register SIS-IS address.\n");
 		exit(1);
 	}
+	pthread_mutex_unlock(&sisis_addr_mutex);
 	
 	// Status
 	printf("Opening socket at %s on port %i.\n", sisis_addr, port);
