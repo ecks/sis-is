@@ -5,8 +5,8 @@ LIBS = -lrt -lpthread
 
 all: $(EXECUTABLES)
 
-shim: shim.o table.o
-	$(CC) $(CFLAGS) $(LIBS) -o shim shim.o table.o $(SISIS_API_C)
+shim: shim.o table.o redundancy.o
+	$(CC) $(CFLAGS) $(LIBS) -o shim shim.o table.o redundancy.o $(SISIS_API_C)
 
 sort: sort.o table.o redundancy.o
 	$(CC) $(CFLAGS) $(LIBS) -o sort sort.o table.o redundancy.o $(SISIS_API_C)
