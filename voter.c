@@ -19,7 +19,6 @@
 
 #include "demo.h"
 #include "voter.h"
-#include "redundancy.h"
 #include "table.h"
 
 #include "../tests/sisis_api.h"
