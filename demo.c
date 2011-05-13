@@ -4,6 +4,17 @@
  * University of Delaware
  */
 
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "demo.h"
+
+#include "../tests/sisis_api.h"
+#include "../tests/sisis_process_types.h"
+#include "../tests/sisis_addr_format.h"
+
 /** Get list of processes of a given type.  Caller should call FREE_LINKED_LIST on result after. */
 struct list * get_processes_by_type(uint64_t process_type)
 {
