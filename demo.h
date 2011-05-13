@@ -1,6 +1,8 @@
 #ifndef DEMO_H
 #define DEMO_H
 
+#include <sys/types.h>
+
 #define SHIM_PORT 50000
 #define SORT_PORT 50000
 #define JOIN_PORT 50000
