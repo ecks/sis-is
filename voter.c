@@ -116,7 +116,6 @@ void process_input(char * buf, int buflen)
 void vote_and_process()
 {
 	// Vote
-	printf("Voting.\n");
 	table_group_item_t * merge_table_item = merge_table_vote(&merge_table_group);
 	if (!merge_table_item)
 		printf("Failed to vote on tables.\n");
@@ -128,9 +127,9 @@ void vote_and_process()
 		else
 		{
 			demo_merge_table_entry * join_table = (demo_merge_table_entry *)merge_table_item->table;
-			printf("Joined Rows: %d\n", merge_table_item->table_size);
 			int i;
 			/*
+			printf("Joined Rows: %d\n", merge_table_item->table_size);
 			for (i = 0; i < merge_table_item->table_size; i++)
 				printf("User Id: %d\tName: %s\tGender: %c\n", join_table[i].user_id, join_table[i].name, join_table[i].gender);
 			*/
