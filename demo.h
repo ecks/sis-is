@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/types.h>
+#include <stdint.h>
 
 #define SHIM_PORT 50000
 #define SORT_PORT 50000
