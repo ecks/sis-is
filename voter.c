@@ -38,7 +38,7 @@ table_group_item_t * cur_merge_table_item;
 demo_merge_table_entry expected_table[MAX_TABLE_SIZE];
 int expected_table_size = 0;
 struct timeval expected_table_received;
-int expected_table_checked;
+int expected_table_checked = 1;
 pthread_mutex_t expected_table_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int main (int argc, char ** argv)
@@ -69,6 +69,9 @@ void * validator(void * param)
 	int buflen;
 	char buf[RECV_BUFFER_SIZE];
 	
+	// Timing info
+	struct timeval tv_now, tv_diff;
+	
 	// Receive message
 	while (1)
 	{
@@ -77,10 +80,36 @@ void * validator(void * param)
 			// Deserialize
 			int bytes_used;
 			pthread_mutex_lock(&expected_table_mutex);
+			
+			// Check if the last table was checked against current result.
+			int miss = 0;
+			if (!expected_table_checked)
+			{
+				miss = 1;
+				
+				// Get current time
+				gettimeofday(&tv_now, NULL);
+				
+				// Determine time that passed
+				timersub(&tv_now, &expected_table_received, &tv_diff);
+			}
+			
+			// Store new excepted information
 			gettimeofday(&expected_table_received, NULL);
 			expected_table_size = deserialize_join_table(expected_table, MAX_TABLE_SIZE, buf, buflen, &bytes_used);
 			expected_table_checked = 0;
 			pthread_mutex_unlock(&expected_table_mutex);
+			
+			// Output missed result
+			if (miss)
+			{
+				// Create timestamp
+				char ts[32];
+				sprintf(ts, "%llu.%06llu", (uint64_t)tv_diff.tv_sec, (uint64_t)tv_diff.tv_usec);
+				
+				// Print message
+				printf("Result now received in %s sec.\n", ts);
+			}
 		}
 	}
 	
@@ -164,14 +193,15 @@ void vote_and_process()
 			expected_table_checked = 1;
 			pthread_mutex_unlock(&expected_table_mutex);
 			
-			// Print timestamp
-			printf("%llu.%06llu: ", (uint64_t)tv_diff.tv_sec, (uint64_t)tv_diff.tv_usec);
+			// Create timestamp
+			char ts[32];
+			sprintf(ts, "%llu.%06llu", (uint64_t)tv_diff.tv_sec, (uint64_t)tv_diff.tv_usec);
 			
 			// Was this correct
 			if (correct)
-				printf("Correct result.\n");
+				printf("Correct result in %s sec.\n", ts);
 			else
-				printf("WRONG result.\n");
+				printf("WRONG result in %s sec.\n", ts);
 		}
 	}
 	
