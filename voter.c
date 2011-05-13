@@ -137,7 +137,10 @@ void vote_and_process()
 			// Compare against expected table
 			short correct = 1;
 			if (expected_table_size != merge_table_item->table_size)
+			{
+				printf("Expected %d rows, got %d.\n", expected_table_size, merge_table_item->table_size);
 				correct = 0;
+			}
 			else
 			{
 				for (i = 0; correct && i < expected_table_size; i++)
