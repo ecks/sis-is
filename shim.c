@@ -101,6 +101,8 @@ int main (int argc, char ** argv)
 			table2[i].gender = (i % 3) ? 'M' : 'F';
 		}
 		
+		// Send real result to voter
+		send_real_result_to_voter(table1, MAX_TABLE_SIZE, table2, MAX_TABLE_SIZE);
 		
 		// Serialize
 		printf("Serializing...\n");
