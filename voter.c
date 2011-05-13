@@ -54,10 +54,12 @@ int main (int argc, char ** argv)
 void * validator(void * param)
 {
 	// Wait until sisis address is set up
+	printf("Waiting for SIS-IS address.\n");
 	char tmp_addr[INET6_ADDRSTRLEN];
 	get_sisis_addr(tmp_addr);
 	
 	// Make socket
+	printf("Opening socket.\n");
 	char port_str[16];
 	sprintf(port_str, "%u", VOTER_ANSWER_PORT);
 	int fd = make_socket(port_str);
@@ -69,6 +71,7 @@ void * validator(void * param)
 	// Receive message
 	while (1)
 	{
+		printf("Waiting for data.\n");
 		if ((buflen = recvfrom(fd, buf, RECV_BUFFER_SIZE, 0, NULL, NULL)) != -1)
 		{
 			// Deserialize
