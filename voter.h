@@ -10,4 +10,7 @@ void process_input(char * buf, int buflen);
 /** Vote on input and process */
 void vote_and_process();
 
+/** Flush inputs */
+void flush_inputs();
+
 #endif

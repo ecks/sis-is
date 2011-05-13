@@ -47,7 +47,7 @@ int main (int argc, char ** argv)
 	table2_group.first = NULL;
 	
 	// Start main loop
-	redundancy_main((uint64_t)SISIS_PTYPE_DEMO1_JOIN, (uint64_t)VERSION, JOIN_PORT, (uint64_t)SISIS_PTYPE_DEMO1_SORT, process_input, vote_and_process, 0, argc, argv);
+	redundancy_main((uint64_t)SISIS_PTYPE_DEMO1_JOIN, (uint64_t)VERSION, JOIN_PORT, (uint64_t)SISIS_PTYPE_DEMO1_SORT, process_input, vote_and_process, flush_inputs, 0, argc, argv);
 }
 
 /** Process input from a single process. */
@@ -109,6 +109,14 @@ void vote_and_process()
 		process_tables(table1_item->table, table1_item->table_size, table2_item->table, table2_item->table_size);
 	}
 	
+	// Clear tables
+	table_group_free(&table1_group);
+	table_group_free(&table2_group);
+}
+
+/** Flush inputs */
+void flush_inputs()
+{
 	// Clear tables
 	table_group_free(&table1_group);
 	table_group_free(&table2_group);

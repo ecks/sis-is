@@ -37,7 +37,7 @@ int table2_size;
 int main (int argc, char ** argv)
 {
 	// Start main loop
-	redundancy_main((uint64_t)SISIS_PTYPE_DEMO1_SORT, (uint64_t)VERSION, SORT_PORT, 0, process_input, vote_and_process, REDUNDANCY_MAIN_FLAG_SINGLE_INPUT, argc, argv);
+	redundancy_main((uint64_t)SISIS_PTYPE_DEMO1_SORT, (uint64_t)VERSION, SORT_PORT, 0, process_input, vote_and_process, NULL, REDUNDANCY_MAIN_FLAG_SINGLE_INPUT, argc, argv);
 }
 
 /** Process input from a single process. */

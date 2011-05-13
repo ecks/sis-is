@@ -98,7 +98,7 @@ void get_sisis_addr(char * buf)
 }
 
 /** Main loop for redundant processes */
-void redundancy_main(uint64_t process_type, uint64_t process_type_version, int port, uint64_t input_process_type, void (*process_input)(char *, int), void (*vote_and_process)(), int flags, int argc, char ** argv)
+void redundancy_main(uint64_t process_type, uint64_t process_type_version, int port, uint64_t input_process_type, void (*process_input)(char *, int), void (*vote_and_process)(), void (*flush_inputs)(), int flags, int argc, char ** argv)
 {
 	// Store process type
 	ptype = process_type;
@@ -299,7 +299,13 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 				
 				// Check that at least 1/2 of the processes sent inputs
 				if (!(flags & REDUNDANCY_MAIN_FLAG_SINGLE_INPUT) && num_input <= num_input_processes/2)
+				{
+					// Flush inputs
+					flush_inputs();
+		#ifdef DEBUG
 					printf("Not enough inputs for a vote.\n");
+		#endif
+				}
 				else
 				{
 		#ifdef DEBUG

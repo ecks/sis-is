@@ -50,7 +50,7 @@ int main (int argc, char ** argv)
 	merge_table_group.first = NULL;
 	
 	// Start main loop
-	redundancy_main((uint64_t)SISIS_PTYPE_DEMO1_VOTER, (uint64_t)VERSION, VOTER_PORT, (uint64_t)SISIS_PTYPE_DEMO1_JOIN, process_input, vote_and_process, REDUNDANCY_MAIN_FLAG_SKIP_REDUNDANCY, argc, argv);
+	redundancy_main((uint64_t)SISIS_PTYPE_DEMO1_VOTER, (uint64_t)VERSION, VOTER_PORT, (uint64_t)SISIS_PTYPE_DEMO1_JOIN, process_input, vote_and_process, flush_inputs, REDUNDANCY_MAIN_FLAG_SKIP_REDUNDANCY, argc, argv);
 }
 
 /** Gets real answer from shim and validates results. */
@@ -205,6 +205,13 @@ void vote_and_process()
 		}
 	}
 	
+	// Clear tables
+	table_group_free(&merge_table_group);
+}
+
+/** Flush inputs */
+void flush_inputs()
+{
 	// Clear tables
 	table_group_free(&merge_table_group);
 }
