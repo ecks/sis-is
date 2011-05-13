@@ -41,6 +41,11 @@ void terminate(int signal)
 
 int main (int argc, char ** argv)
 {
+	// Sleep time
+	unsigned int sleep_time = 5;
+	if (argc == 2)
+		sscanf(argc, "%u", &sleep_time);
+	
 	printf("Opening socket...\n");
 	
 	// Create socket
@@ -59,84 +64,91 @@ int main (int argc, char ** argv)
 	// Seed random number generator
 	srand(time(NULL));
 	
-	// Create random tables
-	int i;
-	
-	// Table 1
-	printf("Building table 1...\n");
-	demo_table1_entry table1[MAX_TABLE_SIZE];
-	short user_id_pool[100];
-	for (i = 0; i < 100; i++)
-		user_id_pool[i] = 0;
-	for (i = 0; i < MAX_TABLE_SIZE; i++)
+	// Loop forever
+	while (1)
 	{
-		do {
-			table1[i].user_id = rand() % 100;
-		} while (user_id_pool[table1[i].user_id]);
-		user_id_pool[table1[i].user_id] = 1;
+		// Create random tables
+		int i;
 		
-		sprintf(table1[i].name, "User #%d", i+1);
-	}
-	
-	// Table 2
-	printf("Building table 2...\n");
-	demo_table2_entry table2[MAX_TABLE_SIZE];
-	for (i = 0; i < 100; i++)
-		user_id_pool[i] = 0;
-	for (i = 0; i < MAX_TABLE_SIZE; i++)
-	{
-		do {
-			table2[i].user_id = rand() % 100;
-		} while (user_id_pool[table2[i].user_id]);
-		user_id_pool[table2[i].user_id] = 1;
+		// Table 1
+		printf("Building table 1...\n");
+		demo_table1_entry table1[MAX_TABLE_SIZE];
+		short user_id_pool[100];
+		for (i = 0; i < 100; i++)
+			user_id_pool[i] = 0;
+		for (i = 0; i < MAX_TABLE_SIZE; i++)
+		{
+			do {
+				table1[i].user_id = rand() % 100;
+			} while (user_id_pool[table1[i].user_id]);
+			user_id_pool[table1[i].user_id] = 1;
+			
+			sprintf(table1[i].name, "User #%d", i+1);
+		}
 		
-		table2[i].gender = (i % 3) ? 'M' : 'F';
-	}
-	
-	// Serialize
-	printf("Serializing...\n");
-	char buf[RECV_BUFFER_SIZE];
-	int buflen, buflen2;
-	buflen = serialize_table1(table1, MAX_TABLE_SIZE, buf, RECV_BUFFER_SIZE);
-	if (buflen != -1)
-		buflen2 = serialize_table2(table2, MAX_TABLE_SIZE, buf+buflen, RECV_BUFFER_SIZE - buflen);
-	if (buflen == -1 || buflen2 == -1)
-		printf("Failed to serialize tables.\n");
-	else
-	{
-		// Find all sort processes
-		printf("Searching for sort processes...\n");
-		char sort_addr[INET6_ADDRSTRLEN+1];
-		sisis_create_addr(sort_addr, (uint64_t)SISIS_PTYPE_DEMO1_SORT, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
-		struct prefix_ipv6 sort_prefix = sisis_make_ipv6_prefix(sort_addr, 42);
-		struct list * sort_addrs = get_sisis_addrs_for_prefix(&sort_prefix);
-		if (sort_addrs == NULL || sort_addrs->size == 0)
-			printf("No sort processes found.\n");
+		// Table 2
+		printf("Building table 2...\n");
+		demo_table2_entry table2[MAX_TABLE_SIZE];
+		for (i = 0; i < 100; i++)
+			user_id_pool[i] = 0;
+		for (i = 0; i < MAX_TABLE_SIZE; i++)
+		{
+			do {
+				table2[i].user_id = rand() % 100;
+			} while (user_id_pool[table2[i].user_id]);
+			user_id_pool[table2[i].user_id] = 1;
+			
+			table2[i].gender = (i % 3) ? 'M' : 'F';
+		}
+		
+		// Serialize
+		printf("Serializing...\n");
+		char buf[RECV_BUFFER_SIZE];
+		int buflen, buflen2;
+		buflen = serialize_table1(table1, MAX_TABLE_SIZE, buf, RECV_BUFFER_SIZE);
+		if (buflen != -1)
+			buflen2 = serialize_table2(table2, MAX_TABLE_SIZE, buf+buflen, RECV_BUFFER_SIZE - buflen);
+		if (buflen == -1 || buflen2 == -1)
+			printf("Failed to serialize tables.\n");
 		else
 		{
-			// Send to all sort processes
-			struct listnode * node;
-			LIST_FOREACH(sort_addrs, node)
+			// Find all sort processes
+			printf("Searching for sort processes...\n");
+			char sort_addr[INET6_ADDRSTRLEN+1];
+			sisis_create_addr(sort_addr, (uint64_t)SISIS_PTYPE_DEMO1_SORT, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
+			struct prefix_ipv6 sort_prefix = sisis_make_ipv6_prefix(sort_addr, 42);
+			struct list * sort_addrs = get_sisis_addrs_for_prefix(&sort_prefix);
+			if (sort_addrs == NULL || sort_addrs->size == 0)
+				printf("No sort processes found.\n");
+			else
 			{
-				// Get address
-				struct in6_addr * remote_addr = (struct in6_addr *)node->data;
+				// Send to all sort processes
+				struct listnode * node;
+				LIST_FOREACH(sort_addrs, node)
+				{
+					// Get address
+					struct in6_addr * remote_addr = (struct in6_addr *)node->data;
+					
+					// Set up socket info
+					struct sockaddr_in6 sockaddr;
+					int sockaddr_size = sizeof(sockaddr);
+					memset(&sockaddr, 0, sockaddr_size);
+					sockaddr.sin6_family = AF_INET6;
+					sockaddr.sin6_port = htons(SORT_PORT);
+					sockaddr.sin6_addr = *remote_addr;
+					
+					printf("Sending data to sort process...\n");
+					if (sendto(sockfd, buf, buflen+buflen2, 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
+						printf("Failed to send message.  Error: %i\n", errno);
+				}
 				
-				// Set up socket info
-				struct sockaddr_in6 sockaddr;
-				int sockaddr_size = sizeof(sockaddr);
-				memset(&sockaddr, 0, sockaddr_size);
-				sockaddr.sin6_family = AF_INET6;
-				sockaddr.sin6_port = htons(SORT_PORT);
-				sockaddr.sin6_addr = *remote_addr;
-				
-				printf("Sending data to sort process...\n");
-				if (sendto(sockfd, buf, buflen+buflen2, 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
-					printf("Failed to send message.  Error: %i\n", errno);
+				// Free memory
+				FREE_LINKED_LIST(sort_addrs);
 			}
-			
-			// Free memory
-			FREE_LINKED_LIST(sort_addrs);
 		}
+		
+		// Sleep
+		sleep(sleep_time);
 	}
 	
 	// Close socket
