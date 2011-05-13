@@ -44,7 +44,7 @@ int main (int argc, char ** argv)
 	// Sleep time
 	unsigned int sleep_time = 5;
 	if (argc == 2)
-		sscanf(argc, "%u", &sleep_time);
+		sscanf(argv[1], "%u", &sleep_time);
 	
 	printf("Opening socket...\n");
 	
