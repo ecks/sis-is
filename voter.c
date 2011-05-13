@@ -108,7 +108,7 @@ void * validator(void * param)
 				sprintf(ts, "%llu.%06llu", (uint64_t)tv_diff.tv_sec, (uint64_t)tv_diff.tv_usec);
 				
 				// Print message
-				printf("Result now received in %s sec.\n", ts);
+				printf("Result NOT received in %s sec.\n", ts);
 			}
 		}
 	}
