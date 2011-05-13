@@ -26,19 +26,6 @@
 
 #define VERSION 1
 
-int sockfd = -1;
-
-void terminate(int signal)
-{
-	printf("Terminating...\n");
-	if (sockfd != -1)
-	{
-		printf("Closing remove connection socket...\n");
-		close(sockfd);
-	}
-	exit(0);
-}
-
 int main (int argc, char ** argv)
 {
 	// Sleep time
