@@ -31,7 +31,7 @@
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
 
-//#define DEBUG
+#define DEBUG
 
 #define VERSION 1
 int sockfd = -1;
