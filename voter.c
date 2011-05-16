@@ -212,6 +212,8 @@ void vote_and_process()
 /** Flush inputs */
 void flush_inputs()
 {
+	printf("Flushing inputs.\n");
+	
 	// Clear tables
 	table_group_free(&merge_table_group);
 }
