@@ -151,6 +151,7 @@ void process_input(char * buf, int buflen)
 /** Vote on input and process */
 void vote_and_process()
 {
+	printf("Voting...\n");
 	// Vote
 	table_group_item_t * merge_table_item = merge_table_vote(&merge_table_group);
 	if (!merge_table_item)
