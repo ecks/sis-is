@@ -258,6 +258,11 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 					// Read from socket
 					if ((buflen = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
 					{
+#ifdef DEBUG
+						char addr[INET6_ADDRSTRLEN];
+						if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != 1)
+							printf("Input from %s.\n", addr);
+#endif
 						// Setup input
 						if (num_input == 0)
 						{
