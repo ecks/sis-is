@@ -260,7 +260,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 					{
 #ifdef DEBUG
 						char addr[INET6_ADDRSTRLEN];
-						if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != 1)
+						if (inet_ntop(AF_INET6, remote_addr.sin6_addr, addr, INET6_ADDRSTRLEN) != 1)
 							printf("Input from %s.\n", addr);
 #endif
 						// Setup input
