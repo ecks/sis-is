@@ -414,7 +414,7 @@ void check_redundancy()
 	int num_machines = get_process_type_count((uint64_t)SISIS_PTYPE_MACHINE_MONITOR);
 	
 	// Determine number of processes we should have
-	int num_procs = MAX(num_machines*REDUNDANCY_PERCENTAGE/100, 3);
+	int num_procs = MAX(num_machines*REDUNDANCY_PERCENTAGE/100, 4);
 	
 	// Get list of all processes
 	struct list * proc_addrs = get_processes_by_type(ptype);
@@ -738,6 +738,7 @@ void check_redundancy()
 				uint64_t prefix, sisis_version, process_type, process_version, sys_id, other_pid, ts;
 				if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != NULL)
 					if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &other_pid, &ts) == 0)
+						// TODO: Maybe if there have the same timestamp, first kill duplicates on the same host
 						if (ts < timestamp || (ts == timestamp && (sys_id < host_num || other_pid < pid))) // Use System ID and PID as tie breakers
 							if (++younger_procs == num_procs)
 							{
