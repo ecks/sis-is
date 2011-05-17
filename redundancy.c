@@ -260,7 +260,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 					{
 #ifdef DEBUG
 						char addr[INET6_ADDRSTRLEN];
-						if (inet_ntop(AF_INET6, remote_addr.sin6_addr, addr, INET6_ADDRSTRLEN) != 1)
+						if (inet_ntop(AF_INET6, remote_addr.sin6_addr, addr, INET6_ADDRSTRLEN) != NULL)
 							printf("Input from %s.\n", addr);
 #endif
 						// Setup input
@@ -336,7 +336,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 	if (route->p->prefixlen == 128)
 	{
 		char addr[INET6_ADDRSTRLEN];
-		if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), addr, INET6_ADDRSTRLEN) != 1)
+		if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), addr, INET6_ADDRSTRLEN) != NULL)
 		{
 			// Parse components
 			uint64_t prefix, sisis_version, process_type, process_version, sys_id, pid, ts;
@@ -372,7 +372,7 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 	if (route->p->prefixlen == 128)
 	{
 		char addr[INET6_ADDRSTRLEN];
-		if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), addr, INET6_ADDRSTRLEN) != 1)
+		if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), addr, INET6_ADDRSTRLEN) != NULL)
 		{
 			// Parse components
 			uint64_t prefix, sisis_version, process_type, process_version, sys_id, pid, ts;
@@ -438,7 +438,7 @@ void check_redundancy()
 				// Parse components
 				char addr[INET6_ADDRSTRLEN];
 				uint64_t prefix, sisis_version, process_type, process_version, sys_id, other_pid, ts;
-				if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != 1)
+				if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != NULL)
 					if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &other_pid, &ts) == 0)
 						if (ts < timestamp || (ts == timestamp && (sys_id < host_num || other_pid < pid))) // Use System ID and PID as tie breakers
 						{
@@ -486,7 +486,7 @@ void check_redundancy()
 					// Parse components
 					char addr[INET6_ADDRSTRLEN];
 					uint64_t prefix, sisis_version, process_type, process_version, sys_id, other_pid, ts;
-					if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != 1)
+					if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != NULL)
 						if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &other_pid, &ts) == 0)
 						{
 							desirable_hosts[i].priority = (sys_id == host_num ? 10000 : 0);
@@ -505,7 +505,7 @@ void check_redundancy()
 									
 									// Get system id
 									uint64_t mm_sys_id;
-									if (inet_ntop(AF_INET6, remote_addr2, addr, INET6_ADDRSTRLEN) != 1)
+									if (inet_ntop(AF_INET6, remote_addr2, addr, INET6_ADDRSTRLEN) != NULL)
 										if (get_sisis_addr_components(addr, NULL, NULL, NULL, NULL, &mm_sys_id, NULL, NULL) == 0)
 											if (mm_sys_id == sys_id)
 											{
@@ -685,7 +685,7 @@ void check_redundancy()
 	#ifdef DEBUG
 							// Debugging info
 							char tmp_addr[INET6_ADDRSTRLEN];
-							if (inet_ntop(AF_INET6, remote_addr, tmp_addr, INET6_ADDRSTRLEN) != 1)
+							if (inet_ntop(AF_INET6, remote_addr, tmp_addr, INET6_ADDRSTRLEN) != NULL)
 								printf("Starting new process via %s.\n", tmp_addr);
 							else
 								printf("Starting new process.\n");
@@ -735,7 +735,7 @@ void check_redundancy()
 				// Parse components
 				char addr[INET6_ADDRSTRLEN];
 				uint64_t prefix, sisis_version, process_type, process_version, sys_id, other_pid, ts;
-				if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != 1)
+				if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != NULL)
 					if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &other_pid, &ts) == 0)
 						if (ts < timestamp || (ts == timestamp && (sys_id < host_num || other_pid < pid))) // Use System ID and PID as tie breakers
 							if (++younger_procs == num_procs)
