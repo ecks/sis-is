@@ -6,6 +6,7 @@
 #include "../tests/sisis_api.h"
 
 #define MACHINE_MONITOR_REQUEST_TIMEOUT 2000000 // in usec
+#define INITIAL_CHECK_PROCS_ALARM_DELAY 50000 // in usec
 #define RECHECK_PROCS_ALARM_DELAY 500000 // in usec
 
 // Socket

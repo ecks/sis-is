@@ -18,6 +18,7 @@
 #include <errno.h>
 
 #include <time.h>
+#include <sys/time.h>
 #include <pthread.h>
 
 #include "demo.h"
@@ -46,6 +47,7 @@ pthread_mutex_t sisis_addr_mutex = PTHREAD_MUTEX_INITIALIZER;
 char sisis_addr[INET6_ADDRSTRLEN] = { '\0' };
 
 // Current number of processes (-1 for invalid)
+pthread_mutex_t num_processes_mutex = PTHREAD_MUTEX_INITIALIZER;
 int num_processes = -1;
 
 void close_listener()
@@ -72,7 +74,7 @@ void terminate(int signal)
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	if ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000) < 10)
-		sleep(1.0 - ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000))/10.0);
+		sleep(1.1 - ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000))/10.0);
 		
 #ifdef DEBUG
 	printf("Terminating...\n");
@@ -359,13 +361,25 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 					if (process_type == ptype)
 					{
 						// Update current number of processes
+						pthread_mutex_lock(&num_processes_mutex);
 						if (num_processes == -1)
 							num_processes = get_process_type_count(ptype);
 						else
 							num_processes++;
+						pthread_mutex_unlock(&num_processes_mutex);
 						
-						// Check redundancy
-						check_redundancy();
+						// Set alarm to check redundancy in a little bit
+						struct itimerval itv;
+						// Check that there is a shorter timer already set
+						getitimer(ITIMER_REAL, &itv);
+						if (itv.it_value.tv_sec * 1000000 + itv.it_value.tv_usec > INITIAL_CHECK_PROCS_ALARM_DELAY)
+						{
+							// Set timer
+							memset(&itv, 0 sizeof itv);
+							itv.it_value.tv_sec = INITIAL_CHECK_PROCS_ALARM_DELAY / 1000000;
+							itv.it_value.tv_usec = INITIAL_CHECK_PROCS_ALARM_DELAY % 1000000;
+							setitimer(ITIMER_REAL, &itv, NULL);
+						}
 					}
 				}
 			}
@@ -395,13 +409,25 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 					if (process_type == ptype)
 					{
 						// Update current number of processes
+						pthread_mutex_lock(&num_processes_mutex);
 						if (num_processes == -1)
 							num_processes = get_process_type_count(ptype);
 						else
 							num_processes--;
+						pthread_mutex_unlock(&num_processes_mutex);
 						
-						// Check redundancy
-						check_redundancy();
+						// Set alarm to check redundancy in a little bit
+						struct itimerval itv;
+						// Check that there is a shorter timer already set
+						getitimer(ITIMER_REAL, &itv);
+						if (itv.it_value.tv_sec * 1000000 + itv.it_value.tv_usec > INITIAL_CHECK_PROCS_ALARM_DELAY)
+						{
+							// Set timer
+							memset(&itv, 0 sizeof itv);
+							itv.it_value.tv_sec = INITIAL_CHECK_PROCS_ALARM_DELAY / 1000000;
+							itv.it_value.tv_usec = INITIAL_CHECK_PROCS_ALARM_DELAY % 1000000;
+							setitimer(ITIMER_REAL, &itv, NULL);
+						}
 					}
 				}
 			}
@@ -430,11 +456,15 @@ void check_redundancy()
 	struct listnode * node;
 	
 	// Check current number of processes
+	pthread_mutex_lock(&num_processes_mutex);
 	if (num_processes == -1)
 		num_processes = get_process_type_count(ptype);
-	printf("Need %d processes... Have %d.\n", num_procs, num_processes);
+	int local_num_processes = num_processes;
+	pthread_mutex_unlock(&num_processes_mutex);
+	printf("Need %d processes... Have %d.\n", num_procs, local_num_processes);
+	
 	// Too few
-	if (num_processes < num_procs)
+	if (local_num_processes < num_procs)
 	{
 		// TODO: Maybe only have the leader do this (or a leader and spare)
 		// Only have youngest process start new processes
@@ -462,7 +492,7 @@ void check_redundancy()
 		if (do_startup)
 		{
 			// Number of processes to start
-			int num_start = num_procs - num_processes;
+			int num_start = num_procs - local_num_processes;
 			
 			// Get machine monitors
 			char mm_addr[INET6_ADDRSTRLEN+1];
@@ -722,7 +752,17 @@ void check_redundancy()
 				free(desirable_hosts);
 				
 				// Set alarm to recheck redundancy in a little bit
-				ualarm(RECHECK_PROCS_ALARM_DELAY, 0);
+				struct itimerval itv;
+				// Check that there is a shorter timer already set
+				getitimer(ITIMER_REAL, &itv);
+				if (itv.it_value.tv_sec * 1000000 + itv.it_value.tv_usec > RECHECK_PROCS_ALARM_DELAY)
+				{
+					// Set timer
+					memset(&itv, 0 sizeof itv);
+					itv.it_value.tv_sec = RECHECK_PROCS_ALARM_DELAY / 1000000;
+					itv.it_value.tv_usec = RECHECK_PROCS_ALARM_DELAY % 1000000;
+					setitimer(ITIMER_REAL, &itv, NULL);
+				}
 			}
 			// Free memory
 			if (spawn_addrs)
@@ -732,7 +772,7 @@ void check_redundancy()
 		}
 	}
 	// Too many
-	else if (num_processes > num_procs)
+	else if (local_num_processes > num_procs)
 	{
 		// Exit if not one of first num_procs processes
 		int younger_procs = 0;
