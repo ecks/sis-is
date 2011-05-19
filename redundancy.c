@@ -76,19 +76,23 @@ void terminate(int signal)
 #ifdef DEBUG
 	printf("Terminating...\n");
 #endif
-	// Wait at least 1.5 seconds before killing to prevent OSPF issues
+	// Wait at least 1 seconds before killing to prevent OSPF issues
 	if (timestamp_precise.tv_sec == 0 && timestamp_precise.tv_usec == 0)
 		gettimeofday(&timestamp_precise, NULL);
-	struct timeval tv, tv2;
+	struct timeval tv, tv2, tv3;
 	gettimeofday(&tv, NULL);
-	if ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000) < 15)
+	if ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000) < 10)
 	{
 		timersub(&tv, &timestamp_precise, &tv2);
-		unsigned long sleep_time = 1500000;
-		sleep_time -= (unsigned long)tv2.tv_sec*1000000 + (unsigned long)tv2.tv_usec;
-		printf("Waiting %lu microseconds to prevent OSPF issue.\n", sleep_time);
-		if (usleep(sleep_time) == -1)
-			perror("usleep");
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+		timersub(&tv, &tv2, &tv3);
+		struct timespec sleep_time;
+		sleep_time.tv_sec = tv3.tv_sec;
+		sleep_time.tv_nsec = tv3.tv_usec * 1000;
+		printf("Waiting %llu.%06llu seconds to prevent OSPF issue.\n", (uint64_t)sleep_time.tv_sec, (uint64_t)sleep_time.tv_nsec/1000);
+		if (nanosleep(sleep_time) == -1)
+			perror("nanosleep");
 		
 		gettimeofday(&tv, NULL);
 		timersub(&tv, &timestamp_precise, &tv2);
