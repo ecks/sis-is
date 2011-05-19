@@ -87,7 +87,8 @@ void terminate(int signal)
 		unsigned long sleep_time = 1500000;
 		sleep_time -= (unsigned long)tv2.tv_sec*1000000 + (unsigned long)tv2.tv_usec;
 		printf("Waiting %lu microseconds to prevent OSPF issue.\n", sleep_time);
-		usleep(sleep_time);
+		if (usleep(sleep_time) == -1)
+			perror("usleep");
 		
 		gettimeofday(&tv, NULL);
 		timersub(&tv, &timestamp_precise, &tv2);
