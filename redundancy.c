@@ -101,7 +101,6 @@ void terminate(int signal)
 			else
 				break;
 		}
-		*/
 		// Busy wait as last resort
 		gettimeofday(&tv, NULL);
 		timersub(&tv, &timestamp_precise, &tv2);
