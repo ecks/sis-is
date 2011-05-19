@@ -41,7 +41,7 @@ int stop_redundancy_socket = -1;
 volatile short redundancy_flag = 1;
 uint64_t ptype, host_num, pid;
 uint64_t timestamp;
-struct timeval timestamp_precise;
+struct timeval timestamp_precise = { 0 };
 
 // Time when the last set of inputs were actually processed (ie. there were enough processes)
 struct timeval last_inputs_processes;
@@ -77,6 +77,8 @@ void terminate(int signal)
 	printf("Terminating...\n");
 #endif
 	// Wait at least 1.5 seconds before killing to prevent OSPF issues
+	if (timestamp_precise.tv_sec == 0 && timestamp_precise.tv_usec == 0)
+		gettimeofday(&timestamp_precise, NULL);
 	struct timeval tv, tv2;
 	gettimeofday(&tv, NULL);
 	if ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000) < 15)
