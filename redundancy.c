@@ -43,6 +43,9 @@ uint64_t ptype, host_num, pid;
 uint64_t timestamp;
 struct timeval timestamp_precise;
 
+// Time when the last set of inputs were actually processed (ie. there were enough processes)
+struct timeval last_inputs_processes;
+
 pthread_mutex_t sisis_addr_mutex = PTHREAD_MUTEX_INITIALIZER;
 char sisis_addr[INET6_ADDRSTRLEN] = { '\0' };
 
@@ -115,6 +118,9 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	// Get start time
 	timestamp = time(NULL);
 	gettimeofday(&timestamp_precise, NULL);	// More precise
+	
+	// There are no last inputs processed
+	memset(&last_inputs_processes, 0, sizeof last_inputs_processes);
 	
 	// Check number of args
 	if (argc != 2)
@@ -266,8 +272,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 					// Read from socket
 					if ((buflen = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
 					{
-//#ifdef DEBUG
-#if 1
+#ifdef DEBUG
 						gettimeofday(&cur_time, NULL);
 						char addr[INET6_ADDRSTRLEN];
 						if (inet_ntop(AF_INET6, &(remote_addr.sin6_addr), addr, INET6_ADDRSTRLEN) != NULL)
@@ -319,6 +324,12 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 				// Check that at least 1/2 of the processes sent inputs
 				if (!(flags & REDUNDANCY_MAIN_FLAG_SINGLE_INPUT) && num_input <= num_input_processes/2)
 				{
+					// Check how late these are for the last set of inputs
+					gettimeofday(&cur_time, NULL);
+					timersub(&cur_time, &last_inputs_processes, &tmp1);
+					//if ((tmp1.tv_sec * 1000000 + tmp1.tv_usec) < GATHER_RESULTS_TIMEOUT_USEC * 1.25)
+					printf("Late by %llu.%06llu seconds.\n", tmp1.tv_sec, tmp1.tv_usec);
+					
 					// Flush inputs
 					flush_inputs();
 		#ifdef DEBUG
@@ -330,6 +341,9 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 		#ifdef DEBUG
 					printf("Voting...\n");
 		#endif
+					// Record time
+					gettimeofday(&last_inputs_processes, NULL);
+					
 					// Vote and process results
 					vote_and_process();
 				}
