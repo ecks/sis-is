@@ -175,6 +175,11 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	gettimeofday(&tv, NULL);
 	timestamp = (tv.tv_sec & 0xfffe0000) | (((tv.tv_sec & 0x1ffff) * 1000 + (tv.tv_usec / 1000)) & 0x1ffff);
 	
+	// Set up signal handling
+	signal(SIGABRT, terminate);
+	signal(SIGTERM, terminate);
+	signal(SIGINT, terminate);
+	
 	// There are no last inputs processed
 	memset(&last_inputs_processes, 0, sizeof last_inputs_processes);
 	
@@ -242,11 +247,6 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	// Status message
 	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)(addr->ai_addr))->sin6_addr, sisis_addr, INET6_ADDRSTRLEN);
 	printf("Socket opened at %s on port %u.\n", sisis_addr, ntohs(((struct sockaddr_in *)(addr->ai_addr))->sin_port));
-	
-	// Set up signal handling
-	signal(SIGABRT, terminate);
-	signal(SIGTERM, terminate);
-	signal(SIGINT, terminate);
 	
 	// Info to subscribe to RIB changes
 	struct subscribe_to_rib_changes_info info;
