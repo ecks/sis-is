@@ -164,8 +164,8 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	ptype_version = process_type_version;
 	
 	// Get start time
-	timestamp = time(NULL);
 	gettimeofday(&timestamp_precise, NULL);	// More precise
+	timestamp = (timestamp_precise.tv_sec & 0xfffe0000) | ((timestamp_precise.tv_usec * 1000) & 0x1ffff);
 	
 	// There are no last inputs processed
 	memset(&last_inputs_processes, 0, sizeof last_inputs_processes);
