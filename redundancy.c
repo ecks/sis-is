@@ -271,7 +271,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 						gettimeofday(&cur_time, NULL);
 						char addr[INET6_ADDRSTRLEN];
 						if (inet_ntop(AF_INET6, &(remote_addr.sin6_addr), addr, INET6_ADDRSTRLEN) != NULL)
-							printf("[%llu.%06llu] Input from %*s.\n", INET6_ADDRSTRLEN, addr, (uint64_t)cur_time.tv_sec, (uint64_t)cur_time.tv_usec);
+							printf("[%llu.%06llu] Input from %*s.\n", (uint64_t)cur_time.tv_sec, (uint64_t)cur_time.tv_usec, INET6_ADDRSTRLEN, addr);
 #endif
 						// Setup input
 						if (num_input == 0)
