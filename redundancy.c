@@ -41,7 +41,7 @@ int stop_redundancy_socket = -1;
 volatile short redundancy_flag = 1;
 uint64_t ptype, ptype_version, host_num, pid;
 uint64_t timestamp;
-struct timeval timestamp_precise = { 0 };
+struct timeval timestamp_sisis_registered = { 0 };
 
 // Time when the last set of inputs were actually processed (ie. there were enough processes)
 struct timeval last_inputs_processes;
@@ -65,11 +65,11 @@ void close_listener()
 		close(sockfd);
 		
 		// Wait at least 1.1 seconds to prevent OSPF issues
-		if (timestamp_precise.tv_sec == 0 && timestamp_precise.tv_usec == 0)
-			gettimeofday(&timestamp_precise, NULL);
+		if (timestamp_sisis_registered.tv_sec == 0 && timestamp_sisis_registered.tv_usec == 0)
+			gettimeofday(&timestamp_sisis_registered, NULL);
 		struct timeval tv, tv2, tv3;
 		gettimeofday(&tv, NULL);
-		timersub(&tv, &timestamp_precise, &tv2);
+		timersub(&tv, &timestamp_sisis_registered, &tv2);
 		if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000))
 		{
 			tv.tv_sec = 1;
@@ -96,7 +96,7 @@ void close_listener()
 			}
 			// Busy wait as last resort
 			gettimeofday(&tv, NULL);
-			timersub(&tv, &timestamp_precise, &tv2);
+			timersub(&tv, &timestamp_sisis_registered, &tv2);
 			if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000))
 			{
 	#ifdef DEBUG
@@ -105,13 +105,13 @@ void close_listener()
 				do
 				{
 					gettimeofday(&tv, NULL);
-					timersub(&tv, &timestamp_precise, &tv2);
+					timersub(&tv, &timestamp_sisis_registered, &tv2);
 				} while (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000));
 			}
 			
 			
 			gettimeofday(&tv, NULL);
-			timersub(&tv, &timestamp_precise, &tv2);
+			timersub(&tv, &timestamp_sisis_registered, &tv2);
 	#ifdef DEBUG
 			printf("%llu.%06llu seconds since start... now actually terminating.\n", (uint64_t)tv2.tv_sec, (uint64_t)tv2.tv_usec);
 	#endif
@@ -165,8 +165,9 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	ptype_version = process_type_version;
 	
 	// Get start time
-	gettimeofday(&timestamp_precise, NULL);	// More precise
-	timestamp = (timestamp_precise.tv_sec & 0xfffe0000) | (((timestamp_precise.tv_sec & 0x1ffff) * 1000 + (timestamp_precise.tv_usec / 1000)) & 0x1ffff);
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	timestamp = (tv.tv_sec & 0xfffe0000) | (((tv.tv_sec & 0x1ffff) * 1000 + (tv.tv_usec / 1000)) & 0x1ffff);
 	
 	// There are no last inputs processed
 	memset(&last_inputs_processes, 0, sizeof last_inputs_processes);
@@ -192,6 +193,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 		exit(1);
 	}
 	pthread_mutex_unlock(&sisis_addr_mutex);
+	gettimeofday(&timestamp_sisis_registered, NULL);
 	
 	// Status
 	printf("Opening socket at %s on port %i.\n", sisis_addr, port);
@@ -862,7 +864,7 @@ void check_redundancy()
 								// TODO: In first 1.1 seconds, give second chance to avoid OSPF issues
 								struct timeval tv, tv2, tv3;
 								gettimeofday(&tv, NULL);
-								timersub(&tv, &timestamp_precise, &tv2);
+								timersub(&tv, &timestamp_sisis_registered, &tv2);
 								if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000))
 								{
 									tv.tv_sec = 1;
@@ -881,13 +883,13 @@ void check_redundancy()
 									}
 									// Busy wait as last resort
 									gettimeofday(&tv, NULL);
-									timersub(&tv, &timestamp_precise, &tv2);
+									timersub(&tv, &timestamp_sisis_registered, &tv2);
 									if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000))
 									{
 										do
 										{
 											gettimeofday(&tv, NULL);
-											timersub(&tv, &timestamp_precise, &tv2);
+											timersub(&tv, &timestamp_sisis_registered, &tv2);
 										} while (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000));
 									}
 									
