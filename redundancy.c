@@ -328,7 +328,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 					gettimeofday(&cur_time, NULL);
 					timersub(&cur_time, &last_inputs_processes, &tmp1);
 					//if ((tmp1.tv_sec * 1000000 + tmp1.tv_usec) < GATHER_RESULTS_TIMEOUT_USEC * 1.25)
-					printf("Late by %llu.%06llu seconds.\n", tmp1.tv_sec, tmp1.tv_usec);
+					printf("Late by %llu.%06llu seconds.\n", (uint64_t)tmp1.tv_sec, (uint64_t)tmp1.tv_usec);
 					
 					// Flush inputs
 					flush_inputs();
