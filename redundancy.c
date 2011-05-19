@@ -73,6 +73,9 @@ void close_listener()
 
 void terminate(int signal)
 {
+	// Block further interrupts
+	sigblock(sigmask(SIGINT));
+	
 #ifdef DEBUG
 	printf("Terminating...\n");
 #endif
