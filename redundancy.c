@@ -100,13 +100,12 @@ void terminate(int signal)
 		{
 			gettimeofday(&tv, NULL);
 			timersub(&tv, &timestamp_precise, &tv2);
-		} while (tv2.tv_sec < 2 || (tv2.tv_sec == 1 && tv2.tv_usec > 500000));
+		} while (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 500000));
 		
 		
 		gettimeofday(&tv, NULL);
 		timersub(&tv, &timestamp_precise, &tv2);
 		printf("%llu.%06llu seconds since start... now actually terminating.\n", (uint64_t)tv2.tv_sec, (uint64_t)tv2.tv_usec);
-		exit(0);
 	}
 	
 	close_listener();
