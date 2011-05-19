@@ -73,9 +73,6 @@ void close_listener()
 
 void terminate(int signal)
 {
-	// Block further interrupts
-	sigblock(sigmask(SIGINT));
-	
 #ifdef DEBUG
 	printf("Terminating...\n");
 #endif
@@ -94,8 +91,17 @@ void terminate(int signal)
 		sleep_time.tv_sec = tv3.tv_sec;
 		sleep_time.tv_nsec = tv3.tv_usec * 1000;
 		printf("Waiting %llu.%06llu seconds to prevent OSPF issue.\n", (uint64_t)sleep_time.tv_sec, (uint64_t)sleep_time.tv_nsec/1000);
+		/*
 		if (nanosleep(&sleep_time, NULL) == -1)
 			perror("nanosleep");
+		*/
+		// TODO: Don't busy wait
+		do
+		{
+			gettimeofday(&tv, NULL);
+			timersub(&tv, &timestamp_precise, &tv2);
+		} while (tv2.tv_sec < 1);
+		
 		
 		gettimeofday(&tv, NULL);
 		timersub(&tv, &timestamp_precise, &tv2);
