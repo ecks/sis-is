@@ -82,7 +82,8 @@ void terminate(int signal)
 	if ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000) < 15)
 	{
 		printf("Waiting a bit longer to prevent OSPF issue.\n");
-		sleep(1.5 - ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000))/10.0);
+		timersub(&tv, &timestamp_precise, &tv2);
+		usleep(1500000 - tv2.tv_sec*1000000 - tv2.tv_usec);
 		
 		gettimeofday(&tv, NULL);
 		timersub(&tv, &timestamp_precise, &tv2);
