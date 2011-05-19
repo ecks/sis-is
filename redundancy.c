@@ -76,16 +76,16 @@ void terminate(int signal)
 #ifdef DEBUG
 	printf("Terminating...\n");
 #endif
-	// Wait at least 1 seconds before killing to prevent OSPF issues
+	// Wait at least 1.5 seconds before killing to prevent OSPF issues
 	if (timestamp_precise.tv_sec == 0 && timestamp_precise.tv_usec == 0)
 		gettimeofday(&timestamp_precise, NULL);
 	struct timeval tv, tv2, tv3;
 	gettimeofday(&tv, NULL);
-	if ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000) < 10)
+	if ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000) < 15)
 	{
 		timersub(&tv, &timestamp_precise, &tv2);
 		tv.tv_sec = 1;
-		tv.tv_usec = 0;
+		tv.tv_usec = 500000;
 		timersub(&tv, &tv2, &tv3);
 		struct timespec sleep_time;
 		sleep_time.tv_sec = tv3.tv_sec;
@@ -100,7 +100,7 @@ void terminate(int signal)
 		{
 			gettimeofday(&tv, NULL);
 			timersub(&tv, &timestamp_precise, &tv2);
-		} while (tv2.tv_sec < 1);
+		} while (tv2.tv_sec < 2 || (tv2.tv_sec == 1 && tv2.tv_usec > 500000));
 		
 		
 		gettimeofday(&tv, NULL);
