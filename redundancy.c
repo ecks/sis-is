@@ -90,7 +90,7 @@ void terminate(int signal)
 		printf("%llu.%06llu seconds since start... now actually terminating.\n", (uint64_t)tv2.tv_sec, (uint64_t)tv2.tv_usec);
 	}
 	
-	close_listener();
+	//close_listener();
 	exit(0);
 }
 
