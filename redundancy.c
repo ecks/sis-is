@@ -32,7 +32,7 @@
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
 
-#define DEBUG
+//#define DEBUG
 
 #define VERSION 1
 int sockfd = -1;
@@ -301,7 +301,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 			#endif
 						}
 					}
-				} while(!(flags & REDUNDANCY_MAIN_FLAG_SINGLE_INPUT) && num_input < num_input_processes && select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
+				} while(!(flags & REDUNDANCY_MAIN_FLAG_SINGLE_INPUT) && /*num_input < num_input_processes */&& select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
 				
 				// Check that at least 1/2 of the processes sent inputs
 				if (!(flags & REDUNDANCY_MAIN_FLAG_SINGLE_INPUT) && num_input <= num_input_processes/2)
@@ -739,6 +739,9 @@ void check_redundancy()
 				if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != NULL)
 					if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &other_pid, &ts) == 0)
 						// TODO: Maybe if there have the same timestamp, first kill duplicates on the same host
+						// TODO: Create list, sort by timestamp, host_num, pid
+						// Count # of addresses priors to this one in the list, ignoring extra processes on the same host.
+						// If there are num_procs processes and this is the first process on the host: Stay alive
 						if (ts < timestamp || (ts == timestamp && (sys_id < host_num || other_pid < pid))) // Use System ID and PID as tie breakers
 							if (++younger_procs == num_procs)
 							{
