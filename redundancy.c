@@ -76,16 +76,16 @@ void terminate(int signal)
 #ifdef DEBUG
 	printf("Terminating...\n");
 #endif
-	// Wait at least 1.05 seconds before killing to prevent OSPF issues
+	// Wait at least 1.1 seconds before killing to prevent OSPF issues
 	if (timestamp_precise.tv_sec == 0 && timestamp_precise.tv_usec == 0)
 		gettimeofday(&timestamp_precise, NULL);
 	struct timeval tv, tv2, tv3;
 	gettimeofday(&tv, NULL);
 	timersub(&tv, &timestamp_precise, &tv2);
-	if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 50000))
+	if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000))
 	{
 		tv.tv_sec = 1;
-		tv.tv_usec = 50000;
+		tv.tv_usec = 100000;
 		timersub(&tv, &tv2, &tv3);
 		struct timespec sleep_time, rem_sleep_time;
 		sleep_time.tv_sec = tv3.tv_sec;
@@ -109,7 +109,7 @@ void terminate(int signal)
 		// Busy wait as last resort
 		gettimeofday(&tv, NULL);
 		timersub(&tv, &timestamp_precise, &tv2);
-		if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 50000))
+		if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000))
 		{
 #ifdef DEBUG
 			printf("Busy waiting...\n");
@@ -118,7 +118,7 @@ void terminate(int signal)
 			{
 				gettimeofday(&tv, NULL);
 				timersub(&tv, &timestamp_precise, &tv2);
-			} while (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 50000));
+			} while (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000));
 		}
 		
 		
