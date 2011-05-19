@@ -375,7 +375,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 						if (itv.it_value.tv_sec * 1000000 + itv.it_value.tv_usec > INITIAL_CHECK_PROCS_ALARM_DELAY)
 						{
 							// Set timer
-							memset(&itv, 0 sizeof itv);
+							memset(&itv, 0, sizeof itv);
 							itv.it_value.tv_sec = INITIAL_CHECK_PROCS_ALARM_DELAY / 1000000;
 							itv.it_value.tv_usec = INITIAL_CHECK_PROCS_ALARM_DELAY % 1000000;
 							setitimer(ITIMER_REAL, &itv, NULL);
@@ -423,7 +423,7 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 						if (itv.it_value.tv_sec * 1000000 + itv.it_value.tv_usec > INITIAL_CHECK_PROCS_ALARM_DELAY)
 						{
 							// Set timer
-							memset(&itv, 0 sizeof itv);
+							memset(&itv, 0, sizeof itv);
 							itv.it_value.tv_sec = INITIAL_CHECK_PROCS_ALARM_DELAY / 1000000;
 							itv.it_value.tv_usec = INITIAL_CHECK_PROCS_ALARM_DELAY % 1000000;
 							setitimer(ITIMER_REAL, &itv, NULL);
@@ -758,7 +758,7 @@ void check_redundancy()
 				if (itv.it_value.tv_sec * 1000000 + itv.it_value.tv_usec > RECHECK_PROCS_ALARM_DELAY)
 				{
 					// Set timer
-					memset(&itv, 0 sizeof itv);
+					memset(&itv, 0, sizeof itv);
 					itv.it_value.tv_sec = RECHECK_PROCS_ALARM_DELAY / 1000000;
 					itv.it_value.tv_usec = RECHECK_PROCS_ALARM_DELAY % 1000000;
 					setitimer(ITIMER_REAL, &itv, NULL);
