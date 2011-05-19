@@ -198,8 +198,6 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	
 	// Set of sockets for select call when waiting for other inputs
 	fd_set socks;
-	FD_ZERO(&socks);
-	FD_SET(sockfd, &socks);
 	
 	// Timeout information for select call
 	struct timeval select_timeout;
@@ -221,6 +219,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 		fd_set main_socks;
 		FD_ZERO(&main_socks);
 		FD_SET(sockfd, &main_socks);
+		
 		// Are we checking redundancy?
 		if (!(flags & REDUNDANCY_MAIN_FLAG_SKIP_REDUNDANCY))
 		{
@@ -301,7 +300,11 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 			#endif
 						}
 					}
-				} while(!(flags & REDUNDANCY_MAIN_FLAG_SINGLE_INPUT) && /*num_input < num_input_processes &&*/ select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
+					
+					// Set of sockets for select call when waiting for other inputs
+					FD_ZERO(&socks);
+					FD_SET(sockfd, &socks);
+				} while(!(flags & REDUNDANCY_MAIN_FLAG_SINGLE_INPUT) && num_input < num_input_processes && select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
 				
 				// Check that at least 1/2 of the processes sent inputs
 				if (!(flags & REDUNDANCY_MAIN_FLAG_SINGLE_INPUT) && num_input <= num_input_processes/2)
