@@ -126,6 +126,12 @@ void close_listener()
 
 void terminate(int signal)
 {
+	// Block SIGINT
+	sigset_t set;
+	sigemptyset(&set);
+	sigaddset (&set, SIGINT);
+	sigprocmask(SIG_BLOCK, &set, NULL);
+	
 #ifdef DEBUG
 	printf("Terminating...\n");
 #endif
