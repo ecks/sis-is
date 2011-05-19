@@ -301,7 +301,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 			#endif
 						}
 					}
-				} while(!(flags & REDUNDANCY_MAIN_FLAG_SINGLE_INPUT) && /*num_input < num_input_processes */&& select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
+				} while(!(flags & REDUNDANCY_MAIN_FLAG_SINGLE_INPUT) && /*num_input < num_input_processes &&*/ select(sockfd+1, &socks, NULL, NULL, &select_timeout) > 0);
 				
 				// Check that at least 1/2 of the processes sent inputs
 				if (!(flags & REDUNDANCY_MAIN_FLAG_SINGLE_INPUT) && num_input <= num_input_processes/2)
