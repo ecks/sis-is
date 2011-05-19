@@ -512,7 +512,7 @@ void check_redundancy()
 	int num_machines = get_process_type_count((uint64_t)SISIS_PTYPE_MACHINE_MONITOR);
 	
 	// Determine number of processes we should have
-	int num_procs = MAX(num_machines*REDUNDANCY_PERCENTAGE/100, 4);
+	int num_procs = MAX(num_machines*REDUNDANCY_PERCENTAGE/100, MIN_NUM_PROCESSES);
 	
 	// Get list of all processes
 	struct list * proc_addrs = get_processes_by_type(ptype);
