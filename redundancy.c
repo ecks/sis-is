@@ -76,26 +76,31 @@ void terminate(int signal)
 #ifdef DEBUG
 	printf("Terminating...\n");
 #endif
-	// Wait at least 1.25 seconds before killing to prevent OSPF issues
+	// Wait at least 1.05 seconds before killing to prevent OSPF issues
 	if (timestamp_precise.tv_sec == 0 && timestamp_precise.tv_usec == 0)
 		gettimeofday(&timestamp_precise, NULL);
 	struct timeval tv, tv2, tv3;
 	gettimeofday(&tv, NULL);
 	timersub(&tv, &timestamp_precise, &tv2);
-	if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 250000))
+	if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 50000))
 	{
 		tv.tv_sec = 1;
-		tv.tv_usec = 250000;
+		tv.tv_usec = 50000;
 		timersub(&tv, &tv2, &tv3);
 		struct timespec sleep_time, rem_sleep_time;
 		sleep_time.tv_sec = tv3.tv_sec;
 		sleep_time.tv_nsec = tv3.tv_usec * 1000;
+#ifdef DEBUG
 		printf("Waiting %llu.%06llu seconds to prevent OSPF issue.\n", (uint64_t)sleep_time.tv_sec, (uint64_t)sleep_time.tv_nsec/1000);
+#endif
+		// Sleep
 		while (nanosleep(&sleep_time, &rem_sleep_time) == -1)
 		{
 			if (errno == EINTR)
 			{
+#ifdef DEBUG
 				printf("Sleep Interrupted... Trying again.\n");
+#endif
 				memcpy(&sleep_time, &rem_sleep_time, sizeof rem_sleep_time);
 			}
 			else
@@ -104,20 +109,24 @@ void terminate(int signal)
 		// Busy wait as last resort
 		gettimeofday(&tv, NULL);
 		timersub(&tv, &timestamp_precise, &tv2);
-		if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 250000))
+		if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 50000))
 		{
+#ifdef DEBUG
 			printf("Busy waiting...\n");
+#endif
 			do
 			{
 				gettimeofday(&tv, NULL);
 				timersub(&tv, &timestamp_precise, &tv2);
-			} while (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 250000));
+			} while (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 50000));
 		}
 		
 		
 		gettimeofday(&tv, NULL);
 		timersub(&tv, &timestamp_precise, &tv2);
+#ifdef DEBUG
 		printf("%llu.%06llu seconds since start... now actually terminating.\n", (uint64_t)tv2.tv_sec, (uint64_t)tv2.tv_usec);
+#endif
 	}
 	
 	close_listener();
