@@ -173,7 +173,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	// Get start time
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
-	timestamp = (tv.tv_sec & 0xfffe0000) | (((tv.tv_sec & 0x1ffff) * 1000 + (tv.tv_usec / 1000)) & 0x1ffff);
+	timestamp = (tv.tv_sec * 100 + (tv.tv_usec / 10000)) & 0x00000000ffffffffLLU;	// In 100ths of seconds
 	
 	// Set up signal handling
 	signal(SIGABRT, terminate);
