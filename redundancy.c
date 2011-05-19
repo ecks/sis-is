@@ -86,7 +86,7 @@ void terminate(int signal)
 		
 		gettimeofday(&tv, NULL);
 		timersub(&tv, &timestamp_precise, &tv2);
-		printf("%llu.%06llu seconds since start... now actually terminating.\n", (unit64_t)tv2.tv_sec, (unit64_t)tv2.tv_usec);
+		printf("%llu.%06llu seconds since start... now actually terminating.\n", (uint64_t)tv2.tv_sec, (uint64_t)tv2.tv_usec);
 	}
 	
 	close_listener();
