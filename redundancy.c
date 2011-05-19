@@ -858,12 +858,37 @@ void check_redundancy()
 						if (ts < timestamp || (ts == timestamp && (sys_id < host_num || other_pid < pid))) // Use System ID and PID as tie breakers
 							if (++younger_procs == num_procs)
 							{
-								// TODO: In first second, give second chance to avoid OSPF issues
-								struct timeval tv;
+								// TODO: In first 1.1 seconds, give second chance to avoid OSPF issues
+								struct timeval tv, tv2, tv3;
 								gettimeofday(&tv, NULL);
-								if ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000) < 10)
+								timersub(&tv, &timestamp_precise, &tv2);
+								if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000))
 								{
-									sleep(1);
+									tv.tv_sec = 1;
+									tv.tv_usec = 100000;
+									timersub(&tv, &tv2, &tv3);
+									struct timespec sleep_time, rem_sleep_time;
+									sleep_time.tv_sec = tv3.tv_sec;
+									sleep_time.tv_nsec = tv3.tv_usec * 1000;
+									// Sleep
+									while (nanosleep(&sleep_time, &rem_sleep_time) == -1)
+									{
+										if (errno == EINTR)
+											memcpy(&sleep_time, &rem_sleep_time, sizeof rem_sleep_time);
+										else
+											break;
+									}
+									// Busy wait as last resort
+									gettimeofday(&tv, NULL);
+									timersub(&tv, &timestamp_precise, &tv2);
+									if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000))
+									{
+										do
+										{
+											gettimeofday(&tv, NULL);
+											timersub(&tv, &timestamp_precise, &tv2);
+										} while (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000));
+									}
 									
 									// Recheck
 									check_redundancy();
