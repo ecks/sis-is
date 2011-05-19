@@ -64,16 +64,16 @@ void close_listener()
 #endif
 		close(sockfd);
 		
-		// Wait at least 1.1 seconds to prevent OSPF issues
+		// Wait at least 1 seconds to prevent OSPF issues
 		if (timestamp_sisis_registered.tv_sec == 0 && timestamp_sisis_registered.tv_usec == 0)
 			gettimeofday(&timestamp_sisis_registered, NULL);
 		struct timeval tv, tv2, tv3;
 		gettimeofday(&tv, NULL);
 		timersub(&tv, &timestamp_sisis_registered, &tv2);
-		if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000))
+		if (tv2.tv_sec < 1)
 		{
 			tv.tv_sec = 1;
-			tv.tv_usec = 100000;
+			tv.tv_usec = 0;
 			timersub(&tv, &tv2, &tv3);
 			struct timespec sleep_time, rem_sleep_time;
 			sleep_time.tv_sec = tv3.tv_sec;
@@ -97,7 +97,7 @@ void close_listener()
 			// Busy wait as last resort
 			gettimeofday(&tv, NULL);
 			timersub(&tv, &timestamp_sisis_registered, &tv2);
-			if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000))
+			if (tv2.tv_sec < 1)
 			{
 	#ifdef DEBUG
 				printf("Busy waiting...\n");
@@ -106,7 +106,7 @@ void close_listener()
 				{
 					gettimeofday(&tv, NULL);
 					timersub(&tv, &timestamp_sisis_registered, &tv2);
-				} while (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000));
+				} while (tv2.tv_sec < 1);
 			}
 			
 			
@@ -867,14 +867,14 @@ void check_redundancy()
 						if (ts < timestamp || (ts == timestamp && (sys_id < host_num || other_pid < pid))) // Use System ID and PID as tie breakers
 							if (++younger_procs == num_procs)
 							{
-								// TODO: In first 1.1 seconds, give second chance to avoid OSPF issues
+								// TODO: In first second, give second chance to avoid OSPF issues
 								struct timeval tv, tv2, tv3;
 								gettimeofday(&tv, NULL);
 								timersub(&tv, &timestamp_sisis_registered, &tv2);
-								if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000))
+								if (tv2.tv_sec < 1)
 								{
 									tv.tv_sec = 1;
-									tv.tv_usec = 100000;
+									tv.tv_usec = 0;
 									timersub(&tv, &tv2, &tv3);
 									struct timespec sleep_time, rem_sleep_time;
 									sleep_time.tv_sec = tv3.tv_sec;
@@ -890,13 +890,13 @@ void check_redundancy()
 									// Busy wait as last resort
 									gettimeofday(&tv, NULL);
 									timersub(&tv, &timestamp_sisis_registered, &tv2);
-									if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000))
+									if (tv2.tv_sec < 1)
 									{
 										do
 										{
 											gettimeofday(&tv, NULL);
 											timersub(&tv, &timestamp_sisis_registered, &tv2);
-										} while (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000));
+										} while (tv2.tv_sec < 1);
 									}
 									
 									// Recheck
