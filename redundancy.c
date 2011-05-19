@@ -372,7 +372,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 						struct itimerval itv;
 						// Check that there is a shorter timer already set
 						getitimer(ITIMER_REAL, &itv);
-						if (itv.it_value.tv_sec * 1000000 + itv.it_value.tv_usec > INITIAL_CHECK_PROCS_ALARM_DELAY)
+						if ((itv.it_value.tv_sec == 0 && itv.it_value.tv_usec == 0) || itv.it_value.tv_sec * 1000000 + itv.it_value.tv_usec > RECHECK_PROCS_ALARM_DELAY)
 						{
 							// Set timer
 							memset(&itv, 0, sizeof itv);
@@ -420,7 +420,7 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 						struct itimerval itv;
 						// Check that there is a shorter timer already set
 						getitimer(ITIMER_REAL, &itv);
-						if (itv.it_value.tv_sec * 1000000 + itv.it_value.tv_usec > INITIAL_CHECK_PROCS_ALARM_DELAY)
+						if ((itv.it_value.tv_sec == 0 && itv.it_value.tv_usec == 0) || itv.it_value.tv_sec * 1000000 + itv.it_value.tv_usec > RECHECK_PROCS_ALARM_DELAY)
 						{
 							// Set timer
 							memset(&itv, 0, sizeof itv);
@@ -755,7 +755,7 @@ void check_redundancy()
 				struct itimerval itv;
 				// Check that there is a shorter timer already set
 				getitimer(ITIMER_REAL, &itv);
-				if (itv.it_value.tv_sec * 1000000 + itv.it_value.tv_usec > RECHECK_PROCS_ALARM_DELAY)
+				if ((itv.it_value.tv_sec == 0 && itv.it_value.tv_usec == 0) || itv.it_value.tv_sec * 1000000 + itv.it_value.tv_usec > RECHECK_PROCS_ALARM_DELAY)
 				{
 					// Set timer
 					memset(&itv, 0, sizeof itv);
