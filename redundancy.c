@@ -87,20 +87,33 @@ void terminate(int signal)
 		tv.tv_sec = 1;
 		tv.tv_usec = 250000;
 		timersub(&tv, &tv2, &tv3);
-		struct timespec sleep_time;
+		struct timespec sleep_time, rem_sleep_time;
 		sleep_time.tv_sec = tv3.tv_sec;
 		sleep_time.tv_nsec = tv3.tv_usec * 1000;
 		printf("Waiting %llu.%06llu seconds to prevent OSPF issue.\n", (uint64_t)sleep_time.tv_sec, (uint64_t)sleep_time.tv_nsec/1000);
-		/*
-		if (nanosleep(&sleep_time, NULL) == -1)
-			perror("nanosleep");
-		*/
-		// TODO: Don't busy wait
-		do
+		while (nanosleep(&sleep_time, &rem_sleep_time) == -1)
 		{
-			gettimeofday(&tv, NULL);
-			timersub(&tv, &timestamp_precise, &tv2);
-		} while (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 250000));
+			if (errno == EINTR)
+			{
+				printf("Sleep Interrupted... Trying again.\n");
+				memcpy(&sleep_time, &rem_sleep_time, sizeof rem_sleep_time);
+			}
+			else
+				break;
+		}
+		*/
+		// Busy wait as last resort
+		gettimeofday(&tv, NULL);
+		timersub(&tv, &timestamp_precise, &tv2);
+		if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 250000))
+		{
+			printf("Busy waiting...\n");
+			do
+			{
+				gettimeofday(&tv, NULL);
+				timersub(&tv, &timestamp_precise, &tv2);
+			} while (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 250000));
+		}
 		
 		
 		gettimeofday(&tv, NULL);
