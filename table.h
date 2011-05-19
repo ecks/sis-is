@@ -71,6 +71,16 @@ typedef struct {
 	table_group_item_t * first;
 } table_group_t;
 
+/** Get table group size */
+static inline int get_table_group_size(table_group_t * group)
+{
+	table_group_item_t * tmp = group->first;
+	int cnt = 0;
+	for (; tmp != NULL; cnt++)
+		tmp = tmp->next;
+	return cnt;
+}
+
 /** Voter on a group of table 1s. */
 table_group_item_t * table1_vote(table_group_t * tables);
 

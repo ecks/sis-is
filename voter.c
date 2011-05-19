@@ -151,7 +151,9 @@ void process_input(char * buf, int buflen)
 /** Vote on input and process */
 void vote_and_process()
 {
-	printf("Voting...\n");
+	// Get number of inputs used
+	int num_inputs_used = get_table_group_size(&merge_table_group);
+	
 	// Vote
 	table_group_item_t * merge_table_item = merge_table_vote(&merge_table_group);
 	if (!merge_table_item)
@@ -181,10 +183,7 @@ void vote_and_process()
 			// Compare against expected table
 			short correct = 1;
 			if (expected_table_size != merge_table_item->table_size)
-			{
-				printf("Expected %d rows, got %d.\n", expected_table_size, merge_table_item->table_size);
 				correct = 0;
-			}
 			else
 			{
 				for (i = 0; correct && i < expected_table_size; i++)
@@ -200,9 +199,9 @@ void vote_and_process()
 			
 			// Was this correct
 			if (correct)
-				printf("Correct result in %s sec.\n", ts);
+				printf("Correct result in %s sec.  Used %d inputs.\n", ts, num_inputs_used);
 			else
-				printf("WRONG result in %s sec.\n", ts);
+				printf("WRONG result in %s sec.  Used %d inputs.\n", ts, num_inputs_used);
 		}
 	}
 	

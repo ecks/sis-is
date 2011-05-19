@@ -70,11 +70,11 @@ void close_listener()
 
 void terminate(int signal)
 {
-	// Wait at least 1 seconds before killing to prevent OSPF issues
+	// Wait at least 1.5 seconds before killing to prevent OSPF issues
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
-	if ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000) < 10)
-		sleep(1.1 - ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000))/10.0);
+	if ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000) < 15)
+		sleep(1.5 - ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000))/10.0);
 		
 #ifdef DEBUG
 	printf("Terminating...\n");
