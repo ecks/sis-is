@@ -83,10 +83,10 @@ void terminate(int signal)
 	gettimeofday(&tv, NULL);
 	if ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000) < 15)
 	{
+		timersub(&tv, &timestamp_precise, &tv2);
 		unsigned long sleep_time = 1500000;
 		sleep_time -= (unsigned long)tv2.tv_sec*1000000 + (unsigned long)tv2.tv_usec;
 		printf("Waiting %lu microseconds to prevent OSPF issue.\n", sleep_time);
-		timersub(&tv, &timestamp_precise, &tv2);
 		usleep(sleep_time);
 		
 		gettimeofday(&tv, NULL);
