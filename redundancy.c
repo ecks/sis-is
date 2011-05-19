@@ -73,15 +73,22 @@ void close_listener()
 
 void terminate(int signal)
 {
-	// Wait at least 1.5 seconds before killing to prevent OSPF issues
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	if ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000) < 15)
-		sleep(1.5 - ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000))/10.0);
-		
 #ifdef DEBUG
 	printf("Terminating...\n");
 #endif
+	// Wait at least 1.5 seconds before killing to prevent OSPF issues
+	struct timeval tv, tv2;
+	gettimeofday(&tv, NULL);
+	if ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000) < 15)
+	{
+		printf("Waiting a bit longer to prevent OSPF issue.\n");
+		sleep(1.5 - ((tv.tv_sec * 10 + tv.tv_usec/100000) - (timestamp_precise.tv_sec * 10 + timestamp_precise.tv_usec/100000))/10.0);
+		
+		gettimeofday(&tv, NULL);
+		timersub(&tv, &timestamp_precise, &tv2);
+		printf("%llu.%06llu seconds since start... now actually terminating.\n", (unit64_t)tv2.tv_sec, (unit64_t)tv2.tv_usec);
+	}
+	
 	close_listener();
 	exit(0);
 }
