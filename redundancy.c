@@ -39,7 +39,7 @@
 int sockfd = -1;
 int stop_redundancy_socket = -1;
 volatile short redundancy_flag = 1;
-uint64_t ptype, host_num, pid;
+uint64_t ptype, ptype_version, host_num, pid;
 uint64_t timestamp;
 struct timeval timestamp_precise = { 0 };
 
@@ -65,7 +65,7 @@ void close_listener()
 		close(sockfd);
 		
 		// Unregister
-		sisis_unregister(NULL, ptype, (uint64_t)VERSION, host_num, pid, timestamp);
+		sisis_unregister(NULL, ptype, ptype_version, host_num, pid, timestamp);
 		
 		sockfd = -1;
 	}
@@ -161,6 +161,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 {
 	// Store process type
 	ptype = process_type;
+	ptype_version = process_type_version;
 	
 	// Get start time
 	timestamp = time(NULL);
@@ -421,12 +422,12 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 				if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
 				{
 					// Check if this is the current process type
-					if (process_type == ptype)
+					if (process_type == ptype && process_version == ptype_version)
 					{
 						// Update current number of processes
 						pthread_mutex_lock(&num_processes_mutex);
 						if (num_processes == -1)
-							num_processes = get_process_type_count(ptype);
+							num_processes = get_process_type_version_count(ptype, ptype_version);
 						else
 							num_processes++;
 						pthread_mutex_unlock(&num_processes_mutex);
@@ -469,12 +470,12 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 				if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
 				{
 					// Check if this is the current process type
-					if (process_type == ptype)
+					if (process_type == ptype && process_version == ptype_version)
 					{
 						// Update current number of processes
 						pthread_mutex_lock(&num_processes_mutex);
 						if (num_processes == -1)
-							num_processes = get_process_type_count(ptype);
+							num_processes = get_process_type_version_count(ptype, ptype_version);
 						else
 							num_processes--;
 						pthread_mutex_unlock(&num_processes_mutex);
@@ -521,7 +522,7 @@ void check_redundancy()
 	// Check current number of processes
 	pthread_mutex_lock(&num_processes_mutex);
 	if (num_processes == -1)
-		num_processes = get_process_type_count(ptype);
+		num_processes = get_process_type_version_count(ptype, ptype_version);
 	int local_num_processes = num_processes;
 	pthread_mutex_unlock(&num_processes_mutex);
 	printf("Need %d processes... Have %d.\n", num_procs, local_num_processes);

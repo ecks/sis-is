@@ -44,3 +44,23 @@ int get_process_type_count(uint64_t process_type)
 	
 	return cnt;
 }
+
+/** Count number of processes of a given type/version*/
+int get_process_type_version_count(uint64_t process_type, uint64_t process_version)
+{
+	int cnt = 0;
+	
+	char addr[INET6_ADDRSTRLEN+1];
+	sisis_create_addr(addr, process_type, process_version, (uint64_t)0, (uint64_t)0, (uint64_t)0);
+	struct prefix_ipv6 prefix = sisis_make_ipv6_prefix(addr, 42);
+	struct list * addrs = get_sisis_addrs_for_prefix(&prefix);
+	if (addrs != NULL)
+	{
+		cnt = addrs->size;
+		
+		// Free memory
+		FREE_LINKED_LIST(addrs);
+	}
+	
+	return cnt;
+}

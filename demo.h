@@ -44,6 +44,9 @@
 /** Count number of processes of a given type */
 int get_process_type_count(uint64_t process_type);
 
+/** Count number of processes of a given type/version*/
+int get_process_type_version_count(uint64_t process_type, uint64_t process_version);
+
 /** Get list of processes of a given type.  Caller should call FREE_LINKED_LIST on result after. */
 struct list * get_processes_by_type(uint64_t process_type);
 
