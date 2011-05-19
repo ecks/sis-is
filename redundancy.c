@@ -266,10 +266,12 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 					// Read from socket
 					if ((buflen = recvfrom(sockfd, buf, RECV_BUFFER_SIZE, 0, (struct sockaddr *)&remote_addr, &addr_size)) != -1)
 					{
-#ifdef DEBUG
+//#ifdef DEBUG
+#if 1
+						gettimeofday(&cur_time, NULL);
 						char addr[INET6_ADDRSTRLEN];
 						if (inet_ntop(AF_INET6, &(remote_addr.sin6_addr), addr, INET6_ADDRSTRLEN) != NULL)
-							printf("Input from %*s.\n", INET6_ADDRSTRLEN, addr);
+							printf("[%d.%06d] Input from %*s.\n", INET6_ADDRSTRLEN, addr, cur_time.tv_sec, cur_time.tv_usec);
 #endif
 						// Setup input
 						if (num_input == 0)
