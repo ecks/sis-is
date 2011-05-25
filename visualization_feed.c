@@ -127,14 +127,14 @@ int main (int argc, char ** argv)
 	// Create socket
 	if ((sockfd = socket(server_info->ai_family, server_info->ai_socktype, server_info->ai_protocol)) == -1)
 	{
-		ts_printf("Failed to open socket: %s\n", strerror(errno));
+		printf("Failed to open socket: %s\n", strerror(errno));
 		exit(1);
 	}
 	
 	// Connect to socket
 	if (connect(sockfd, server_info->ai_addr,server_info->ai_addrlen) == -1)
 	{
-		ts_printf("Failed to connect to server: %s\n", strerror(errno));
+		printf("Failed to connect to server: %s\n", strerror(errno));
 		close(sockfd);
 		exit(1);
 	}
