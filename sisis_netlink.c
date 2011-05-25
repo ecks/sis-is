@@ -369,7 +369,7 @@ sisis_netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h, void *
 						route->distance = 0;
 						
 						// Note: Receivers responsibilty to free memory for route
-						
+						printf("Here\n");
 						(h->nlmsg_type == RTM_NEWROUTE) ? real_info->rib_add_ipv6_route(route, real_info->data) : real_info->rib_remove_ipv6_route(route, real_info->data);
 					}
 				}
