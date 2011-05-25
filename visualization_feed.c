@@ -83,7 +83,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 					struct list * monitor_addrs = get_sisis_addrs_for_prefix(&mm_prefix);
 					// Find machine monitor
 					struct in6_addr * mm_remote_addr = NULL;
-					if (monitor_addrs != NULL && monitor_addrs->size > 0)
+					if (monitor_addrs != NULL)
 					{
 						struct listnode * mm_node;
 						LIST_FOREACH(monitor_addrs, mm_node)
@@ -156,7 +156,6 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 									char * hostname_str = "Hostname: ";
 									if ((match = strstr(buf, hostname_str)) != NULL)
 										sscanf(match+strlen(hostname_str), "%s", hostname);
-									printf("%s\n", buf);
 								}
 							}
 						}
