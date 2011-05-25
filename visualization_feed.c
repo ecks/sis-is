@@ -53,8 +53,8 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 			
 			// Send message
 			char buf[512];
-			sprintf(buf, "hostUp %llu\n", sys_id % 16);
-			sprintf(buf, "procAdd %llu $%llu %s\n", sys_id % 16, proc_num, proc);
+			sprintf(buf, "hostUp %i\n", sys_id % 16);
+			sprintf(buf, "procAdd %i $%llu %s\n", sys_id % 16, proc_num, proc);
 			send(sockfd, buf, strlen(buf), 0);
 		}
 	}
@@ -116,7 +116,7 @@ int main (int argc, char ** argv)
 	// Set up socket address info
 	struct addrinfo hints, *server_info;
 	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_INET4;	// IPv4
+	hints.ai_family = AF_INET;	// IPv4
 	hints.ai_socktype = SOCK_STREAM;
 	if (getaddrinfo(argv[1], argv[2], &hints, &server_info) != 0)
 	{
