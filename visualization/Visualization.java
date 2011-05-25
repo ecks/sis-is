@@ -123,7 +123,7 @@ public class Visualization extends JPanel implements Runnable
 												count = hostProcessesCopies.get(hostIdx).get(procNum);
 											count++;
 											hostProcessesCopies.get(hostIdx).put(procNum, count);
-											hostProcesses.get(hostIdx).put(procNum, procName + (count > 1 ? count : ""));
+											hostProcesses.get(hostIdx).put(procNum, procName + (count > 1 ? " " + count : ""));
 										}
 										// Remove process
 										if (cmd.equalsIgnoreCase("procDel"))
@@ -138,7 +138,7 @@ public class Visualization extends JPanel implements Runnable
 											if (count > 0)
 											{
 												Scanner tmpScan = new Scanner(hostProcesses.get(hostIdx).get(procNum));
-												hostProcesses.get(hostIdx).put(procNum, tmpScan.next() + (count > 1 ? count : ""));
+												hostProcesses.get(hostIdx).put(procNum, tmpScan.next() + (count > 1 ? " " + count : ""));
 											}
 											else
 												hostProcesses.get(hostIdx).remove(procNum);
