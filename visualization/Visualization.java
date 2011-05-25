@@ -15,6 +15,7 @@ public class Visualization extends JPanel implements Runnable
 	public static final int MAX_HOSTS = 16;
 	boolean [] hosts_up = new boolean[MAX_HOSTS];
 	ArrayList<HashMap<Integer, String>> hostProcesses = new ArrayList<HashMap<Integer, String>>();
+	ArrayList<HashMap<Integer, Integer>> hostProcessesCopies = new ArrayList<HashMap<Integer, Integer>>();
 	
 	String [] host_name = new String[MAX_HOSTS];
 	
@@ -37,6 +38,7 @@ public class Visualization extends JPanel implements Runnable
 		{
 			host_name[i] = "Host #" + i;
 			hostProcesses.add(i, new HashMap<Integer, String>());
+			hostProcessesCopies.add(i, new HashMap<Integer, Integer>());
 		}
 	}
 	
@@ -115,10 +117,33 @@ public class Visualization extends JPanel implements Runnable
 									{
 										// Add process
 										if (cmd.equalsIgnoreCase("procAdd"))
-											hostProcesses.get(hostIdx).put(procNum, procName);
+										{
+											int count = 0;
+											if (hostProcessesCopies.get(hostIdx).contains(procNum))
+											{
+												count = hostProcessesCopies.get(hostIdx).get(procNum);
+												count++;
+												hostProcessesCopies.get(hostIdx).put(procNum, count);
+											}
+											hostProcesses.get(hostIdx).put(procNum, procName + (count > 1 ? count : ""));
 										// Remove process
 										if (cmd.equalsIgnoreCase("procDel"))
-											hostProcesses.get(hostIdx).remove(procNum);
+										{
+											int count = 0;
+											if (hostProcessesCopies.get(hostIdx).contains(procNum))
+											{
+												count = hostProcessesCopies.get(hostIdx).get(procNum);
+												count--;
+												hostProcessesCopies.get(hostIdx).put(procNum, count);
+											}
+											if (count > 0)
+											{
+												Scanner tmpScan = new Scanner(hostProcesses.get(hostIdx).get(procNum));
+												hostProcesses.get(hostIdx).put(procNum, tmpScan.next() + (count > 1 ? count : ""));
+											}
+											else
+												hostProcesses.get(hostIdx).remove(procNum);
+										}
 									}
 								}
 							}
