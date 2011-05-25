@@ -18,6 +18,8 @@
 #include <stdarg.h>
 #include <time.h>
 #include "../tests/sisis_api.h"
+#include "../tests/sisis_process_types.h"
+#include "../tests/sisis_addr_format.h"
 
 int sockfd = -1;
 
