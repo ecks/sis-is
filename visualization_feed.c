@@ -137,6 +137,17 @@ int main (int argc, char ** argv)
 		exit(1);
 	}
 	
+	// Get initial RIB dump
+	sisis_dump_kernel_routes();
+	struct listnode * node;
+#ifdef HAVE_IPV6
+	LIST_FOREACH(ipv6_rib_routes, node)
+	{
+		struct route_ipv6 * route = (struct route_ipv6 *)node->data;
+		rib_monitor_add_ipv6_route(route);
+	}
+#endif /* HAVE_IPV6 */
+	
 	// Monitor rib changes
 	struct subscribe_to_rib_changes_info info;
 	info.rib_add_ipv4_route = NULL;
