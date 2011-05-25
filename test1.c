@@ -127,7 +127,7 @@ void terminate(int signal)
 	exit(0);
 }
 
-int rib_monitor_add_ipv4_route(struct route_ipv4 * route)
+int rib_monitor_add_ipv4_route(struct route_ipv4 * route, void * data)
 {
 	char prefix_str[INET_ADDRSTRLEN];
 	if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
@@ -137,7 +137,7 @@ int rib_monitor_add_ipv4_route(struct route_ipv4 * route)
 	free(route);
 }
 
-int rib_monitor_remove_ipv4_route(struct route_ipv4 * route)
+int rib_monitor_remove_ipv4_route(struct route_ipv4 * route, void * data)
 {
 	char prefix_str[INET_ADDRSTRLEN];
 	if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
@@ -148,7 +148,7 @@ int rib_monitor_remove_ipv4_route(struct route_ipv4 * route)
 }
 
 #ifdef HAVE_IPV6
-int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
+int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 {
 	char prefix_str[INET6_ADDRSTRLEN];
 	if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
@@ -158,7 +158,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 	free(route);
 }
 
-int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
+int rib_monitor_remove_ipv6_route(struct route_ipv6 * route, void * data)
 {
 	char prefix_str[INET6_ADDRSTRLEN];
 	if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)

@@ -136,12 +136,13 @@ int sisis_rib_add_ipv6 (struct route_ipv6 *, void * data);
 /** Callback functions when receiving RIB updates. */
 struct subscribe_to_rib_changes_info
 {
-	int (*rib_add_ipv4_route)(struct route_ipv4 *);
-	int (*rib_remove_ipv4_route)(struct route_ipv4 *);
+	int (*rib_add_ipv4_route)(struct route_ipv4 *, void *);
+	int (*rib_remove_ipv4_route)(struct route_ipv4 *, void *);
 	#ifdef HAVE_IPV6
-	int (*rib_add_ipv6_route)(struct route_ipv6 *);
-	int (*rib_remove_ipv6_route)(struct route_ipv6 *);
+	int (*rib_add_ipv6_route)(struct route_ipv6 *, void *);
+	int (*rib_remove_ipv6_route)(struct route_ipv6 *, void *);
 	#endif /* HAVE_IPV6 */
+	void * data;
 	struct sisis_netlink_routing_table_info * subscribe_info;
 };
 
