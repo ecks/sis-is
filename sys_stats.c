@@ -108,13 +108,13 @@ int main (int argc, char ** argv)
 	printf("==================================== Hosts =====================================\n");
 	printf("Host\t# Procs\n");
 	for (i = 0; i < num_hosts; i++)
-		printf("%llu\t%llu\n", hosts[i].sys_id, hosts[i].num_processes);
+		printf("%llu\t%u\n", hosts[i].sys_id, hosts[i].num_processes);
 	
 	// Print processes
 	printf("================================== Processes ===================================\n");
 	printf("Process\t# Procs\n");
 	for (i = 0; i < num_procs; i++)
-		printf("%lluv$llu\t%llu\n", procs[i].process_type, procs[i].process_version, procs[i].num_processes);
+		printf("%lluv$llu\t%u\n", procs[i].process_type, procs[i].process_version, procs[i].num_processes);
 
 	exit(0);
 }
