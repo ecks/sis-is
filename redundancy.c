@@ -182,7 +182,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	char fn[64];
 	sprintf(fn, "redundancy_%llu.log", pid);
 	debug_file = fopen(fn, "a");
-	printf_file = (debug_file != NULL) debug_file ? stdin;
+	printf_file = (debug_file != NULL) ? debug_file : stdin;
 #else
 	printf_file = stdin;
 #endif
