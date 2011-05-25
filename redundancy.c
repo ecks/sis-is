@@ -138,6 +138,7 @@ void terminate(int signal)
 	
 #ifdef DEBUG
 	fprintf(printf_file, "Terminating...\n");
+	fflush(printf_file);
 #endif
 	
 	close_listener();
@@ -148,6 +149,7 @@ void recheck_redundance_alarm_handler(int signal)
 {
 #ifdef DEBUG
 	fprintf(printf_file, "Timeout expired... Rechecking redundancy.\n");
+	fflush(printf_file);
 #endif
 	check_redundancy();
 }
@@ -204,6 +206,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	if (argc != 2)
 	{
 		fprintf(printf_file, "Usage: %s <host_num>\n", argv[0]);
+		fflush(printf_file);
 		exit(1);
 	}
 	
@@ -215,6 +218,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	if (sisis_register(sisis_addr, process_type, process_type_version, host_num, pid, timestamp) != 0)
 	{
 		fprintf(printf_file, "Failed to register SIS-IS address.\n");
+		fflush(printf_file);
 		exit(1);
 	}
 	pthread_mutex_unlock(&sisis_addr_mutex);
@@ -222,6 +226,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	
 	// Status
 	fprintf(printf_file, "Opening socket at %s on port %i.\n", sisis_addr, port);
+	fflush(printf_file);
 	
 	// Set up socket address info
 	struct addrinfo hints, *addr;
@@ -236,6 +241,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	if ((sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)) == -1)
 	{
 		fprintf(printf_file, "Failed to open socket.\n");
+		fflush(printf_file);
 		exit(1);
 	}
 	
@@ -243,6 +249,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	if (bind(sockfd, addr->ai_addr, addr->ai_addrlen) == -1)
 	{
 		fprintf(printf_file, "Failed to bind socket to port.\n");
+		fflush(printf_file);
 		close_listener();
 		exit(2);
 	}
@@ -261,6 +268,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	// Status message
 	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)(addr->ai_addr))->sin6_addr, sisis_addr, INET6_ADDRSTRLEN);
 	fprintf(printf_file, "Socket opened at %s on port %u.\n", sisis_addr, ntohs(((struct sockaddr_in *)(addr->ai_addr))->sin_port));
+	fflush(printf_file);
 	
 	// Info to subscribe to RIB changes
 	struct subscribe_to_rib_changes_info info;
@@ -327,6 +335,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 					{
 #ifdef DEBUG
 						fprintf(printf_file, "Stopping Redundancy.\n");
+						fflush(printf_file);
 #endif
 						
 						// Unsubscribe to RIB changes
@@ -348,6 +357,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 						char addr[INET6_ADDRSTRLEN];
 						if (inet_ntop(AF_INET6, &(remote_addr.sin6_addr), addr, INET6_ADDRSTRLEN) != NULL)
 							fprintf(printf_file, "[%llu.%06llu] Input from %*s.\n", (uint64_t)cur_time.tv_sec, (uint64_t)cur_time.tv_usec, INET6_ADDRSTRLEN, addr);
+						fflush(printf_file);
 #endif
 						// Setup input
 						if (num_input == 0)
@@ -383,6 +393,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 							fprintf(printf_file, "# inputs: %d\n", num_input);
 							fprintf(printf_file, "# input processes: %d\n", num_input_processes);
 							fprintf(printf_file, "Waiting %ld.%06ld seconds for more results.\n", (long)(select_timeout.tv_sec), (long)(select_timeout.tv_usec));
+							fflush(printf_file);
 			#endif
 						}
 					}
@@ -400,17 +411,20 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 					timersub(&cur_time, &last_inputs_processes, &tmp1);
 					//if ((tmp1.tv_sec * 1000000 + tmp1.tv_usec) < GATHER_RESULTS_TIMEOUT_USEC * 1.25)
 					fprintf(printf_file, "Late by %llu.%06llu seconds.\n", (uint64_t)tmp1.tv_sec, (uint64_t)tmp1.tv_usec);
+					fflush(printf_file);
 					
 					// Flush inputs
 					flush_inputs();
 		#ifdef DEBUG
 					fprintf(printf_file, "Not enough inputs for a vote.\n");
+					fflush(printf_file);
 		#endif
 				}
 				else
 				{
 		#ifdef DEBUG
 					fprintf(printf_file, "Voting...\n");
+					fflush(printf_file);
 		#endif
 					// Record time
 					gettimeofday(&last_inputs_processes, NULL);
@@ -549,6 +563,7 @@ void check_redundancy()
 	int local_num_processes = num_processes;
 	pthread_mutex_unlock(&num_processes_mutex);
 	fprintf(printf_file, "Need %d processes... Have %d.\n", num_procs, local_num_processes);
+	fflush(printf_file);
 	
 	// Too few
 	if (local_num_processes < num_procs)
@@ -599,6 +614,7 @@ void check_redundancy()
 				if (desirable_hosts == NULL)
 				{
 					fprintf(printf_file, "Malloc failed...\n");
+					fflush(printf_file);
 					exit(1);
 				}
 				
@@ -621,6 +637,7 @@ void check_redundancy()
 							// Try to find machine monitor for this host
 #ifdef DEBUG
 							fprintf(printf_file, "Looking for machine monitor: ");
+							fflush(printf_file);
 #endif
 							struct in6_addr * mm_remote_addr = NULL;
 							if (monitor_addrs != NULL && monitor_addrs->size > 0)
@@ -643,6 +660,7 @@ void check_redundancy()
 							}
 #ifdef DEBUG
 							fprintf(printf_file, "%sFound\n", (mm_remote_addr == NULL) ? "Not " : "");
+							fflush(printf_file);
 #endif
 							// Check if there is the same process on this host
 							if (proc_addrs != NULL && proc_addrs->size > 0)
@@ -693,6 +711,7 @@ void check_redundancy()
 									char tmp_addr_str[INET6_ADDRSTRLEN];
 									inet_ntop(AF_INET6, mm_remote_addr, tmp_addr_str, INET6_ADDRSTRLEN);
 									fprintf(printf_file, "Sending machine monitor request to %s.\n", tmp_addr_str);
+									fflush(printf_file);
 #endif
 									// Get memory stats
 									char * req = "data\n";
@@ -700,6 +719,7 @@ void check_redundancy()
 									{
 #ifdef DEBUG
 										fprintf(printf_file, "\tFailed to send machine monitor request.\n");
+										fflush(printf_file);
 #endif
 										desirable_hosts[i].priority += 200;	// Error... penalize
 									}
@@ -707,6 +727,7 @@ void check_redundancy()
 									{
 #ifdef DEBUG
 										fprintf(printf_file, "\tSent machine monitor request.  Waiting for response...\n");
+										fflush(printf_file);
 #endif
 										struct sockaddr_in6 fromaddr;
 										int fromaddr_size = sizeof(fromaddr);
@@ -719,6 +740,7 @@ void check_redundancy()
 										{
 #ifdef DEBUG
 											fprintf(printf_file, "\tMachine monitor request timed out.\n");
+											fflush(printf_file);
 #endif
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
@@ -726,6 +748,7 @@ void check_redundancy()
 										{
 #ifdef DEBUG
 											fprintf(printf_file, "\tFailed to receive machine monitor response.\n");
+											fflush(printf_file);
 #endif
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
@@ -734,6 +757,7 @@ void check_redundancy()
 #ifdef DEBUG
 											inet_ntop(AF_INET6, &((struct sockaddr_in6 *)&fromaddr)->sin6_addr, tmp_addr_str, INET6_ADDRSTRLEN);
 											fprintf(printf_file, "\tFailed to receive machine monitor response.  Response from wrong host (%s).\n", tmp_addr_str);
+											fflush(printf_file);
 #endif
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
@@ -758,6 +782,7 @@ void check_redundancy()
 												{
 #ifdef DEBUG
 													fprintf(printf_file, "\tMemory Usage = %d%%\n", usage);
+													fflush(printf_file);
 #endif
 													desirable_hosts[i].priority += usage;
 												}
@@ -777,6 +802,7 @@ void check_redundancy()
 												{
 #ifdef DEBUG
 													fprintf(printf_file, "\tCPU Usage = %d%%\n", usage);
+													fflush(printf_file);
 #endif
 													desirable_hosts[i].priority += usage;
 												}
@@ -798,6 +824,7 @@ void check_redundancy()
 				// Sort desirable hosts
 #ifdef DEBUG
 				fprintf(printf_file, "Sorting hosts according to desirability.\n");
+				fflush(printf_file);
 #endif
 				qsort(desirable_hosts, spawn_addrs->size, sizeof(desirable_hosts[0]), compare_desirable_hosts);
 				
@@ -808,7 +835,10 @@ void check_redundancy()
 				// Make new socket
 				int spawn_sock = make_socket(NULL);
 				if (spawn_sock == -1)
+				{
 					fprintf(printf_file, "Failed to open spawn socket.\n");
+					fflush(printf_file);
+				}
 				else
 				{
 					do
@@ -832,12 +862,16 @@ void check_redundancy()
 								fprintf(printf_file, "Starting new process via %s.\n", tmp_addr);
 							else
 								fprintf(printf_file, "Starting new process.\n");
+							fflush(printf_file);
 	#endif
 							// Send request
 							char req[32];
 							sprintf(req, "%d %llu", REMOTE_SPAWN_REQ_START, ptype);
 							if (sendto(spawn_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
+							{
 								fprintf(printf_file, "Failed to send message.  Error: %i\n", errno);
+								fflush(printf_file);
+							}
 							else
 								num_start--;
 							
@@ -937,6 +971,7 @@ void check_redundancy()
 								
 #ifdef DEBUG
 								fprintf(printf_file, "Terminating...\n");
+								fflush(printf_file);
 #endif
 								close_listener();
 								exit(0);
