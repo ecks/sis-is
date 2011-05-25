@@ -477,9 +477,14 @@ int main (int argc, char ** argv)
 		char send_buf[SEND_BUF_SIZE];
 		int send_buf_written = 0;
 		
+		// Hostname
+		char hostname[128];
+		if (gethostname(hostname, 128) == 0)
+			send_buf_written += snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "Hostname: %s\n", hostname);
+		
 		// Memory
 		struct memory_stats mem_stats = get_memory_usage();
-		send_buf_written += snprintf(send_buf, SEND_BUF_SIZE - send_buf_written, "MemoryUsage: %hd.%hd%%\n", mem_stats.usage_percent/10, mem_stats.usage_percent%10);
+		send_buf_written += snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "MemoryUsage: %hd.%hd%%\n", mem_stats.usage_percent/10, mem_stats.usage_percent%10);
 		send_buf_written += snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "FreeMemory: %0.0lf\n", mem_stats.free);
 		send_buf_written += snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "TotalMemory: %0.0lf\n", mem_stats.total);
 		
