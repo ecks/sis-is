@@ -140,10 +140,6 @@ void terminate(int signal)
 	fprintf(printf_file, "Terminating...\n");
 #endif
 	
-	// Close debug file
-	if (debug_file != NULL)
-		fclose(debug_file);
-	
 	close_listener();
 	exit(0);
 }
