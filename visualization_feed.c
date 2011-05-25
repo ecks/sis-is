@@ -27,34 +27,6 @@
 // Number of processes per host
 int num_proc_pre_host[16];
 
-int sockfd = -1;
-
-/** Creates a new socket. */
-int make_socket(char * port)
-{
-	int fd;
-	
-	// Set up socket address info
-	struct addrinfo hints, *addr;
-	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_INET6;	// IPv6
-	hints.ai_socktype = SOCK_DGRAM;
-	getaddrinfo("localhost", port, &hints, &addr);
-	
-	// Create socket
-	if ((fd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)) == -1)
-		return -1;
-	
-	// Bind to port
-	if (bind(fd, addr->ai_addr, addr->ai_addrlen) == -1)
-	{
-		close(fd);
-		return -1;
-	}
-	
-	return fd;
-}
-
 #ifdef HAVE_IPV6
 int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 {
@@ -132,7 +104,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 					if (mm_remote_addr != NULL)
 					{
 						// Make new socket
-						int tmp_sock = make_socket(NULL);
+						int tmp_sock = socket(AF_INET6, SOCK_DGRAM, 0));
 						if (tmp_sock != -1)
 						{
 							// Set of sockets for select call
