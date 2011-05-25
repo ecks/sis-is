@@ -25,13 +25,13 @@
 /** Host information */
 typedef struct {
 	uint64_t sys_id;
-	uint_t num_processes;
+	uint32_t num_processes;
 } host_info_t;
 /** Process information */
 typedef struct {
 	uint64_t process_type;
 	uint64_t process_version;
-	uint_t num_processes;
+	uint32_t num_processes;
 } process_info_t;
 
 int main (int argc, char ** argv)
@@ -79,7 +79,6 @@ int main (int argc, char ** argv)
 						host->num_processes++;
 					
 					// Find process type/version
-					int i;
 					process_info_t * proc = NULL;
 					for (i = 0; i < num_procs && proc == NULL; i++)
 						if (procs[i].process_type == process_type && procs[i].process_version == process_version)
