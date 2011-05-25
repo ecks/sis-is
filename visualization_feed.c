@@ -127,6 +127,10 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 							sockaddr.sin6_port = htons(MACHINE_MONITOR_PORT);
 							sockaddr.sin6_addr = *mm_remote_addr;
 							
+							char tmp_addr[INET6_ADDRSTRLEN];
+							if (inet_ntop(AF_INET6, mm_remote_addr, tmp_addr, INET6_ADDRSTRLEN) != NULL)
+								printf("Sending message to machine monitor at %s.\n", mm_remote_addr);
+							
 							// Get stats
 							char * req = "data\n";
 							if (sendto(tmp_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) != -1)
@@ -160,8 +164,6 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 										sscanf(match+strlen(hostname_str), "%s", hostname);
 								}
 							}
-							else
-								perror("sendto");
 						}
 					}
 					
