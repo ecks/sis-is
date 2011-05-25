@@ -70,7 +70,6 @@ public class Visualization extends JPanel implements Runnable
 					String line;
 					do
 					{
-						System.out.println("Waiting for input...");
 						line = in.readLine();
 						if (line != null)
 						{
