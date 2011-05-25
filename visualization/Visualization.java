@@ -104,6 +104,7 @@ public class Visualization extends JPanel implements Runnable
 							// Check that we have everything
 							if (cmd != null && hostIdentifier != -1)
 							{
+								// TODO: Might need a map
 								int hostIdx = hostIdentifier;
 								
 								// Host down
@@ -114,7 +115,7 @@ public class Visualization extends JPanel implements Runnable
 								{
 									// Get hostname
 									if (scan.hasNext())
-										hostnames[i] = scan.next();
+										hostnames[hostIdx] = scan.next();
 									
 									// Set to up
 									hosts_up[hostIdx] = true;

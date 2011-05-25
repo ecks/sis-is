@@ -21,6 +21,8 @@
 #include "../tests/sisis_process_types.h"
 #include "../tests/sisis_addr_format.h"
 
+#define MACHINE_MONITOR_PORT 50000
+
 // Number of processes per host
 int num_proc_pre_host[16];
 
@@ -97,7 +99,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 				{
 					/* Get hostname */
 					char hostname[64];
-					sprintf(hostname, "Host %s", sys_id%16);
+					sprintf(hostname, "Host %llu", sys_id%16);
 					
 					// Get machine monitors
 					char mm_addr[INET6_ADDRSTRLEN+1];
@@ -115,6 +117,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 							
 							// Get system id
 							uint64_t mm_sys_id;
+							char addr[INET6_ADDRSTRLEN];
 							if (inet_ntop(AF_INET6, remote_addr2, addr, INET6_ADDRSTRLEN) != NULL)
 								if (get_sisis_addr_components(addr, NULL, NULL, NULL, NULL, &mm_sys_id, NULL, NULL) == 0)
 									if (mm_sys_id == sys_id)
@@ -178,9 +181,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 									// Get hostname
 									char * hostname_str = "Hostname: ";
 									if ((match = strstr(buf, hostname_str)) != NULL)
-									{
-										sscanf(match+strlen(hostname_str), "%s", &hostname);
-									}
+										sscanf(match+strlen(hostname_str), "%s", hostname);
 								}
 							}
 						}
