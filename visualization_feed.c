@@ -24,6 +24,8 @@
 
 #define MACHINE_MONITOR_PORT 50000
 
+int sockfd = -1;
+
 // Number of processes per host
 int num_proc_pre_host[16];
 
@@ -104,7 +106,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 					if (mm_remote_addr != NULL)
 					{
 						// Make new socket
-						int tmp_sock = socket(AF_INET6, SOCK_DGRAM, 0));
+						int tmp_sock = socket(AF_INET6, SOCK_DGRAM, 0);
 						if (tmp_sock != -1)
 						{
 							// Set of sockets for select call
