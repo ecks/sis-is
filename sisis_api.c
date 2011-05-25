@@ -739,6 +739,7 @@ int sisis_dump_kernel_routes()
 	#ifdef HAVE_IPV6
 	info.rib_add_ipv6_route = sisis_rib_add_ipv6;
 	#endif /* HAVE_IPV6 */
+	info.data = NULL;
 	
 	// Get routes
 	sisis_netlink_route_read(&info);
@@ -746,14 +747,33 @@ int sisis_dump_kernel_routes()
 	return 0;
 }
 
-/* Add an IPv4 Address to RIB. */
-int sisis_rib_add_ipv4 (struct route_ipv4 * route)
+#ifdef HAVE_IPV6
+/**
+ * Dump kernel routing table.
+ * Returns zero on success.
+ */
+int sisis_dump_kernel_ipv6_routes_to_tables(struct list * rib)
 {
+	// Set up callbacks
+	struct sisis_netlink_routing_table_info info;
+	memset(&info, 0, sizeof(info));
+	info.rib_add_ipv6_route = sisis_rib_add_ipv6;
+	info.data = (void *)rib;
+}
+#endif /* HAVE_IPV6 */
+
+/* Add an IPv4 Address to RIB. */
+int sisis_rib_add_ipv4 (struct route_ipv4 * route, void * data)
+{
+	struct list * rib = ipv4_rib_routes;
+	if (data != NULL)
+		rib = (struct list *)data;
+		
 	struct listnode * node = malloc(sizeof(struct listnode));
-	if (ipv4_rib_routes != NULL && node != NULL)
+	if (rib != NULL && node != NULL)
 	{
 		node->data = (void *)route;
-		LIST_APPEND(ipv4_rib_routes, node);
+		LIST_APPEND(rib, node);
 	}
 	
 	/*
@@ -767,13 +787,17 @@ int sisis_rib_add_ipv4 (struct route_ipv4 * route)
 }
 
 #ifdef HAVE_IPV6
-int sisis_rib_add_ipv6 (struct route_ipv6 * route)
+int sisis_rib_add_ipv6 (struct route_ipv6 * route, void * data)
 {
+	struct list * rib = ipv6_rib_routes;
+	if (data != NULL)
+		rib = (struct list *)data;
+	
 	struct listnode * node = malloc(sizeof(struct listnode));
-	if (ipv6_rib_routes != NULL && node != NULL)
+	if (rib != NULL && node != NULL)
 	{
 		node->data = (void *)route;
-		LIST_APPEND(ipv6_rib_routes, node);
+		LIST_APPEND(rib, node);
 	}
 	
 	return 0;
@@ -821,7 +845,9 @@ int unsubscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
 struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 {
 	// Update kernel routes
-	sisis_dump_kernel_routes();
+	struct list * rib = malloc sizeof(*rib);
+	memset(rib, o, sizeof(*rib));
+	sisis_dump_kernel_ipv6_routes_to_tables(rib);
 	
 	// IPv6 version
 	// Create prefix mask IPv6 addr
@@ -858,7 +884,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 	{
 		memset(rtn, 0, sizeof(*rtn));
 		struct listnode * node;
-		LIST_FOREACH(ipv6_rib_routes, node)
+		LIST_FOREACH(rib, node)
 		{
 			struct route_ipv6 * route = (struct route_ipv6 *)node->data;
 			
@@ -881,6 +907,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 				}
 			}
 		}
+		LINKED_LIST_FREE(rib);
 	}
 	
 	return rtn;

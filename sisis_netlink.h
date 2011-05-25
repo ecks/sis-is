@@ -56,6 +56,7 @@ struct sisis_netlink_routing_table_info
 	int (*rib_add_ipv6_route)(struct route_ipv6 *);
 	int (*rib_remove_ipv6_route)(struct route_ipv6 *);
 	#endif /* HAVE_IPV6 */
+	void * data;
 	struct sisis_netlink_wait_for_rib_changes_info * nl_info;
 };
 
