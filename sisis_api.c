@@ -880,7 +880,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 	
 	// Create list of relevant SIS-IS addresses
 	struct list * rtn = malloc(sizeof(struct list));
-	if (ipv6_rib_routes != NULL && rtn != NULL)
+	if (rib != NULL && rtn != NULL)
 	{
 		memset(rtn, 0, sizeof(*rtn));
 		struct listnode * node;
