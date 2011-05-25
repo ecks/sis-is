@@ -795,8 +795,8 @@ int sisis_rib_add_ipv4 (struct route_ipv4 * route, void * data)
 int sisis_rib_add_ipv6 (struct route_ipv6 * route, void * data)
 {
 	struct list * rib = ipv6_rib_routes;
-	if (data != NULL)
-		rib = (struct list *)data;
+	//if (data != NULL)
+		//rib = (struct list *)data;
 	
 	struct listnode * node = malloc(sizeof(struct listnode));
 	if (rib != NULL && node != NULL)

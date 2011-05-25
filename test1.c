@@ -221,7 +221,7 @@ int main (int argc, char ** argv)
 		info.rib_remove_ipv6_route = rib_monitor_remove_ipv6_route;
 		info.data = NULL;
 		subscribe_to_rib_changes(&info);
-		printf("Monitoring RIB...\n");
+		
 		// Do nothing
 		while (1)
 			sleep(600);
