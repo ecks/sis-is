@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <string.h>
@@ -58,7 +59,7 @@ int make_socket(char * port)
 int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 {
 	char prefix_str[INET6_ADDRSTRLEN];
-	if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
+	if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != NULL)
 	{
 		uint64_t prefix, sisis_version, process_type, process_version, sys_id, other_pid, ts;
 		if (get_sisis_addr_components(prefix_str, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &other_pid, &ts) == 0)
@@ -203,7 +204,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 {
 	char prefix_str[INET6_ADDRSTRLEN];
-	if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
+	if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != NULL)
 	{
 		uint64_t prefix, sisis_version, process_type, process_version, sys_id, other_pid, ts;
 		if (get_sisis_addr_components(prefix_str, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &other_pid, &ts) == 0)
