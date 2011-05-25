@@ -26,8 +26,8 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 #define REDUNDANCY_MAIN_FLAG_SKIP_REDUNDANCY (1 << 0)
 #define REDUNDANCY_MAIN_FLAG_SINGLE_INPUT (1 << 1)
 
-int rib_monitor_add_ipv6_route(struct route_ipv6 * route);
-int rib_monitor_remove_ipv6_route(struct route_ipv6 * route);
+int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data);
+int rib_monitor_remove_ipv6_route(struct route_ipv6 * route, void * data);
 
 // Information for deciding most desirable host to start
 typedef struct

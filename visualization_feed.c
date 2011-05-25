@@ -30,7 +30,7 @@ int sockfd = -1;
 int num_proc_pre_host[16];
 
 #ifdef HAVE_IPV6
-int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
+int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 {
 	char prefix_str[INET6_ADDRSTRLEN];
 	if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != NULL)
@@ -162,7 +162,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 						}
 					}
 					*/
-					//FREE_LINKED_LIST(monitor_addrs);
+					FREE_LINKED_LIST(monitor_addrs);
 					
 					sprintf(buf, "hostUp %llu %s\n", sys_id % 16, hostname);
 					send(sockfd, buf, strlen(buf), 0);
@@ -177,7 +177,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 	free(route);
 }
 
-int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
+int rib_monitor_remove_ipv6_route(struct route_ipv6 * route, void * data)
 {
 	char prefix_str[INET6_ADDRSTRLEN];
 	if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != NULL)

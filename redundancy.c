@@ -443,7 +443,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	close_listener();
 }
 
-int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
+int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 {
 	// Make sure it is a host address
 	if (route->p->prefixlen == 128)
@@ -491,7 +491,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 	free(route);
 }
 
-int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
+int rib_monitor_remove_ipv6_route(struct route_ipv6 * route, void * data)
 {
 	// Make sure it is a host address
 	if (route->p->prefixlen == 128)
