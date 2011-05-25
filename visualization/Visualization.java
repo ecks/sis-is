@@ -119,18 +119,19 @@ public class Visualization extends JPanel implements Runnable
 										if (cmd.equalsIgnoreCase("procAdd"))
 										{
 											int count = 0;
-											if (hostProcessesCopies.get(hostIdx).contains(procNum))
+											if (hostProcessesCopies.get(hostIdx).containsKey(procNum))
 											{
 												count = hostProcessesCopies.get(hostIdx).get(procNum);
 												count++;
 												hostProcessesCopies.get(hostIdx).put(procNum, count);
 											}
 											hostProcesses.get(hostIdx).put(procNum, procName + (count > 1 ? count : ""));
+										}
 										// Remove process
 										if (cmd.equalsIgnoreCase("procDel"))
 										{
 											int count = 0;
-											if (hostProcessesCopies.get(hostIdx).contains(procNum))
+											if (hostProcessesCopies.get(hostIdx).containsKey(procNum))
 											{
 												count = hostProcessesCopies.get(hostIdx).get(procNum);
 												count--;
