@@ -70,7 +70,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 				
 				// Send message
 				char buf[512];
-				if (num_proc_pre_host[sys_id%16]++ == 0)
+				if (num_proc_pre_host[sys_id%16]++ == 0 || process_type == (uint64_t)SISIS_PTYPE_MACHINE_MONITOR)
 				{
 					/* Get hostname */
 					char hostname[64];

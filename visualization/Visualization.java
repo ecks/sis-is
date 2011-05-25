@@ -12,6 +12,7 @@ import java.io.*;
 
 public class Visualization extends JPanel implements Runnable
 {
+	// TODO: Customizatable number of hosts
 	public static final int MAX_HOSTS = 16;
 	boolean [] hosts_up = new boolean[MAX_HOSTS];
 	ArrayList<HashMap<Integer, String>> hostProcesses = new ArrayList<HashMap<Integer, String>>();
