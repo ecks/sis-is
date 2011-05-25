@@ -53,8 +53,8 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 			
 			// Send message
 			char buf[512];
-			sprintf(buf, "hostUp %i\n", sys_id % 16);
-			sprintf(buf, "procAdd %i $%llu %s\n", sys_id % 16, proc_num, proc);
+			sprintf(buf, "hostUp %llu\n", sys_id % 16);
+			sprintf(buf, "procAdd %llu %i %s\n", sys_id % 16, proc_num, proc);
 			send(sockfd, buf, strlen(buf), 0);
 		}
 	}
@@ -93,7 +93,7 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 			// Send message
 			char buf[512];
 			sprintf(buf, "hostUp %llu\n", sys_id % 16);
-			sprintf(buf, "procAdd %llu $%llu %s\n", sys_id % 16, proc_num, proc);
+			sprintf(buf, "procDel %llu %i %s\n", sys_id % 16, proc_num, proc);
 			send(sockfd, buf, strlen(buf), 0);
 		}
 	}
