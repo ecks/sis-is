@@ -33,7 +33,11 @@
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
 
-//#define DEBUG
+#define DEBUG
+#define DEBUG_FILE
+
+FILE * debug_file = NULL;
+FILE * printf_file = NULL;
 
 #define VERSION 1
 int sockfd = -1;
@@ -60,7 +64,7 @@ void close_listener()
 	if (sockfd != -1)
 	{
 #ifdef DEBUG
-		printf("Closing listening socket...\n");
+		fprintf(printf_file, "Closing listening socket...\n");
 #endif
 		close(sockfd);
 		
@@ -79,7 +83,7 @@ void close_listener()
 			sleep_time.tv_sec = tv3.tv_sec;
 			sleep_time.tv_nsec = tv3.tv_usec * 1000;
 	#ifdef DEBUG
-			printf("Waiting %llu.%06llu seconds to prevent OSPF issue.\n", (uint64_t)sleep_time.tv_sec, (uint64_t)sleep_time.tv_nsec/1000);
+			fprintf(printf_file, "Waiting %llu.%06llu seconds to prevent OSPF issue.\n", (uint64_t)sleep_time.tv_sec, (uint64_t)sleep_time.tv_nsec/1000);
 	#endif
 			// Sleep
 			while (nanosleep(&sleep_time, &rem_sleep_time) == -1)
@@ -87,7 +91,7 @@ void close_listener()
 				if (errno == EINTR)
 				{
 	#ifdef DEBUG
-					printf("Sleep Interrupted... Trying again.\n");
+					fprintf(printf_file, "Sleep Interrupted... Trying again.\n");
 	#endif
 					memcpy(&sleep_time, &rem_sleep_time, sizeof rem_sleep_time);
 				}
@@ -100,7 +104,7 @@ void close_listener()
 			if (tv2.tv_sec < 1 || (tv2.tv_sec == 1 && tv2.tv_usec < 100000))
 			{
 	#ifdef DEBUG
-				printf("Busy waiting...\n");
+				fprintf(printf_file, "Busy waiting...\n");
 	#endif
 				do
 				{
@@ -113,7 +117,7 @@ void close_listener()
 			gettimeofday(&tv, NULL);
 			timersub(&tv, &timestamp_sisis_registered, &tv2);
 	#ifdef DEBUG
-			printf("%llu.%06llu seconds since start... now actually terminating.\n", (uint64_t)tv2.tv_sec, (uint64_t)tv2.tv_usec);
+			fprintf(printf_file, "%llu.%06llu seconds since start... now actually terminating.\n", (uint64_t)tv2.tv_sec, (uint64_t)tv2.tv_usec);
 	#endif
 		}
 		
@@ -133,8 +137,12 @@ void terminate(int signal)
 	sigprocmask(SIG_BLOCK, &set, NULL);
 	
 #ifdef DEBUG
-	printf("Terminating...\n");
+	fprintf(printf_file, "Terminating...\n");
 #endif
+	
+	// Close debug file
+	if (debug_file != NULL)
+		fclose(debug_file);
 	
 	close_listener();
 	exit(0);
@@ -143,7 +151,7 @@ void terminate(int signal)
 void recheck_redundance_alarm_handler(int signal)
 {
 #ifdef DEBUG
-	printf("Timeout expired... Rechecking redundancy.\n");
+	fprintf(printf_file, "Timeout expired... Rechecking redundancy.\n");
 #endif
 	check_redundancy();
 }
@@ -166,6 +174,19 @@ void get_sisis_addr(char * buf)
 /** Main loop for redundant processes */
 void redundancy_main(uint64_t process_type, uint64_t process_type_version, int port, uint64_t input_process_type, void (*process_input)(char *, int), void (*vote_and_process)(), void (*flush_inputs)(), int flags, int argc, char ** argv)
 {
+	// Get pid
+	pid = getpid();
+	
+	// Open debug file
+#ifdef DEBUG_FILE
+	char fn[64];
+	sprintf(fn, "redundancy_%llu.log", pid);
+	debug_file = fopen(fn, "a");
+	printf_file = (debug_file != NULL) debug_file ? stdin;
+#else
+	printf_file = stdin;
+#endif
+	
 	// Store process type
 	ptype = process_type;
 	ptype_version = process_type_version;
@@ -186,28 +207,25 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	// Check number of args
 	if (argc != 2)
 	{
-		printf("Usage: %s <host_num>\n", argv[0]);
+		fprintf(printf_file, "Usage: %s <host_num>\n", argv[0]);
 		exit(1);
 	}
 	
 	// Get host number
 	sscanf (argv[1], "%llu", &host_num);
 	
-	// Get pid
-	pid = getpid();
-	
 	// Register address
 	pthread_mutex_lock(&sisis_addr_mutex);
 	if (sisis_register(sisis_addr, process_type, process_type_version, host_num, pid, timestamp) != 0)
 	{
-		printf("Failed to register SIS-IS address.\n");
+		fprintf(printf_file, "Failed to register SIS-IS address.\n");
 		exit(1);
 	}
 	pthread_mutex_unlock(&sisis_addr_mutex);
 	gettimeofday(&timestamp_sisis_registered, NULL);
 	
 	// Status
-	printf("Opening socket at %s on port %i.\n", sisis_addr, port);
+	fprintf(printf_file, "Opening socket at %s on port %i.\n", sisis_addr, port);
 	
 	// Set up socket address info
 	struct addrinfo hints, *addr;
@@ -221,14 +239,14 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	// Create socket
 	if ((sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)) == -1)
 	{
-		printf("Failed to open socket.\n");
+		fprintf(printf_file, "Failed to open socket.\n");
 		exit(1);
 	}
 	
 	// Bind to port
 	if (bind(sockfd, addr->ai_addr, addr->ai_addrlen) == -1)
 	{
-		printf("Failed to bind socket to port.\n");
+		fprintf(printf_file, "Failed to bind socket to port.\n");
 		close_listener();
 		exit(2);
 	}
@@ -246,7 +264,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 	
 	// Status message
 	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)(addr->ai_addr))->sin6_addr, sisis_addr, INET6_ADDRSTRLEN);
-	printf("Socket opened at %s on port %u.\n", sisis_addr, ntohs(((struct sockaddr_in *)(addr->ai_addr))->sin_port));
+	fprintf(printf_file, "Socket opened at %s on port %u.\n", sisis_addr, ntohs(((struct sockaddr_in *)(addr->ai_addr))->sin_port));
 	
 	// Info to subscribe to RIB changes
 	struct subscribe_to_rib_changes_info info;
@@ -312,7 +330,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 					if (buflen == strlen(PASSWORD) && memcmp(buf, PASSWORD, buflen) == 0)
 					{
 #ifdef DEBUG
-						printf("Stopping Redundancy.\n");
+						fprintf(printf_file, "Stopping Redundancy.\n");
 #endif
 						
 						// Unsubscribe to RIB changes
@@ -333,7 +351,7 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 						gettimeofday(&cur_time, NULL);
 						char addr[INET6_ADDRSTRLEN];
 						if (inet_ntop(AF_INET6, &(remote_addr.sin6_addr), addr, INET6_ADDRSTRLEN) != NULL)
-							printf("[%llu.%06llu] Input from %*s.\n", (uint64_t)cur_time.tv_sec, (uint64_t)cur_time.tv_usec, INET6_ADDRSTRLEN, addr);
+							fprintf(printf_file, "[%llu.%06llu] Input from %*s.\n", (uint64_t)cur_time.tv_sec, (uint64_t)cur_time.tv_usec, INET6_ADDRSTRLEN, addr);
 #endif
 						// Setup input
 						if (num_input == 0)
@@ -366,9 +384,9 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 						{
 							num_input_processes = get_process_type_count(input_process_type);
 			#ifdef DEBUG
-							printf("# inputs: %d\n", num_input);
-							printf("# input processes: %d\n", num_input_processes);
-							printf("Waiting %ld.%06ld seconds for more results.\n", (long)(select_timeout.tv_sec), (long)(select_timeout.tv_usec));
+							fprintf(printf_file, "# inputs: %d\n", num_input);
+							fprintf(printf_file, "# input processes: %d\n", num_input_processes);
+							fprintf(printf_file, "Waiting %ld.%06ld seconds for more results.\n", (long)(select_timeout.tv_sec), (long)(select_timeout.tv_usec));
 			#endif
 						}
 					}
@@ -385,18 +403,18 @@ void redundancy_main(uint64_t process_type, uint64_t process_type_version, int p
 					gettimeofday(&cur_time, NULL);
 					timersub(&cur_time, &last_inputs_processes, &tmp1);
 					//if ((tmp1.tv_sec * 1000000 + tmp1.tv_usec) < GATHER_RESULTS_TIMEOUT_USEC * 1.25)
-					printf("Late by %llu.%06llu seconds.\n", (uint64_t)tmp1.tv_sec, (uint64_t)tmp1.tv_usec);
+					fprintf(printf_file, "Late by %llu.%06llu seconds.\n", (uint64_t)tmp1.tv_sec, (uint64_t)tmp1.tv_usec);
 					
 					// Flush inputs
 					flush_inputs();
 		#ifdef DEBUG
-					printf("Not enough inputs for a vote.\n");
+					fprintf(printf_file, "Not enough inputs for a vote.\n");
 		#endif
 				}
 				else
 				{
 		#ifdef DEBUG
-					printf("Voting...\n");
+					fprintf(printf_file, "Voting...\n");
 		#endif
 					// Record time
 					gettimeofday(&last_inputs_processes, NULL);
@@ -534,7 +552,7 @@ void check_redundancy()
 		num_processes = get_process_type_version_count(ptype, ptype_version);
 	int local_num_processes = num_processes;
 	pthread_mutex_unlock(&num_processes_mutex);
-	printf("Need %d processes... Have %d.\n", num_procs, local_num_processes);
+	fprintf(printf_file, "Need %d processes... Have %d.\n", num_procs, local_num_processes);
 	
 	// Too few
 	if (local_num_processes < num_procs)
@@ -584,7 +602,7 @@ void check_redundancy()
 				desirable_host_t * desirable_hosts = malloc(sizeof(desirable_host_t) * spawn_addrs->size);
 				if (desirable_hosts == NULL)
 				{
-					printf("Malloc failed...\n");
+					fprintf(printf_file, "Malloc failed...\n");
 					exit(1);
 				}
 				
@@ -606,7 +624,7 @@ void check_redundancy()
 							
 							// Try to find machine monitor for this host
 #ifdef DEBUG
-							printf("Looking for machine monitor: ");
+							fprintf(printf_file, "Looking for machine monitor: ");
 #endif
 							struct in6_addr * mm_remote_addr = NULL;
 							if (monitor_addrs != NULL && monitor_addrs->size > 0)
@@ -628,7 +646,7 @@ void check_redundancy()
 								}
 							}
 #ifdef DEBUG
-							printf("%sFound\n", (mm_remote_addr == NULL) ? "Not " : "");
+							fprintf(printf_file, "%sFound\n", (mm_remote_addr == NULL) ? "Not " : "");
 #endif
 							// Check if there is the same process on this host
 							if (proc_addrs != NULL && proc_addrs->size > 0)
@@ -678,21 +696,21 @@ void check_redundancy()
 #ifdef DEBUG
 									char tmp_addr_str[INET6_ADDRSTRLEN];
 									inet_ntop(AF_INET6, mm_remote_addr, tmp_addr_str, INET6_ADDRSTRLEN);
-									printf("Sending machine monitor request to %s.\n", tmp_addr_str);
+									fprintf(printf_file, "Sending machine monitor request to %s.\n", tmp_addr_str);
 #endif
 									// Get memory stats
 									char * req = "data\n";
 									if (sendto(tmp_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
 									{
 #ifdef DEBUG
-										printf("\tFailed to send machine monitor request.\n");
+										fprintf(printf_file, "\tFailed to send machine monitor request.\n");
 #endif
 										desirable_hosts[i].priority += 200;	// Error... penalize
 									}
 									else
 									{
 #ifdef DEBUG
-										printf("\tSent machine monitor request.  Waiting for response...\n");
+										fprintf(printf_file, "\tSent machine monitor request.  Waiting for response...\n");
 #endif
 										struct sockaddr_in6 fromaddr;
 										int fromaddr_size = sizeof(fromaddr);
@@ -704,14 +722,14 @@ void check_redundancy()
 										if (select(tmp_sock+1, &socks, NULL, NULL, &select_timeout) <= 0)
 										{
 #ifdef DEBUG
-											printf("\tMachine monitor request timed out.\n");
+											fprintf(printf_file, "\tMachine monitor request timed out.\n");
 #endif
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
 										else if ((len = recvfrom(tmp_sock, buf, 65536, 0, (struct sockaddr *)&fromaddr, &fromaddr_size)) < 1)
 										{
 #ifdef DEBUG
-											printf("\tFailed to receive machine monitor response.\n");
+											fprintf(printf_file, "\tFailed to receive machine monitor response.\n");
 #endif
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
@@ -719,7 +737,7 @@ void check_redundancy()
 										{
 #ifdef DEBUG
 											inet_ntop(AF_INET6, &((struct sockaddr_in6 *)&fromaddr)->sin6_addr, tmp_addr_str, INET6_ADDRSTRLEN);
-											printf("\tFailed to receive machine monitor response.  Response from wrong host (%s).\n", tmp_addr_str);
+											fprintf(printf_file, "\tFailed to receive machine monitor response.  Response from wrong host (%s).\n", tmp_addr_str);
 #endif
 											desirable_hosts[i].priority += 200;	// Error... penalize
 										}
@@ -743,7 +761,7 @@ void check_redundancy()
 												if (sscanf(match+strlen(mem_usage_str), "%d%%", &usage))
 												{
 #ifdef DEBUG
-													printf("\tMemory Usage = %d%%\n", usage);
+													fprintf(printf_file, "\tMemory Usage = %d%%\n", usage);
 #endif
 													desirable_hosts[i].priority += usage;
 												}
@@ -762,7 +780,7 @@ void check_redundancy()
 												if (sscanf(match+strlen(cpu_usage_str), "%d%%", &usage))
 												{
 #ifdef DEBUG
-													printf("\tCPU Usage = %d%%\n", usage);
+													fprintf(printf_file, "\tCPU Usage = %d%%\n", usage);
 #endif
 													desirable_hosts[i].priority += usage;
 												}
@@ -783,7 +801,7 @@ void check_redundancy()
 				
 				// Sort desirable hosts
 #ifdef DEBUG
-				printf("Sorting hosts according to desirability.\n");
+				fprintf(printf_file, "Sorting hosts according to desirability.\n");
 #endif
 				qsort(desirable_hosts, spawn_addrs->size, sizeof(desirable_hosts[0]), compare_desirable_hosts);
 				
@@ -794,7 +812,7 @@ void check_redundancy()
 				// Make new socket
 				int spawn_sock = make_socket(NULL);
 				if (spawn_sock == -1)
-					printf("Failed to open spawn socket.\n");
+					fprintf(printf_file, "Failed to open spawn socket.\n");
 				else
 				{
 					do
@@ -815,15 +833,15 @@ void check_redundancy()
 							// Debugging info
 							char tmp_addr[INET6_ADDRSTRLEN];
 							if (inet_ntop(AF_INET6, remote_addr, tmp_addr, INET6_ADDRSTRLEN) != NULL)
-								printf("Starting new process via %s.\n", tmp_addr);
+								fprintf(printf_file, "Starting new process via %s.\n", tmp_addr);
 							else
-								printf("Starting new process.\n");
+								fprintf(printf_file, "Starting new process.\n");
 	#endif
 							// Send request
 							char req[32];
 							sprintf(req, "%d %llu", REMOTE_SPAWN_REQ_START, ptype);
 							if (sendto(spawn_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
-								printf("Failed to send message.  Error: %i\n", errno);
+								fprintf(printf_file, "Failed to send message.  Error: %i\n", errno);
 							else
 								num_start--;
 							
@@ -922,7 +940,7 @@ void check_redundancy()
 								}
 								
 #ifdef DEBUG
-								printf("Terminating...\n");
+								fprintf(printf_file, "Terminating...\n");
 #endif
 								close_listener();
 								exit(0);
