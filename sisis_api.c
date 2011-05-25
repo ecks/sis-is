@@ -741,7 +741,7 @@ int sisis_dump_kernel_routes()
 	#endif /* HAVE_IPV6 */
 	info.data = NULL;
 	
-	// Get routesx
+	// Get routes
 	sisis_netlink_route_read(&info);
 	
 	return 0;
@@ -752,7 +752,7 @@ int sisis_dump_kernel_routes()
  * Dump kernel routing table.
  * Returns zero on success.
  */
-int sisis_dump_kernel_ipv6_routes_to_tables(struct list * rib)
+int sisis_dump_kernel_ipv6_routes_to_tables(struct list ** rib)
 {
 	// Set up callbacks
 	struct sisis_netlink_routing_table_info info;
@@ -770,9 +770,9 @@ int sisis_dump_kernel_ipv6_routes_to_tables(struct list * rib)
 /* Add an IPv4 Address to RIB. */
 int sisis_rib_add_ipv4 (struct route_ipv4 * route, void * data)
 {
-	struct list * rib = ipv4_rib_routes;
+	struct list ** rib = &ipv4_rib_routes;
 	if (data != NULL)
-		rib = (struct list *)data;
+		rib = (struct list **)data;
 		
 	struct listnode * node = malloc(sizeof(struct listnode));
 	if (rib != NULL && node != NULL)
@@ -794,9 +794,9 @@ int sisis_rib_add_ipv4 (struct route_ipv4 * route, void * data)
 #ifdef HAVE_IPV6
 int sisis_rib_add_ipv6 (struct route_ipv6 * route, void * data)
 {
-	struct list * rib = ipv6_rib_routes;
-	//if (data != NULL)
-		//rib = (struct list *)data;
+	struct list ** rib = &ipv6_rib_routes;
+	if (data != NULL)
+		rib = (struct list **)data;
 	
 	struct listnode * node = malloc(sizeof(struct listnode));
 	if (rib != NULL && node != NULL)
@@ -853,7 +853,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 	// Update kernel routes
 	struct list * rib = malloc(sizeof(*rib));
 	memset(rib, 0, sizeof(*rib));
-	sisis_dump_kernel_ipv6_routes_to_tables(rib);
+	sisis_dump_kernel_ipv6_routes_to_tables(&rib);
 	
 	// IPv6 version
 	// Create prefix mask IPv6 addr
