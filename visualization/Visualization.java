@@ -33,7 +33,16 @@ public class Visualization extends JPanel implements Runnable
 		// Start socket thread
 		new Thread(this).start();
 		
+		// Reset host info
+		resetHostInfo();
+	}
+	
+	/** Reset host information */
+	private void resetHostInfo()
+	{
 		// Set up host info
+		hostProcesses.clear();
+		hostProcessesCopies.clear();
 		for (int i = 0; i < MAX_HOSTS; i++)
 		{
 			host_name[i] = "Host #" + i;
@@ -58,6 +67,9 @@ public class Visualization extends JPanel implements Runnable
 			Socket client;
 			while (true)
 			{
+				// Reset host info
+				resetHostInfo();
+				
 				System.out.println("Waiting for connection...");
 				client = server.accept();
 				
