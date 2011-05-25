@@ -36,6 +36,8 @@ typedef struct {
 
 int main (int argc, char ** argv)
 {
+	int i;
+	
 	// List of hosts and processes
 	int num_hosts = 0, num_procs = 0;
 	host_info_t hosts[MAX_HOSTS];
@@ -61,7 +63,6 @@ int main (int argc, char ** argv)
 				if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
 				{
 					// Find host
-					int i;
 					host_info_t * host = NULL;
 					for (i = 0; i < num_hosts && host == NULL; i++)
 						if (hosts[i].sys_id == sys_id)
