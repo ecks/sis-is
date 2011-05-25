@@ -35,42 +35,46 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 		uint64_t prefix, sisis_version, process_type, process_version, sys_id, other_pid, ts;
 		if (get_sisis_addr_components(prefix_str, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &other_pid, &ts) == 0)
 		{
-			// Get process number and name to send
-			int proc_num = 0;
-			char * proc = "Unknown";
-			switch ((int)process_type)
+			// Check that this is an SIS-IS address
+			if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
 			{
-				case SISIS_PTYPE_DEMO1_SORT:
-					proc = "Sort";
-					proc_num = 1;
-					break;
-				case SISIS_PTYPE_DEMO1_JOIN:
-					proc = "Join";
-					proc_num = 2;
-					break;
-				case SISIS_PTYPE_DEMO1_VOTER:
-					proc = "Voter";
-					proc_num = 3;
-					break;
-				case SISIS_PTYPE_REMOTE_SPAWN:
-					proc = "RemoteSpawn";
-					proc_num = 4;
-					break;
-				case SISIS_PTYPE_MACHINE_MONITOR:
-					proc = "MachineMonitor";
-					proc_num = 5;
-					break;
-			}
-			
-			// Send message
-			char buf[512];
-			if (num_proc_pre_host[sys_id%16]++ == 0)
-			{
-				sprintf(buf, "hostUp %llu\n", sys_id % 16);
+				// Get process number and name to send
+				int proc_num = 0;
+				char * proc = "Unknown";
+				switch ((int)process_type)
+				{
+					case SISIS_PTYPE_DEMO1_SORT:
+						proc = "Sort";
+						proc_num = 1;
+						break;
+					case SISIS_PTYPE_DEMO1_JOIN:
+						proc = "Join";
+						proc_num = 2;
+						break;
+					case SISIS_PTYPE_DEMO1_VOTER:
+						proc = "Voter";
+						proc_num = 3;
+						break;
+					case SISIS_PTYPE_REMOTE_SPAWN:
+						proc = "RemoteSpawn";
+						proc_num = 4;
+						break;
+					case SISIS_PTYPE_MACHINE_MONITOR:
+						proc = "MachineMonitor";
+						proc_num = 5;
+						break;
+				}
+				
+				// Send message
+				char buf[512];
+				if (num_proc_pre_host[sys_id%16]++ == 0)
+				{
+					sprintf(buf, "hostUp %llu\n", sys_id % 16);
+					send(sockfd, buf, strlen(buf), 0);
+				}
+				sprintf(buf, "procAdd %llu %i %s\n", sys_id % 16, proc_num, proc);
 				send(sockfd, buf, strlen(buf), 0);
 			}
-			sprintf(buf, "procAdd %llu %i %s\n", sys_id % 16, proc_num, proc);
-			send(sockfd, buf, strlen(buf), 0);
 		}
 	}
 	
@@ -86,42 +90,46 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 		uint64_t prefix, sisis_version, process_type, process_version, sys_id, other_pid, ts;
 		if (get_sisis_addr_components(prefix_str, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &other_pid, &ts) == 0)
 		{
-			// Get process number and name to send
-			int proc_num = 0;
-			char * proc = "Unknown";
-			switch ((int)process_type)
+			// Check that this is an SIS-IS address
+			if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
 			{
-				case SISIS_PTYPE_DEMO1_SORT:
-					proc = "Sort";
-					proc_num = 1;
-					break;
-				case SISIS_PTYPE_DEMO1_JOIN:
-					proc = "Join";
-					proc_num = 2;
-					break;
-				case SISIS_PTYPE_DEMO1_VOTER:
-					proc = "Voter";
-					proc_num = 3;
-					break;
-				case SISIS_PTYPE_REMOTE_SPAWN:
-					proc = "RemoteSpawn";
-					proc_num = 4;
-					break;
-				case SISIS_PTYPE_MACHINE_MONITOR:
-					proc = "MachineMonitor";
-					proc_num = 5;
-					break;
-			}
-			
-			// Send message
-			char buf[512];
-			if (--num_proc_pre_host[sys_id%16] == 0)
-			{
-				sprintf(buf, "hostDown %llu\n", sys_id % 16);
+				// Get process number and name to send
+				int proc_num = 0;
+				char * proc = "Unknown";
+				switch ((int)process_type)
+				{
+					case SISIS_PTYPE_DEMO1_SORT:
+						proc = "Sort";
+						proc_num = 1;
+						break;
+					case SISIS_PTYPE_DEMO1_JOIN:
+						proc = "Join";
+						proc_num = 2;
+						break;
+					case SISIS_PTYPE_DEMO1_VOTER:
+						proc = "Voter";
+						proc_num = 3;
+						break;
+					case SISIS_PTYPE_REMOTE_SPAWN:
+						proc = "RemoteSpawn";
+						proc_num = 4;
+						break;
+					case SISIS_PTYPE_MACHINE_MONITOR:
+						proc = "MachineMonitor";
+						proc_num = 5;
+						break;
+				}
+				
+				// Send message
+				char buf[512];
+				if (--num_proc_pre_host[sys_id%16] == 0)
+				{
+					sprintf(buf, "hostDown %llu\n", sys_id % 16);
+					send(sockfd, buf, strlen(buf), 0);
+				}
+				sprintf(buf, "procDel %llu %i %s\n", sys_id % 16, proc_num, proc);
 				send(sockfd, buf, strlen(buf), 0);
 			}
-			sprintf(buf, "procDel %llu %i %s\n", sys_id % 16, proc_num, proc);
-			send(sockfd, buf, strlen(buf), 0);
 		}
 	}
 	
