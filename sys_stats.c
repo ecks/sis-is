@@ -24,19 +24,7 @@ int main (int argc, char ** argv)
 	// Get kernel routes
 	sisis_dump_kernel_routes();
 	struct listnode * node;
-	printf("----------------------------------- IPv4 -----------------------------------\n");
-	LIST_FOREACH(ipv4_rib_routes, node)
-	{
-		struct route_ipv4 * route = (struct route_ipv4 *)node->data;
-		
-		// Set up prefix
-		char prefix_str[INET_ADDRSTRLEN];
-		if (inet_ntop(AF_INET, &(route->p->prefix.s_addr), prefix_str, INET_ADDRSTRLEN) != 1)
-			printf("%s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
-	}
-
 #ifdef HAVE_IPV6
-	printf("\n----------------------------------- IPv6 -----------------------------------\n");
 	LIST_FOREACH(ipv6_rib_routes, node)
 	{
 		struct route_ipv6 * route = (struct route_ipv6 *)node->data;
@@ -44,7 +32,18 @@ int main (int argc, char ** argv)
 		// Set up prefix
 		char prefix_str[INET6_ADDRSTRLEN];
 		if (inet_ntop(AF_INET6, &(route->p->prefix.s6_addr), prefix_str, INET6_ADDRSTRLEN) != 1)
-			printf("%s/%d [%u/%u]\n", prefix_str, route->p->prefixlen, route->distance, route->metric);
+		{
+			// Parse components
+			uint64_t prefix, sisis_version, process_type, process_version, sys_id, pid, ts;
+			if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &pid, &ts) == 0)
+			{
+				// Check that this is an SIS-IS address
+				if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
+				{
+					printf("%llu\t%llu\t%llu\t%llu\t%llu\n", process_type, process_version, sys_id, pid, ts);
+				}
+			}
+		}
 	}
 #endif /* HAVE_IPV6 */
 
