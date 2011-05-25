@@ -45,6 +45,7 @@ public class Visualization extends JPanel implements Runnable
 		hostProcessesCopies.clear();
 		for (int i = 0; i < MAX_HOSTS; i++)
 		{
+			hosts_up[i] = false;
 			host_name[i] = "Host #" + i;
 			hostProcesses.add(i, new HashMap<Integer, String>());
 			hostProcessesCopies.add(i, new HashMap<Integer, Integer>());
