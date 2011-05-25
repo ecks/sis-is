@@ -162,7 +162,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 						}
 					}
 					*/
-					FREE_LINKED_LIST(monitor_addrs);
+					//FREE_LINKED_LIST(monitor_addrs);
 					
 					sprintf(buf, "hostUp %llu %s\n", sys_id % 16, hostname);
 					send(sockfd, buf, strlen(buf), 0);
