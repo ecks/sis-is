@@ -741,7 +741,7 @@ int sisis_dump_kernel_routes()
 	#endif /* HAVE_IPV6 */
 	info.data = NULL;
 	
-	// Get routes
+	// Get routesx
 	sisis_netlink_route_read(&info);
 	
 	return 0;
@@ -759,6 +759,11 @@ int sisis_dump_kernel_ipv6_routes_to_tables(struct list * rib)
 	memset(&info, 0, sizeof(info));
 	info.rib_add_ipv6_route = sisis_rib_add_ipv6;
 	info.data = (void *)rib;
+	
+	// Get routes
+	sisis_netlink_route_read(&info);
+	
+	return 0;
 }
 #endif /* HAVE_IPV6 */
 
