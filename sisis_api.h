@@ -125,7 +125,7 @@ int sisis_dump_kernel_routes();
  * Dump kernel routing table.
  * Returns zero on success.
  */
-int sisis_dump_kernel_ipv6_routes_to_tables(struct list * rib)
+int sisis_dump_kernel_ipv6_routes_to_tables(struct list * rib);
 #endif
 
 int sisis_rib_add_ipv4 (struct route_ipv4 * route, void * data);
