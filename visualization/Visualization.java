@@ -242,7 +242,7 @@ public class Visualization extends JPanel implements Runnable
 		g2.fillRect(x, y, width, height);
 		
 		// Set font and get info
-		Font font = new Font("SansSerif", Font.PLAIN, 12);
+		Font font = new Font("SansSerif", Font.PLAIN, 10);
 		FontMetrics metrics = g2.getFontMetrics(font);
 		setFont(font);
 		
@@ -271,7 +271,7 @@ public class Visualization extends JPanel implements Runnable
 		int y = row * height + (row + 1) * 10;
 		
 		// Set font and get info
-		Font font = new Font("SansSerif", Font.PLAIN, 12);
+		Font font = new Font("SansSerif", Font.PLAIN, 10);
 		FontMetrics metrics = g2.getFontMetrics(font);
 		setFont(font);
 		
@@ -304,7 +304,7 @@ public class Visualization extends JPanel implements Runnable
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		// Set size
-		frame.setSize(600, 500);
+		frame.setSize(600, 750);
 		
 		// Add panel
 		frame.getContentPane().add(new Visualization());

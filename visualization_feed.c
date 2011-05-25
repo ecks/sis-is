@@ -40,12 +40,6 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 			char * proc = "Unknown";
 			switch ((int)process_type)
 			{
-				case SISIS_PTYPE_REMOTE_SPAWN:
-					proc = "RemoteSpawn";
-					proc_num = 4;
-				case SISIS_PTYPE_MACHINE_MONITOR:
-					proc = "MachineMonitor";
-					proc_num = 5;
 				case SISIS_PTYPE_DEMO1_SORT:
 					proc = "Sort";
 					proc_num = 1;
@@ -57,6 +51,14 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 				case SISIS_PTYPE_DEMO1_VOTER:
 					proc = "Voter";
 					proc_num = 3;
+					break;
+				case SISIS_PTYPE_REMOTE_SPAWN:
+					proc = "RemoteSpawn";
+					proc_num = 4;
+					break;
+				case SISIS_PTYPE_MACHINE_MONITOR:
+					proc = "MachineMonitor";
+					proc_num = 5;
 					break;
 			}
 			
@@ -89,12 +91,6 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 			char * proc = "Unknown";
 			switch ((int)process_type)
 			{
-				case SISIS_PTYPE_REMOTE_SPAWN:
-					proc = "RemoteSpawn";
-					proc_num = 4;
-				case SISIS_PTYPE_MACHINE_MONITOR:
-					proc = "MachineMonitor";
-					proc_num = 5;
 				case SISIS_PTYPE_DEMO1_SORT:
 					proc = "Sort";
 					proc_num = 1;
@@ -106,6 +102,14 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 				case SISIS_PTYPE_DEMO1_VOTER:
 					proc = "Voter";
 					proc_num = 3;
+					break;
+				case SISIS_PTYPE_REMOTE_SPAWN:
+					proc = "RemoteSpawn";
+					proc_num = 4;
+					break;
+				case SISIS_PTYPE_MACHINE_MONITOR:
+					proc = "MachineMonitor";
+					proc_num = 5;
 					break;
 			}
 			
