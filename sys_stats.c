@@ -20,8 +20,27 @@
 #include "sisis_api.h"
 #include "sisis_addr_format.h"
 
+#define MAX_HOSTS 100
+#define MAX_PROCESSES 500
+/** Host information */
+typedef struct {
+	uint64_t sys_id;
+	uint_t num_processes;
+} host_info_t;
+/** Process information */
+typedef struct {
+	uint64_t process_type;
+	uint64_t process_version;
+	uint_t num_processes;
+} process_info_t;
+
 int main (int argc, char ** argv)
 {
+	// List of hosts and processes
+	int num_hosts = 0, num_procs = 0;
+	host_info_t hosts[MAX_HOSTS];
+	process_info_t procs[MAX_PROCESSES];
+	
 	// Get kernel routes
 	sisis_dump_kernel_routes();
 	struct listnode * node;
@@ -41,12 +60,61 @@ int main (int argc, char ** argv)
 				// Check that this is an SIS-IS address
 				if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
 				{
-					printf("%llu\t%llu\t%llu\t%llu\t%llu\n", process_type, process_version, sys_id, pid, ts);
+					// Find host
+					int i;
+					host_info_t * host = NULL;
+					for (i = 0; i < num_hosts && host == NULL; i++)
+						if (hosts[i].sys_id == sys_id)
+							host = &hosts[i];
+					// Add host if needed
+					if (host == NULL && num_hosts + 1 < MAX_HOSTS)
+					{
+						host = &hosts[num_hosts];
+						num_hosts++;
+						host->sys_id = sys_id;
+						host->num_processes = 0;
+					}
+					// Check if the host is not null
+					if (host != NULL)
+						host->num_processes++;
+					
+					// Find process type/version
+					int i;
+					process_info_t * proc = NULL;
+					for (i = 0; i < num_procs && proc == NULL; i++)
+						if (procs[i].process_type == process_type && procs[i].process_version == process_version)
+							proc = &procs[i];
+					// Add process if needed
+					if (proc == NULL && num_procs + 1 < MAX_PROCESSES)
+					{
+						proc = &procs[num_procs];
+						num_procs++;
+						proc->process_type = process_type;
+						proc->process_version = process_version;
+						proc->num_processes = 0;
+					}
+					// Check if the process is not null
+					if (proc != NULL)
+						proc->num_processes++;
+					
+					//printf("%llu\t%llu\t%llu\t%llu\t%llu\n", process_type, process_version, sys_id, pid, ts);
 				}
 			}
 		}
 	}
 #endif /* HAVE_IPV6 */
+
+	// Print hosts
+	printf("==================================== Hosts =====================================\n");
+	printf("Host\t# Procs\n");
+	for (i = 0; i < num_hosts; i++)
+		printf("%llu\t%llu\n", hosts[i].sys_id, hosts[i].num_processes);
+	
+	// Print processes
+	printf("================================== Processes ===================================\n");
+	printf("Process\t# Procs\n");
+	for (i = 0; i < num_procs; i++)
+		printf("%lluv$llu\t%llu\n", procs[i].process_type, procs[i].process_version, procs[i].num_processes);
 
 	exit(0);
 }
