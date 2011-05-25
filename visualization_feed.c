@@ -81,6 +81,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 					sisis_create_addr(mm_addr, (uint64_t)SISIS_PTYPE_MACHINE_MONITOR, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
 					struct prefix_ipv6 mm_prefix = sisis_make_ipv6_prefix(mm_addr, 42);
 					struct list * monitor_addrs = get_sisis_addrs_for_prefix(&mm_prefix);
+					
 					// Find machine monitor
 					struct in6_addr * mm_remote_addr = NULL;
 					if (monitor_addrs != NULL)
@@ -104,6 +105,10 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 					}
 					if (mm_remote_addr != NULL)
 					{
+						char tmp_addr[INET6_ADDRSTRLEN];
+							if (inet_ntop(AF_INET6, mm_remote_addr, tmp_addr, INET6_ADDRSTRLEN) != NULL)
+								printf("Sending message to machine monitor at %s.\n", tmp_addr);
+						
 						// Make new socket
 						int tmp_sock = socket(AF_INET6, SOCK_DGRAM, 0);
 						if (tmp_sock != -1)
