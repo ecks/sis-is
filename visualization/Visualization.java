@@ -294,14 +294,13 @@ public class Visualization extends JPanel implements Runnable
 	{
 		// Get IP address
 		try {
+			serverAddr = InetAddress.getLocalHost();
 			if (args.length == 1)
 			{
 				InetAddress [] addrs = InetAddress.getAllByName(args[0]);
 				if (addrs.length > 0)
 					serverAddr = addrs[0];
 			}
-			else
-				serverAddr = InetAddress.getLocalHost();
 		} catch (UnknownHostException e) {
 			System.out.println("Invalid server address..." + e);
 			return;

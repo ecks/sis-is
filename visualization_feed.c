@@ -35,7 +35,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 			// Get process number and name to send
 			int proc_num = 0;
 			char * proc = "Unknown";
-			switch (process_type)
+			switch ((int)process_type)
 			{
 				case SISIS_PTYPE_DEMO1_SORT:
 					proc = "Sort";
@@ -54,6 +54,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 			// Send message
 			char buf[512];
 			sprintf(buf, "hostUp %llu\n", sys_id % 16);
+			send(sockfd, buf, strlen(buf), 0);
 			sprintf(buf, "procAdd %llu %i %s\n", sys_id % 16, proc_num, proc);
 			send(sockfd, buf, strlen(buf), 0);
 		}
@@ -74,7 +75,7 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 			// Get process number and name to send
 			int proc_num = 0;
 			char * proc = "Unknown";
-			switch (process_type)
+			switch ((int)process_type)
 			{
 				case SISIS_PTYPE_DEMO1_SORT:
 					proc = "Sort";
@@ -93,6 +94,7 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 			// Send message
 			char buf[512];
 			sprintf(buf, "hostUp %llu\n", sys_id % 16);
+			send(sockfd, buf, strlen(buf), 0);
 			sprintf(buf, "procDel %llu %i %s\n", sys_id % 16, proc_num, proc);
 			send(sockfd, buf, strlen(buf), 0);
 		}
