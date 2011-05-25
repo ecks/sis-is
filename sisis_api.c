@@ -825,7 +825,7 @@ int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
 	subscribe_info->rib_add_ipv6_route = info->rib_add_ipv6_route;
 	subscribe_info->rib_remove_ipv6_route = info->rib_remove_ipv6_route;
 	#endif /* HAVE_IPV6 */
-	subscribe_info->data = NULL;
+	subscribe_info->data = info->data;
 	
 	// Subscribe to changes
 	sisis_netlink_subscribe_to_rib_changes(subscribe_info);
