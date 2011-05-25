@@ -18,6 +18,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include "sisis_api.h"
+#include "sisis_addr_format.h"
 
 int main (int argc, char ** argv)
 {
@@ -35,7 +36,7 @@ int main (int argc, char ** argv)
 		{
 			// Parse components
 			uint64_t prefix, sisis_version, process_type, process_version, sys_id, pid, ts;
-			if (get_sisis_addr_components(addr, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &pid, &ts) == 0)
+			if (get_sisis_addr_components(prefix_str, &prefix, &sisis_version, &process_type, &process_version, &sys_id, &pid, &ts) == 0)
 			{
 				// Check that this is an SIS-IS address
 				if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
