@@ -6,10 +6,10 @@ LIBS = -lrt -lpthread
 all: $(EXECUTABLES)
 
 test1: $@.o $(SISIS_API_OBJECTS)
-	$(CC) $(CFLAGS) $(LIBS) -o $@.o $(SISIS_API_OBJECTS)
+	$(CC) $(CFLAGS) $(LIBS) -o $@ $@.o $(SISIS_API_OBJECTS)
 
 sys_stats: $@.o $(SISIS_API_OBJECTS)
-	$(CC) $(CFLAGS) $(LIBS) -o $@.o $(SISIS_API_OBJECTS)
+	$(CC) $(CFLAGS) $(LIBS) -o $@ $@.o $(SISIS_API_OBJECTS)
 
 .c.o: 
 	gcc -c $*.c
