@@ -81,7 +81,6 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 					sisis_create_addr(mm_addr, (uint64_t)SISIS_PTYPE_MACHINE_MONITOR, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
 					struct prefix_ipv6 mm_prefix = sisis_make_ipv6_prefix(mm_addr, 42);
 					struct list * monitor_addrs = get_sisis_addrs_for_prefix(&mm_prefix);
-					/*
 					// Find machine monitor
 					struct in6_addr * mm_remote_addr = NULL;
 					if (monitor_addrs != NULL)
@@ -161,7 +160,6 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 							}
 						}
 					}
-					*/
 					FREE_LINKED_LIST(monitor_addrs);
 					
 					sprintf(buf, "hostUp %llu %s\n", sys_id % 16, hostname);
