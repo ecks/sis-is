@@ -22,6 +22,7 @@
 
 #define MAX_HOSTS 100
 #define MAX_PROCESSES 500
+#define MAX_PROCESS_TYPES 10
 /** Host information */
 typedef struct {
 	uint64_t sys_id;
@@ -34,9 +35,48 @@ typedef struct {
 	uint32_t num_processes;
 } process_info_t;
 
+/** Compare hosts. */
+int compare_hosts(const void * a_ptr, const void * b_ptr)
+{
+	host_info_t * a = (host_info_t *)a_ptr;
+	host_info_t * b = (host_info_t *)b_ptr;
+	if (a->sys_id < b->sys_id)
+		return -1;
+	else if (a->sys_id > b->sys_id)
+		return 1;
+	return 0;
+}
+
+/** Compare processes. */
+int compare_procs(const void * a_ptr, const void * b_ptr)
+{
+	process_info_t * a = (process_info_t *)a_ptr;
+	process_info_t * b = (process_info_t *)b_ptr;
+	if (a->process_type < b->process_type)
+		return -1;
+	else if (a->process_type > b->process_type)
+		return 1;
+	else if (a->process_version < b->process_version)
+		return 1;
+	else if (a->process_version > b->process_version)
+		return 1;
+	return 0;
+}
+
 int main (int argc, char ** argv)
 {
 	int i;
+	
+	// Process types
+	char * process_types[MAX_PROCESS_TYPES];
+	memset(process_types, 0, sizeof(char *) * MAX_PROCESS_TYPES);
+	process_types[SISIS_PTYPE_MACHINE_MONITOR] = "Machine Monitor";
+	process_types[SISIS_PTYPE_REMOTE_SPAWN] = "Remote Spawn";
+	process_types[SISIS_PTYPE_LEADER_ELECTOR] = "Leader Elector";
+	process_types[SISIS_PTYPE_DEMO1_SORT] = "Sort";
+	process_types[SISIS_PTYPE_DEMO1_JOIN] = "Join";
+	process_types[SISIS_PTYPE_DEMO1_VOTER] = "Voter";
+	
 	
 	// List of hosts and processes
 	int num_hosts = 0, num_procs = 0;
@@ -103,6 +143,10 @@ int main (int argc, char ** argv)
 		}
 	}
 #endif /* HAVE_IPV6 */
+	
+	// Sort hosts and processes
+	qsort(hosts, num_hosts, sizeof(hosts[0]), compare_hosts);
+	qsort(procs, num_procs, sizeof(procs[0]), compare_procs);
 
 	// Print hosts
 	printf("==================================== Hosts =====================================\n");
@@ -114,7 +158,12 @@ int main (int argc, char ** argv)
 	printf("================================== Processes ===================================\n");
 	printf("Process\t# Procs\n");
 	for (i = 0; i < num_procs; i++)
-		printf("%lluv%llu\t%u\n", procs[i].process_type, procs[i].process_version, procs[i].num_processes);
+	{
+		if (procs[i].process_type < MAX_PROCESS_TYPES && process_types[procs[i].process_type] != NULL)
+			printf("%llu(%s)v%llu\t%u\n", procs[i].process_type, process_types[procs[i].process_type], procs[i].process_version, procs[i].num_processes);
+		else
+			printf("%lluv%llu\t%u\n", procs[i].process_type, procs[i].process_version, procs[i].num_processes);
+	}
 
 	exit(0);
 }
