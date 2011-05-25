@@ -642,7 +642,7 @@ void check_redundancy()
 									uint64_t proc_sys_id;
 									if (inet_ntop(AF_INET6, remote_addr2, addr, INET6_ADDRSTRLEN) != NULL)
 										if (get_sisis_addr_components(addr, NULL, NULL, NULL, NULL, &proc_sys_id, NULL, NULL) == 0)
-											if (mm_sys_id == sys_id)
+											if (proc_sys_id == sys_id)
 												desirable_hosts[i].priority += 1000;
 								}
 							}
