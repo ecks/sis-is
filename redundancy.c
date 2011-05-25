@@ -630,6 +630,22 @@ void check_redundancy()
 #ifdef DEBUG
 							printf("%sFound\n", (mm_remote_addr == NULL) ? "Not " : "");
 #endif
+							// Check if there is the same process on this host
+							if (proc_addrs != NULL && proc_addrs->size > 0)
+							{
+								struct listnode * proc_node;
+								LIST_FOREACH(proc_addrs, proc_node)
+								{
+									struct in6_addr * remote_addr2 = (struct in6_addr *)proc_node->data;
+									
+									// Get system id
+									uint64_t proc_sys_id;
+									if (inet_ntop(AF_INET6, remote_addr2, addr, INET6_ADDRSTRLEN) != NULL)
+										if (get_sisis_addr_components(addr, NULL, NULL, NULL, NULL, &proc_sys_id, NULL, NULL) == 0)
+											if (mm_sys_id == sys_id)
+												desirable_hosts[i].priority += 1000;
+								}
+							}
 							
 							// If there is no machine monitor, it is les desirable
 							if (mm_remote_addr == NULL)
