@@ -907,7 +907,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 				}
 			}
 		}
-		LINKED_LIST_FREE(rib);
+		FREE_LINKED_LIST(rib);
 	}
 	
 	return rtn;
