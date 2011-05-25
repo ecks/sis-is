@@ -17,7 +17,7 @@ public class Visualization extends JPanel implements Runnable
 	ArrayList<HashMap<Integer, String>> hostProcesses = new ArrayList<HashMap<Integer, String>>();
 	ArrayList<HashMap<Integer, Integer>> hostProcessesCopies = new ArrayList<HashMap<Integer, Integer>>();
 	
-	String [] host_name = new String[MAX_HOSTS];
+	String [] hostnames = new String[MAX_HOSTS];
 	
 	public static InetAddress serverAddr = null;
 	
@@ -46,7 +46,7 @@ public class Visualization extends JPanel implements Runnable
 		for (int i = 0; i < MAX_HOSTS; i++)
 		{
 			hosts_up[i] = false;
-			host_name[i] = "Host #" + i;
+			hostnames[i] = "Host #" + i;
 			hostProcesses.add(i, new HashMap<Integer, String>());
 			hostProcessesCopies.add(i, new HashMap<Integer, Integer>());
 		}
@@ -111,7 +111,14 @@ public class Visualization extends JPanel implements Runnable
 									hosts_up[hostIdx] = false;
 								// Host up
 								else if (cmd.equalsIgnoreCase("hostUp"))
+								{
+									// Get hostname
+									if (scan.hasNext())
+										hostnames[i] = scan.next();
+									
+									// Set to up
 									hosts_up[hostIdx] = true;
+								}
 								// Add/remove process
 								else if (cmd.equalsIgnoreCase("procAdd") || cmd.equalsIgnoreCase("procDel"))
 								{
@@ -261,7 +268,7 @@ public class Visualization extends JPanel implements Runnable
 		
 		// Write host number text
 		g.setColor(Color.BLACK);
-		g2.drawString(host_name[host], x + 5, y + (int)metrics.getAscent() + 2);
+		g2.drawString(hostnames[host], x + 5, y + (int)metrics.getAscent() + 2);
 	}
 	
 	/**

@@ -26,6 +26,32 @@ int num_proc_pre_host[16];
 
 int sockfd = -1;
 
+/** Creates a new socket. */
+int make_socket(char * port)
+{
+	int fd;
+	
+	// Set up socket address info
+	struct addrinfo hints, *addr;
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_INET6;	// IPv6
+	hints.ai_socktype = SOCK_DGRAM;
+	getaddrinfo("localhost", port, &hints, &addr);
+	
+	// Create socket
+	if ((fd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)) == -1)
+		return -1;
+	
+	// Bind to port
+	if (bind(fd, addr->ai_addr, addr->ai_addrlen) == -1)
+	{
+		close(fd);
+		return -1;
+	}
+	
+	return fd;
+}
+
 #ifdef HAVE_IPV6
 int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 {
@@ -69,7 +95,98 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 				char buf[512];
 				if (num_proc_pre_host[sys_id%16]++ == 0)
 				{
-					sprintf(buf, "hostUp %llu\n", sys_id % 16);
+					/* Get hostname */
+					char hostname[64];
+					sprintf(hostname, "Host %s", sys_id%16);
+					
+					// Get machine monitors
+					char mm_addr[INET6_ADDRSTRLEN+1];
+					sisis_create_addr(mm_addr, (uint64_t)SISIS_PTYPE_MACHINE_MONITOR, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
+					struct prefix_ipv6 mm_prefix = sisis_make_ipv6_prefix(mm_addr, 42);
+					struct list * monitor_addrs = get_sisis_addrs_for_prefix(&mm_prefix);
+					// Find machine monitor
+					struct in6_addr * mm_remote_addr = NULL;
+					if (monitor_addrs != NULL && monitor_addrs->size > 0)
+					{
+						struct listnode * mm_node;
+						LIST_FOREACH(monitor_addrs, mm_node)
+						{
+							struct in6_addr * remote_addr2 = (struct in6_addr *)mm_node->data;
+							
+							// Get system id
+							uint64_t mm_sys_id;
+							if (inet_ntop(AF_INET6, remote_addr2, addr, INET6_ADDRSTRLEN) != NULL)
+								if (get_sisis_addr_components(addr, NULL, NULL, NULL, NULL, &mm_sys_id, NULL, NULL) == 0)
+									if (mm_sys_id == sys_id)
+									{
+										mm_remote_addr = remote_addr2;
+										break;
+									}
+						}
+						FREE_LINKED_LIST(monitor_addrs);
+					}
+					if (mm_remote_addr != NULL)
+					{
+						// Make new socket
+						int tmp_sock = make_socket(NULL);
+						if (tmp_sock != -1)
+						{
+							// Set of sockets for select call
+							fd_set socks;
+							FD_ZERO(&socks);
+							FD_SET(tmp_sock, &socks);
+							
+							// Timeout information for select call
+							struct timeval select_timeout;
+							select_timeout.tv_sec = 0;
+							select_timeout.tv_usec = 250000; // 250ms
+							
+							// Set up socket info
+							struct sockaddr_in6 sockaddr;
+							int sockaddr_size = sizeof(sockaddr);
+							memset(&sockaddr, 0, sockaddr_size);
+							sockaddr.sin6_family = AF_INET6;
+							sockaddr.sin6_port = htons(MACHINE_MONITOR_PORT);
+							sockaddr.sin6_addr = *mm_remote_addr;
+							
+							// Get stats
+							char * req = "data\n";
+							if (sendto(tmp_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) != -1)
+							{
+								struct sockaddr_in6 fromaddr;
+								int fromaddr_size = sizeof(fromaddr);
+								memset(&fromaddr, 0, fromaddr_size);
+								char buf[65536];
+								int len;
+								
+								// Wait for response
+								if (select(tmp_sock+1, &socks, NULL, NULL, &select_timeout) <= 0)
+								{}
+								else if ((len = recvfrom(tmp_sock, buf, 65536, 0, (struct sockaddr *)&fromaddr, &fromaddr_size)) < 1)
+								{}
+								else if (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0)
+								{}
+								else
+								{
+									// Terminate if needed
+									if (len == 65536)
+										buf[len-1] = '\0';
+									
+									// Parse response
+									char * match;
+									
+									// Get hostname
+									char * hostname_str = "Hostname: ";
+									if ((match = strstr(buf, hostname_str)) != NULL)
+									{
+										sscanf(match+strlen(hostname_str), "%s", &hostname);
+									}
+								}
+							}
+						}
+					}
+					
+					sprintf(buf, "hostUp %llu %s\n", sys_id % 16, hostname);
 					send(sockfd, buf, strlen(buf), 0);
 				}
 				sprintf(buf, "procAdd %llu %i %s\n", sys_id % 16, proc_num, proc);
