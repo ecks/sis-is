@@ -155,12 +155,8 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 									// Get hostname
 									char * hostname_str = "Hostname: ";
 									if ((match = strstr(buf, hostname_str)) != NULL)
-									{
 										sscanf(match+strlen(hostname_str), "%s", hostname);
-										printf("Hostname: %s\n", hostname);
-									}
-									else
-										printf("No match.\n");
+									printf(buf);
 								}
 							}
 						}
