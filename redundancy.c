@@ -859,7 +859,13 @@ void check_redundancy()
 							// Debugging info
 							char tmp_addr[INET6_ADDRSTRLEN];
 							if (inet_ntop(AF_INET6, remote_addr, tmp_addr, INET6_ADDRSTRLEN) != NULL)
-								fprintf(printf_file, "Starting new process via %s.\n", tmp_addr);
+							{
+								uint64_t tmp_sys_id;
+								if (get_sisis_addr_components(addr, NULL, NULL, NULL, NULL, &tmp_sys_id, NULL, NULL) == 0)
+									fprintf(printf_file, "Starting new process via %s on host #%llu.\n", tmp_addr, tmp_sys_id);
+								else
+									fprintf(printf_file, "Starting new process via %s.\n", tmp_addr);
+							}
 							else
 								fprintf(printf_file, "Starting new process.\n");
 							fflush(printf_file);
