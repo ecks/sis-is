@@ -75,7 +75,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 					/* Get hostname */
 					char hostname[64];
 					sprintf(hostname, "Host #%llu", sys_id%16);
-					/*
+					
 					// Get machine monitors
 					char mm_addr[INET6_ADDRSTRLEN+1];
 					sisis_create_addr(mm_addr, (uint64_t)SISIS_PTYPE_MACHINE_MONITOR, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
@@ -102,6 +102,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 									}
 						}
 					}
+					/*
 					if (mm_remote_addr != NULL)
 					{
 						// Make new socket
@@ -160,8 +161,9 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 							}
 						}
 					}
-					FREE_LINKED_LIST(monitor_addrs);
 					*/
+					FREE_LINKED_LIST(monitor_addrs);
+					
 					sprintf(buf, "hostUp %llu %s\n", sys_id % 16, hostname);
 					send(sockfd, buf, strlen(buf), 0);
 				}
