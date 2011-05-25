@@ -813,7 +813,7 @@ int sisis_rib_add_ipv6 (struct route_ipv6 * route, void * data)
 int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
 {
 	int rtn = 0;
-	
+	printf("Here1\n");
 	// Set up callbacks
 	struct sisis_netlink_routing_table_info * subscribe_info = malloc(sizeof(struct sisis_netlink_routing_table_info));
 	if (subscribe_info == NULL)
@@ -826,11 +826,11 @@ int subscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
 	subscribe_info->rib_remove_ipv6_route = info->rib_remove_ipv6_route;
 	#endif /* HAVE_IPV6 */
 	subscribe_info->data = info->data;
-	
+	printf("Here2\n");
 	// Subscribe to changes
 	sisis_netlink_subscribe_to_rib_changes(subscribe_info);
 	info->subscribe_info = subscribe_info;
-	
+	printf("Here3\n");
 	return rtn;
 }
 
