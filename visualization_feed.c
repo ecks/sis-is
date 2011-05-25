@@ -17,7 +17,7 @@
 
 #include <stdarg.h>
 #include <time.h>
-#include "sisis_api.h"
+#include "../tests/sisis_api.h"
 
 int sockfd = -1;
 
