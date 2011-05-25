@@ -778,7 +778,7 @@ int sisis_rib_add_ipv4 (struct route_ipv4 * route, void * data)
 	if (*rib != NULL && node != NULL)
 	{
 		node->data = (void *)route;
-		LIST_APPEND(*rib, node);
+		LIST_APPEND((*rib), node);
 	}
 	
 	/*
@@ -802,7 +802,7 @@ int sisis_rib_add_ipv6 (struct route_ipv6 * route, void * data)
 	if (*rib != NULL && node != NULL)
 	{
 		node->data = (void *)route;
-		LIST_APPEND(*rib, node);
+		LIST_APPEND((*rib), node);
 	}
 	
 	return 0;
