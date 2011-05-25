@@ -19,6 +19,7 @@
 #include <time.h>
 #include "sisis_api.h"
 #include "sisis_addr_format.h"
+#include "sisis_process_types.h"
 
 #define MAX_HOSTS 100
 #define MAX_PROCESSES 500
