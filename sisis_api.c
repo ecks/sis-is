@@ -845,8 +845,8 @@ int unsubscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
 struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 {
 	// Update kernel routes
-	struct list * rib = malloc sizeof(*rib);
-	memset(rib, o, sizeof(*rib));
+	struct list * rib = malloc(sizeof(*rib));
+	memset(rib, 0, sizeof(*rib));
 	sisis_dump_kernel_ipv6_routes_to_tables(rib);
 	
 	// IPv6 version
