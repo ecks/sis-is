@@ -18,7 +18,9 @@ public class Visualization extends JPanel implements Runnable
 	
 	String [] host_name = new String[MAX_HOSTS];
 	
-	Calendar lastRandomize = null;
+	public static InetAddress serverAddr = null;
+	
+	//Calendar lastRandomize = null;
 	
 	/**
 	 * Constructor
@@ -46,7 +48,7 @@ public class Visualization extends JPanel implements Runnable
 		try{
 			// Open socket
 			ServerSocket server;
-			server = new ServerSocket(54321, 50, InetAddress.getLocalHost()); 
+			server = new ServerSocket(54321, 50, serverAddr); 
 			
 			System.out.println("Socket open at " + server.getInetAddress() + ":" + server.getLocalPort());
 			
@@ -290,6 +292,21 @@ public class Visualization extends JPanel implements Runnable
 	
 	public static void main(String[] args)
 	{
+		// Get IP address
+		try {
+			if (args.length == 1)
+			{
+				InetAddress [] addrs = InetAddress.getAllByName(args[0]);
+				if (addrs.length > 0)
+					serverAddr = addrs[0];
+			}
+			else
+				serverAddr = InetAddress.getLocalHost();
+		} catch (UnknownHostException e) {
+			System.out.println("Invalid server address..." + e);
+			return;
+		}
+		
 		//Schedule a job for the event-dispatching thread:
 		//creating and showing this application's GUI.
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
