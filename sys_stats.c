@@ -114,7 +114,7 @@ int main (int argc, char ** argv)
 	printf("================================== Processes ===================================\n");
 	printf("Process\t# Procs\n");
 	for (i = 0; i < num_procs; i++)
-		printf("%lluv$llu\t%u\n", procs[i].process_type, procs[i].process_version, procs[i].num_processes);
+		printf("%lluv%llu\t%u\n", procs[i].process_type, procs[i].process_version, procs[i].num_processes);
 
 	exit(0);
 }
