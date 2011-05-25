@@ -105,9 +105,11 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 					}
 					if (mm_remote_addr != NULL)
 					{
+						/*
 						char tmp_addr[INET6_ADDRSTRLEN];
 							if (inet_ntop(AF_INET6, mm_remote_addr, tmp_addr, INET6_ADDRSTRLEN) != NULL)
 								printf("Sending message to machine monitor at %s.\n", tmp_addr);
+						*/
 						
 						// Make new socket
 						int tmp_sock = socket(AF_INET6, SOCK_DGRAM, 0);
