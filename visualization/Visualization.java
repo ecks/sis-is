@@ -114,8 +114,8 @@ public class Visualization extends JPanel implements Runnable
 								else if (cmd.equalsIgnoreCase("hostUp"))
 								{
 									// Get hostname
-									if (scan.hasNext())
-										hostnames[hostIdx] = scan.next();
+									if (scan.hasNextLine())
+										hostnames[hostIdx] = scan.nextLine();
 									
 									// Set to up
 									hosts_up[hostIdx] = true;

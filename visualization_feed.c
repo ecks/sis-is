@@ -109,6 +109,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 						int tmp_sock = socket(AF_INET6, SOCK_DGRAM, 0);
 						if (tmp_sock != -1)
 						{
+							printf("Here1\n");
 							// Set of sockets for select call
 							fd_set socks;
 							FD_ZERO(&socks);
@@ -131,6 +132,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 							char * req = "data\n";
 							if (sendto(tmp_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) != -1)
 							{
+								printf("Here2\n");
 								struct sockaddr_in6 fromaddr;
 								int fromaddr_size = sizeof(fromaddr);
 								memset(&fromaddr, 0, fromaddr_size);
@@ -146,6 +148,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 								{}
 								else
 								{
+									printf("Here3\n");
 									// Terminate if needed
 									if (len == 65536)
 										buf[len-1] = '\0';
