@@ -21,6 +21,9 @@
 #include "../tests/sisis_process_types.h"
 #include "../tests/sisis_addr_format.h"
 
+// Number of processes per host
+int num_proc_pre_host[16];
+
 int sockfd = -1;
 
 #ifdef HAVE_IPV6
@@ -53,8 +56,11 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route)
 			
 			// Send message
 			char buf[512];
-			sprintf(buf, "hostUp %llu\n", sys_id % 16);
-			send(sockfd, buf, strlen(buf), 0);
+			if (num_proc_pre_host[sys_id%16]++ == 0)
+			{
+				sprintf(buf, "hostUp %llu\n", sys_id % 16);
+				send(sockfd, buf, strlen(buf), 0);
+			}
 			sprintf(buf, "procAdd %llu %i %s\n", sys_id % 16, proc_num, proc);
 			send(sockfd, buf, strlen(buf), 0);
 		}
@@ -93,8 +99,11 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 			
 			// Send message
 			char buf[512];
-			sprintf(buf, "hostUp %llu\n", sys_id % 16);
-			send(sockfd, buf, strlen(buf), 0);
+			if (--num_proc_pre_host[sys_id%16] == 0)
+			{
+				sprintf(buf, "hostDown %llu\n", sys_id % 16);
+				send(sockfd, buf, strlen(buf), 0);
+			}
 			sprintf(buf, "procDel %llu %i %s\n", sys_id % 16, proc_num, proc);
 			send(sockfd, buf, strlen(buf), 0);
 		}
@@ -107,6 +116,10 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route)
 
 int main (int argc, char ** argv)
 {
+	int i;
+	for (i = 0; i < 16; i++)
+		num_proc_pre_host[i] = 0;
+	
 	// Open socket to visualization process
 	// Check if the IP address and port are set
 	if (argc != 3)
