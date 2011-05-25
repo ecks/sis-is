@@ -280,7 +280,7 @@ int main (int argc, char ** argv)
 	LIST_FOREACH(ipv6_rib_routes, node)
 	{
 		struct route_ipv6 * route = (struct route_ipv6 *)node->data;
-		rib_monitor_add_ipv6_route(route);
+		rib_monitor_add_ipv6_route(route, NULL);
 	}
 #endif /* HAVE_IPV6 */
 	
@@ -290,6 +290,7 @@ int main (int argc, char ** argv)
 	info.rib_remove_ipv4_route = NULL;
 	info.rib_add_ipv6_route = rib_monitor_add_ipv6_route;
 	info.rib_remove_ipv6_route = rib_monitor_remove_ipv6_route;
+	info.data = NULL;
 	subscribe_to_rib_changes(&info);
 	
 	// Do nothing
