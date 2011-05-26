@@ -258,7 +258,7 @@ public class Visualization extends JPanel implements Runnable
 		if (hosts_up[host])
 			g.setColor(Color.LIGHT_GRAY);
 		else
-			g.setColor(Color.RED);
+			g.setColor(new Color(0xff, 0x79, 0x79));
 		
 		// Draw rectangle
 		g2.fillRect(x, y, width, height);
