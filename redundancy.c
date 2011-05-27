@@ -34,7 +34,7 @@
 #endif
 
 #define DEBUG
-#define DEBUG_FILE
+//#define DEBUG_FILE
 
 FILE * debug_file = NULL;
 FILE * printf_file = NULL;

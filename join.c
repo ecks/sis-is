@@ -32,7 +32,7 @@
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
 
-#define PERCENT_WRONG_RESULTS 40
+#define PERCENT_WRONG_RESULTS 0
 
 #define VERSION 1
 
@@ -151,6 +151,8 @@ void process_tables(demo_table1_entry * table1, int rows1, demo_table2_entry * t
 	// Check if we should randomly process a wrong result
 	if (rand() % 100 < PERCENT_WRONG_RESULTS)
 	{
+		printf("Sending WRONG result!\n");
+		
 		// How will it be wrong?
 		switch (rand() % 2)
 		{
