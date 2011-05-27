@@ -18,6 +18,12 @@ public class Visualization extends JPanel implements Runnable
 	ArrayList<HashMap<Integer, String>> hostProcesses = new ArrayList<HashMap<Integer, String>>();
 	ArrayList<HashMap<Integer, Integer>> hostProcessesCopies = new ArrayList<HashMap<Integer, Integer>>();
 	
+	/** List of background colors for processes */
+	ArrayList<Color> processColors = new ArrayList<Color>();
+
+	/** List of text colors for processes */
+	ArrayList<Color> processTextColors = new ArrayList<Color>();
+	
 	String [] hostnames = new String[MAX_HOSTS];
 	
 	public static InetAddress serverAddr = null;
@@ -33,6 +39,21 @@ public class Visualization extends JPanel implements Runnable
 		
 		// Start socket thread
 		new Thread(this).start();
+		
+		// Set up colors for processes
+		processColors.add(new Color(0x7f, 0xff 0x0));
+		processTextColors.add(Color.BLACK);
+		processColors.add(new Color(0xb2, 0x22, 0x22));
+		processTextColors.add(Color.WHITE);
+		processColors.add(new Color(0xff, 0xa5, 0x0));
+		processTextColors.add(Color.BLACK);
+		processColors.add(new Color(0x94, 0x0, 0xd3));
+		processTextColors.add(Color.WHITE);
+		processColors.add(new Color(0x0, 0x0, 0xcd));
+		processTextColors.add(Color.WHITE);
+		processColors.add(Color.BLACK);
+		processTextColors.add(Color.WHITE);
+		
 		
 		// Reset host info
 		resetHostInfo();
@@ -258,7 +279,7 @@ public class Visualization extends JPanel implements Runnable
 		if (hosts_up[host])
 			g.setColor(Color.LIGHT_GRAY);
 		else
-			g.setColor(new Color(0xff, 0x79, 0x79));
+			g.setColor(new Color(0xff 0xc0, 0xcb));
 		
 		// Draw rectangle
 		g2.fillRect(x, y, width, height);
@@ -306,11 +327,12 @@ public class Visualization extends JPanel implements Runnable
 		procStartY += procNum * (procHeight + 2);
 		
 		// Add box
-		g.setColor(new Color(0x00, 0x00, 0xff - Math.min(procNum*0x30, 0xff)));
+		int colorIdx = procNum % processColors.size();
+		g.setColor(processColors.get(colorIdx));
 		g2.fillRect(x + 2, procStartY, width - 4, procHeight);
 		
 		// Add text
-		g.setColor(Color.WHITE);
+		g.setColor(processTextColors.get(colorIdx));
 		g2.drawString(proc, x + 5, procStartY + (int)metrics.getAscent() + 2);
 	}
 	
