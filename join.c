@@ -32,7 +32,7 @@
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
 
-#define PERCENT_WRONG_RESULTS 40
+#define PERCENT_WRONG_RESULTS 25
 
 #define VERSION 1
 
