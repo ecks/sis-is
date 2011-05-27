@@ -28,6 +28,9 @@
 
 int sockfd = -1;
 
+uint64_t ptype, ptype_version, host_num, pid, timestamp;
+char sisis_addr[INET6_ADDRSTRLEN];
+
 void terminate(int signal)
 {
 	printf("Terminating...\n");
@@ -36,30 +39,90 @@ void terminate(int signal)
 		printf("Closing remove connection socket...\n");
 		close(sockfd);
 	}
+	
+	// Unregister
+	sisis_unregister(NULL, ptype, ptype_version, host_num, pid, timestamp);
+	
 	exit(0);
 }
 
 int main (int argc, char ** argv)
 {
-	// Sleep time
-	unsigned int sleep_time = 5;
-	if (argc == 2)
-		sscanf(argv[1], "%u", &sleep_time);
-	
-	printf("Opening socket...\n");
-	
-	// Create socket
-	if ((sockfd = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
+	// Check number of args
+	if (argc <  2)
 	{
-		printf("Failed to open socket.\n");
+		printf("Usage: %s <host_num> [<interval>]\n", argv[0]);
 		exit(1);
 	}
+	
+	// Get host number
+	sscanf (argv[1], "%llu", &host_num);
+	
+	// Sleep time
+	unsigned int sleep_time = 5;
+	if (argc >= 3)
+		sscanf(argv[2], "%u", &sleep_time);
 	
 	// Set up signal handling
 	signal(SIGABRT, terminate);
 	signal(SIGTERM, terminate);
 	signal(SIGINT, terminate);
 	
+	// Store process type
+	ptype = (uint64_t)SISIS_PTYPE_DEMO1_SHIM;
+	ptype_version = (uint64_t)VERSION;
+	
+	// Get pid
+	pid = getpid();
+	
+	// Get start time
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	timestamp = (tv.tv_sec * 100 + (tv.tv_usec / 10000)) & 0x00000000ffffffffLLU;	// In 100ths of seconds
+	
+	// Register SIS-IS address
+	if (sisis_register(sisis_addr, ptype, ptype_version, host_num, pid, timestamp) != 0)
+	{
+		printf("Failed to register SIS-IS address.\n");
+		exit(1);
+	}
+	printf("Opening socket at %s on port %i.\n", sisis_addr, port);
+	
+	// Note: You can use this if you don't care which IPv6 address the socket has
+	/*
+	// Create socket
+	if ((sockfd = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
+	{
+		printf("Failed to open socket.\n");
+		exit(1);
+	}
+	*/
+	// Set up socket address info
+	struct addrinfo hints, *addr;
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_INET6;	// IPv6
+	hints.ai_socktype = SOCK_DGRAM;
+	char port_str[8];
+	sprintf(port_str, "%u", port);
+	getaddrinfo(sisis_addr, port_str, &hints, &addr);
+	
+	// Create socket
+	if ((sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)) == -1)
+	{
+		printf("Failed to open socket.\n");
+		exit(1);
+	}
+	
+	// Bind to port
+	if (bind(sockfd, addr->ai_addr, addr->ai_addrlen) == -1)
+	{
+		printf("Failed to bind socket to port.\n");
+		close_listener();
+		exit(2);
+	}
+	
+	// Short sleep while address propagates
+	usleep(50000);	// 50ms
 	
 	// Seed random number generator
 	srand(time(NULL));

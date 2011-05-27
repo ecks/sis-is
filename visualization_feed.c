@@ -54,17 +54,21 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 						proc = "MachineMonitor";
 						proc_num = 2;
 						break;
+					case SISIS_PTYPE_REMOTE_SHIM:
+						proc = "Shim";
+						proc_num = 3;
+						break;
 					case SISIS_PTYPE_DEMO1_SORT:
 						proc = "Sort";
-						proc_num = 3;
+						proc_num = 4;
 						break;
 					case SISIS_PTYPE_DEMO1_JOIN:
 						proc = "Join";
-						proc_num = 4;
+						proc_num = 5;
 						break;
 					case SISIS_PTYPE_DEMO1_VOTER:
 						proc = "Voter";
-						proc_num = 5;
+						proc_num = 6;
 						break;
 				}
 				
@@ -206,17 +210,21 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route, void * data)
 						proc = "MachineMonitor";
 						proc_num = 2;
 						break;
+					case SISIS_PTYPE_REMOTE_SHIM:
+						proc = "Shim";
+						proc_num = 3;
+						break;
 					case SISIS_PTYPE_DEMO1_SORT:
 						proc = "Sort";
-						proc_num = 3;
+						proc_num = 4;
 						break;
 					case SISIS_PTYPE_DEMO1_JOIN:
 						proc = "Join";
-						proc_num = 4;
+						proc_num = 5;
 						break;
 					case SISIS_PTYPE_DEMO1_VOTER:
 						proc = "Voter";
-						proc_num = 5;
+						proc_num = 6;
 						break;
 				}
 				
