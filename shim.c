@@ -86,7 +86,7 @@ int main (int argc, char ** argv)
 		printf("Failed to register SIS-IS address.\n");
 		exit(1);
 	}
-	printf("Opening socket at %s on port %i.\n", sisis_addr, port);
+	printf("Opening socket at %s on port %i.\n", sisis_addr, SHIM_PORT);
 	
 	// Note: You can use this if you don't care which IPv6 address the socket has
 	/*
@@ -103,7 +103,7 @@ int main (int argc, char ** argv)
 	hints.ai_family = AF_INET6;	// IPv6
 	hints.ai_socktype = SOCK_DGRAM;
 	char port_str[8];
-	sprintf(port_str, "%u", port);
+	sprintf(port_str, "%u", SHIM_PORT);
 	getaddrinfo(sisis_addr, port_str, &hints, &addr);
 	
 	// Create socket
