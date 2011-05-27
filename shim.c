@@ -117,7 +117,7 @@ int main (int argc, char ** argv)
 	if (bind(sockfd, addr->ai_addr, addr->ai_addrlen) == -1)
 	{
 		printf("Failed to bind socket to port.\n");
-		close_listener();
+		terminate(0);
 		exit(2);
 	}
 	
