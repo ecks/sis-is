@@ -39,7 +39,7 @@
 #define MAX_TABLE_SIZE 50
 
 #define REDUNDANCY_PERCENTAGE 20
-#define MIN_REDUNDANCY 3
+#define MIN_REDUNDANCY 4
 
 /** Count number of processes of a given type */
 int get_process_type_count(uint64_t process_type);

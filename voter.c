@@ -203,20 +203,11 @@ void vote_and_process()
 			else
 				printf("WRONG result in %s sec.  Used %d inputs.\n", ts, num_inputs_used);
 			
-			printf("********************************** Voted Table *********************************\n");
-			for (i = 0; i < merge_table_item->table_size; i++)
-				printf("User Id: %d\tName: %s\tGender: %c\n", join_table[i].user_id, join_table[i].name, join_table[i].gender);
-			
 			// Check if any of the input tables disagreed with the voter on table
 			int num_diff = 0;
 			table_group_item_t * item = merge_table_group.first;
 			while (item != NULL)
 			{
-				printf("********************************** Voted Table *********************************\n");
-				demo_merge_table_entry * t1 = (demo_merge_table_entry *)(item->table);
-				for (i = 0; i < item->table_size; i++)
-					printf("User Id: %d\tName: %s\tGender: %c\n", t1[i].user_id, t1[i].name, t1[i].gender);
-				
 				if (merge_table_distance((demo_merge_table_entry *)(item->table), item->table_size, (demo_merge_table_entry *)merge_table_item->table, merge_table_item->table_size))
 					num_diff++;
 				
