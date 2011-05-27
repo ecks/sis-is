@@ -205,7 +205,7 @@ void vote_and_process()
 			
 			// Check if any of the input tables disagreed with the voter on table
 			int num_diff = 0;
-			table_group_item_t * item = merge_table_group->first;
+			table_group_item_t * item = merge_table_group.first;
 			while (item != NULL)
 			{
 				if (merge_table_distance((demo_merge_table_entry *)(item->table), item->table_size, (demo_merge_table_entry *)merge_table_item->table, merge_table_item->table_size))
