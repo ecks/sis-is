@@ -41,7 +41,7 @@ public class Visualization extends JPanel implements Runnable
 		new Thread(this).start();
 		
 		// Set up colors for processes
-		processColors.add(new Color(0x7f, 0xff 0x0));
+		processColors.add(new Color(0x7f, 0xff, 0x0));
 		processTextColors.add(Color.BLACK);
 		processColors.add(new Color(0xb2, 0x22, 0x22));
 		processTextColors.add(Color.WHITE);
@@ -279,7 +279,7 @@ public class Visualization extends JPanel implements Runnable
 		if (hosts_up[host])
 			g.setColor(Color.LIGHT_GRAY);
 		else
-			g.setColor(new Color(0xff 0xc0, 0xcb));
+			g.setColor(new Color(0xff, 0xc0, 0xcb));
 		
 		// Draw rectangle
 		g2.fillRect(x, y, width, height);
