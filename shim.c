@@ -31,9 +31,8 @@ int sockfd = -1;
 uint64_t ptype, ptype_version, host_num, pid, timestamp;
 char sisis_addr[INET6_ADDRSTRLEN];
 
-void terminate(int signal)
+void close_listener()
 {
-	printf("Terminating...\n");
 	if (sockfd != -1)
 	{
 		printf("Closing remove connection socket...\n");
@@ -42,7 +41,12 @@ void terminate(int signal)
 	
 	// Unregister
 	sisis_unregister(NULL, ptype, ptype_version, host_num, pid, timestamp);
-	
+}
+
+void terminate(int signal)
+{
+	printf("Terminating...\n");
+	close_listener();
 	exit(0);
 }
 
@@ -117,7 +121,7 @@ int main (int argc, char ** argv)
 	if (bind(sockfd, addr->ai_addr, addr->ai_addrlen) == -1)
 	{
 		printf("Failed to bind socket to port.\n");
-		terminate(0);
+		close_listener();
 		exit(2);
 	}
 	

@@ -54,7 +54,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 						proc = "MachineMonitor";
 						proc_num = 2;
 						break;
-					case SISIS_PTYPE_REMOTE_SHIM:
+					case SISIS_PTYPE_DEMO1_SHIM:
 						proc = "Shim";
 						proc_num = 3;
 						break;
@@ -210,7 +210,7 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route, void * data)
 						proc = "MachineMonitor";
 						proc_num = 2;
 						break;
-					case SISIS_PTYPE_REMOTE_SHIM:
+					case SISIS_PTYPE_DEMO1_SHIM:
 						proc = "Shim";
 						proc_num = 3;
 						break;
