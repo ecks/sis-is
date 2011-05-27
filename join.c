@@ -32,6 +32,8 @@
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
 
+#define PERCENT_WRONG_RESULTS 40
+
 #define VERSION 1
 
 // Setup list of tables
@@ -45,6 +47,9 @@ int main (int argc, char ** argv)
 	// Setup list of tables
 	table1_group.first = NULL;
 	table2_group.first = NULL;
+	
+	// Set random seed
+	srand(time(NULL)*getpid());
 	
 	// Start main loop
 	redundancy_main((uint64_t)SISIS_PTYPE_DEMO1_JOIN, (uint64_t)VERSION, JOIN_PORT, (uint64_t)SISIS_PTYPE_DEMO1_SORT, process_input, vote_and_process, flush_inputs, 0, argc, argv);
@@ -142,6 +147,40 @@ void process_tables(demo_table1_entry * table1, int rows1, demo_table2_entry * t
 			//printf("User Id: %d\tName: %s\tGender: %c\n", join_table[i].user_id, join_table[i].name, join_table[i].gender);
 	}
 #endif
+
+	// Check if we should randomly process a wrong result
+	if (rand() % 100 < PERCENT_WRONG_RESULTS)
+	{
+		// How will it be wrong?
+		switch (rand() % 2)
+		{
+			// Half table
+			case 0:
+				rows = rows / 2;
+				break;
+			// Corrupted data
+			case 1:
+				for (i = 0; i < rows; i++)
+				{
+					if (rand() % 6 == 0)
+						join_table[i].user_id = rand() % 1000000;
+					if (rand() % 6 == 0)
+						join_table[i].gender = (join_table[i].gender == 'M') ? 'F' : 'M';
+					if (rand() % 6 == 0)
+					{
+						int len = strlen(join_table[i].name);
+						int idx = len - 1;
+						while (idx > -1)
+						{
+							// Mess with a few characters
+							if (rand() % len < 3)
+								join_table[i].name[i] = (rand() % 26) + (rand() % 2 ? 'A' : 'a');
+						}
+					}
+				}
+				break;
+		}
+	}
 	
 	// Serialize
 	char buf[SEND_BUFFER_SIZE];
