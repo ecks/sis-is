@@ -32,7 +32,7 @@
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
 
-#define PERCENT_WRONG_RESULTS 0
+#define PERCENT_WRONG_RESULTS 40
 
 #define VERSION 1
 
@@ -176,7 +176,7 @@ void process_tables(demo_table1_entry * table1, int rows1, demo_table2_entry * t
 						{
 							// Mess with a few characters
 							if (rand() % len < 3)
-								join_table[i].name[i] = (rand() % 26) + (rand() % 2 ? 'A' : 'a');
+								join_table[i].name[idx--] = (rand() % 26) + (rand() % 2 ? 'A' : 'a');
 						}
 					}
 				}
