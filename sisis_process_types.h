@@ -7,5 +7,6 @@
 #define SISIS_PTYPE_DEMO1_SORT							4
 #define SISIS_PTYPE_DEMO1_JOIN							5
 #define SISIS_PTYPE_DEMO1_VOTER							6
+#define SISIS_PTYPE_DEMO1_SHIM							7
 
 #endif
