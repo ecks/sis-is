@@ -202,6 +202,20 @@ void vote_and_process()
 				printf("Correct result in %s sec.  Used %d inputs.\n", ts, num_inputs_used);
 			else
 				printf("WRONG result in %s sec.  Used %d inputs.\n", ts, num_inputs_used);
+			
+			// Check if any of the input tables disagreed with the voter on table
+			int num_diff = 0;
+			table_group_item_t * item = merge_table_group->first;
+			while (item != NULL)
+			{
+				if (merge_table_distance((demo_merge_table_entry *)(item->table), item->table_size, (demo_merge_table_entry *)merge_table_item->table, merge_table_item->table_size))
+					num_diff++;
+				
+				// Get next item
+				item = item->next;
+			}
+			if (num_diff)
+				printf("\t%d inputs disagreed with voted table.\n", num_diff);
 		}
 	}
 	
