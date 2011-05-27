@@ -156,9 +156,9 @@ void process_tables(demo_table1_entry * table1, int rows1, demo_table2_entry * t
 		// How will it be wrong?
 		switch (rand() % 2)
 		{
-			// Half table
+			// Patrial table
 			case 0:
-				rows = rows / 2;
+				rows = rows - (rand() % rows) - 1;
 				break;
 			// Corrupted data
 			case 1:
