@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <string.h>
 #include <stdlib.h>
@@ -149,7 +150,7 @@ int main (int argc, char ** argv)
 		int sockaddr_size = sizeof(sockaddr);
 		memset(&sockaddr, 0, sockaddr_size);
 		sockaddr.sin6_family = AF_INET6;
-		sockaddr.sin6_port = htons(mm_PORT);
+		sockaddr.sin6_port = htons(MACHINE_MONITOR_PORT);
 		sockaddr.sin6_addr = mm_remote_addr;
 		
 		// Construct message
