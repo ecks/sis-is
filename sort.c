@@ -25,7 +25,11 @@
 #include "../tests/sisis_api.h"
 #include "../tests/sisis_process_types.h"
 
-#define VERSION 1
+#ifdef BUBBLE_SORT
+	#define VERSION 2
+#else
+	#define VERSION 1
+#endif
 
 // Setup tables
 // We only need one set of tables since there is a single shim
@@ -33,6 +37,29 @@ demo_table1_entry table1[MAX_TABLE_SIZE];
 int table1_size;
 demo_table2_entry table2[MAX_TABLE_SIZE];
 int table2_size;
+
+/** Bubble sort */
+void bubble_sort(void * base, size_t num, size_t size, int (*comparator) (const void *, const void *))
+{
+	void * swap_elem = malloc(size);
+	size_t i;
+	short swapped;
+	do
+	{
+		swapped = 0;
+		for (i = 0; i < num - 1; i++)
+		{
+			if (comparator(base+i*size, base+(i+1)*size) > 0)
+			{
+				// Swap
+				memcpy(swap_elem, base+i*size, size);
+				memcpy(base+i*size, base+(i+1)*size, size);
+				memcpy(base+(i+1)*size, swap_elem, size);
+				swapped = 1;
+			}
+		}
+	}while (swapped);
+}
 
 int main (int argc, char ** argv)
 {

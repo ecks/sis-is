@@ -10,6 +10,7 @@
 #include <math.h>
 
 #include "table.h"
+#include "sort.h"
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define ABS(a) ((a) < 0 ? (0 - (a)) : (a))
@@ -242,7 +243,11 @@ int table1_user_id_comparator(const void * v_a, const void * v_b)
 /** Sort table 1 by user_id */
 void sort_table1_by_user_id(demo_table1_entry * table, int size)
 {
+#ifdef BUBBLE_SORT
+	bubble_sort(table, size, sizeof(demo_table1_entry), table1_user_id_comparator);
+#else
 	qsort(table, size, sizeof(demo_table1_entry), table1_user_id_comparator);
+#endif
 }
 
 /** Compare user id of two table 2 entries */
@@ -260,7 +265,11 @@ int table2_user_id_comparator(const void * v_a, const void * v_b)
 /** Sort table 2 by user_id */
 void sort_table2_by_user_id(demo_table2_entry * table, int size)
 {
+#ifdef BUBBLE_SORT
+	bubble_sort(table, size, sizeof(demo_table2_entry), table2_user_id_comparator);
+#else
 	qsort(table, size, sizeof(demo_table2_entry), table2_user_id_comparator);
+#endif
 }
 
 /** Merge join table 1 and 2.  Input tables should be pre-sorted.  Assumes user_id is a primary key. */

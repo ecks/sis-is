@@ -1,5 +1,5 @@
 CC = gcc
-EXECUTABLES = shim sort join voter stop_redundancy visualization_feed demo_killer
+EXECUTABLES = shim sort sortv2 join voter stop_redundancy visualization_feed demo_killer
 SISIS_API_C = ../tests/sisis_*.c
 LIBS = -lrt -lpthread
 
@@ -10,6 +10,15 @@ shim: shim.o table.o demo.o
 
 sort: sort.o table.o redundancy.o demo.o
 	$(CC) $(CFLAGS) $(LIBS) -o sort sort.o table.o redundancy.o demo.o $(SISIS_API_C)
+
+sortv2: sortv2.o table_bubblesort.o redundancy.o demo.o
+	$(CC) $(CFLAGS) $(LIBS) -o sort sort.o table.o redundancy.o demo.o $(SISIS_API_C)
+
+sortv2.o:
+	gcc -DBUBBLE_SORT -o sortv2.o -c sort.c
+
+table_bubblesort.o:
+	gcc -DBUBBLE_SORT -o table_bubblesort.o -c table.c
 
 join: join.o table.o redundancy.o demo.o
 	$(CC) $(CFLAGS) $(LIBS) -o join join.o table.o redundancy.o demo.o $(SISIS_API_C)
