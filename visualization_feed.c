@@ -29,6 +29,48 @@ int sockfd = -1;
 // Number of processes per host
 int num_proc_pre_host[16];
 
+/** Process visualization information */
+typedef struct {
+	char * desc;
+	int proc_num;
+} process_visualization_info_t;
+
+/** Get process visualization information */
+process_visualization_info_t get_process_info(int process_type)
+{
+	process_visualization_info_t info;
+	info.desc = "Unknown";
+	info.proc_num = 0;
+	switch (process_type)
+	{
+		case SISIS_PTYPE_REMOTE_SPAWN:
+			info.desc = "RemoteSpawn";
+			info.proc_num = 1;
+			break;
+		case SISIS_PTYPE_MACHINE_MONITOR:
+			info.desc = "MachineMonitor";
+			info.proc_num = 2;
+			break;
+		case SISIS_PTYPE_DEMO1_SHIM:
+			info.desc = "Shim";
+			info.proc_num = 3;
+			break;
+		case SISIS_PTYPE_DEMO1_SORT:
+			info.desc = "Sort";
+			info.proc_num = 4;
+			break;
+		case SISIS_PTYPE_DEMO1_JOIN:
+			info.desc = "Join";
+			info.proc_num = 5;
+			break;
+		case SISIS_PTYPE_DEMO1_VOTER:
+			info.desc = "Voter";
+			info.proc_num = 6;
+			break;
+	}
+	return info;
+}
+
 #ifdef HAVE_IPV6
 int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 {
@@ -42,35 +84,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 			if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
 			{
 				// Get process number and name to send
-				int proc_num = 0;
-				char * proc = "Unknown";
-				switch ((int)process_type)
-				{
-					case SISIS_PTYPE_REMOTE_SPAWN:
-						proc = "RemoteSpawn";
-						proc_num = 1;
-						break;
-					case SISIS_PTYPE_MACHINE_MONITOR:
-						proc = "MachineMonitor";
-						proc_num = 2;
-						break;
-					case SISIS_PTYPE_DEMO1_SHIM:
-						proc = "Shim";
-						proc_num = 3;
-						break;
-					case SISIS_PTYPE_DEMO1_SORT:
-						proc = "Sort";
-						proc_num = 4;
-						break;
-					case SISIS_PTYPE_DEMO1_JOIN:
-						proc = "Join";
-						proc_num = 5;
-						break;
-					case SISIS_PTYPE_DEMO1_VOTER:
-						proc = "Voter";
-						proc_num = 6;
-						break;
-				}
+				process_visualization_info_t proc_info = get_process_info((int)process_type);
 				
 				// Send message
 				char buf[512];
@@ -176,7 +190,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 					sprintf(buf, "hostUp %llu %s\n", sys_id % 16, hostname);
 					send(sockfd, buf, strlen(buf), 0);
 				}
-				sprintf(buf, "procAdd %llu %i %s\n", sys_id % 16, proc_num, proc);
+				sprintf(buf, "procAdd %llu %i %s\n", sys_id % 16, proc_info.proc_num, proc_info.desc);
 				send(sockfd, buf, strlen(buf), 0);
 			}
 		}
@@ -198,35 +212,7 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route, void * data)
 			if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
 			{
 				// Get process number and name to send
-				int proc_num = 0;
-				char * proc = "Unknown";
-				switch ((int)process_type)
-				{
-					case SISIS_PTYPE_REMOTE_SPAWN:
-						proc = "RemoteSpawn";
-						proc_num = 1;
-						break;
-					case SISIS_PTYPE_MACHINE_MONITOR:
-						proc = "MachineMonitor";
-						proc_num = 2;
-						break;
-					case SISIS_PTYPE_DEMO1_SHIM:
-						proc = "Shim";
-						proc_num = 3;
-						break;
-					case SISIS_PTYPE_DEMO1_SORT:
-						proc = "Sort";
-						proc_num = 4;
-						break;
-					case SISIS_PTYPE_DEMO1_JOIN:
-						proc = "Join";
-						proc_num = 5;
-						break;
-					case SISIS_PTYPE_DEMO1_VOTER:
-						proc = "Voter";
-						proc_num = 6;
-						break;
-				}
+				process_visualization_info_t proc_info = get_process_info((int)process_type);
 				
 				// Send message
 				char buf[512];
@@ -235,7 +221,7 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route, void * data)
 					sprintf(buf, "hostDown %llu\n", sys_id % 16);
 					send(sockfd, buf, strlen(buf), 0);
 				}
-				sprintf(buf, "procDel %llu %i %s\n", sys_id % 16, proc_num, proc);
+				sprintf(buf, "procDel %llu %i %s\n", sys_id % 16, proc_info.proc_num, proc_info.desc);
 				send(sockfd, buf, strlen(buf), 0);
 			}
 		}
