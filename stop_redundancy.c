@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <string.h>
 #include <stdlib.h>
@@ -59,7 +60,6 @@ void stop_redundancy_for_process_type(uint64_t proc_type, uint64_t proc_version)
 		}
 		
 		// Kill all processes
-		struct listnode * node;
 		LIST_FOREACH(addrs, node)
 		{
 			// Get address
@@ -79,8 +79,8 @@ void stop_redundancy_for_process_type(uint64_t proc_type, uint64_t proc_version)
 					if (mm_addrs != NULL)
 					{
 						// Send to all mm processes
-						struct listnode * node;
-						LIST_FOREACH(mm_addrs, node)
+						struct listnode * node2;
+						LIST_FOREACH(mm_addrs, node2)
 						{
 							// Set up socket info
 							struct sockaddr_in6 sockaddr;
@@ -88,7 +88,7 @@ void stop_redundancy_for_process_type(uint64_t proc_type, uint64_t proc_version)
 							memset(&sockaddr, 0, sockaddr_size);
 							sockaddr.sin6_family = AF_INET6;
 							sockaddr.sin6_port = htons(STOP_REDUNDANCY_PORT);
-							sockaddr.sin6_addr = *(struct in6_addr *)node->data;
+							sockaddr.sin6_addr = *(struct in6_addr *)node2->data;
 							
 							// Construct message
 							char buf[64];
