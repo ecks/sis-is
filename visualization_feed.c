@@ -241,7 +241,7 @@ int rib_monitor_remove_ipv6_route(struct route_ipv6 * route, void * data)
 			if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
 			{
 				// Get process number and name to send
-				process_visualization_info_t proc_info = get_process_info((int)process_type);
+				process_visualization_info_t proc_info = get_process_info((int)process_type, (int)process_version);
 				
 				// Send message
 				char buf[512];
