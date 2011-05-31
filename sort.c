@@ -52,6 +52,7 @@ void bubble_sort(void * base, size_t num, size_t size, int (*comparator) (const 
 			if (comparator(base+i*size, base+(i+1)*size) > 0)
 			{
 				// Swap
+				printf("Swapping %d and %d.\n", i, i+1);
 				memcpy(swap_elem, base+i*size, size);
 				memcpy(base+i*size, base+(i+1)*size, size);
 				memcpy(base+(i+1)*size, swap_elem, size);
