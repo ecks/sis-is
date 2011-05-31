@@ -185,8 +185,8 @@ int main (int argc, char ** argv)
 			// Find all sort processes
 			printf("Searching for sort processes...\n");
 			char sort_addr[INET6_ADDRSTRLEN+1];
-			sisis_create_addr(sort_addr, (uint64_t)SISIS_PTYPE_DEMO1_SORT, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
-			struct prefix_ipv6 sort_prefix = sisis_make_ipv6_prefix(sort_addr, 42);
+			sisis_create_addr(sort_addr, (uint64_t)SISIS_PTYPE_DEMO1_SORT, (uint64_t)0, (uint64_t)0, (uint64_t)0, (uint64_t)0);
+			struct prefix_ipv6 sort_prefix = sisis_make_ipv6_prefix(sort_addr, 37);
 			struct list * sort_addrs = get_sisis_addrs_for_prefix(&sort_prefix);
 			if (sort_addrs == NULL || sort_addrs->size == 0)
 				printf("No sort processes found.\n");
