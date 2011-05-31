@@ -24,6 +24,8 @@
 
 #define MACHINE_MONITOR_PORT 50000
 
+#define DEMO_UPGRADE
+
 int sockfd = -1;
 
 // Number of processes per host
@@ -36,7 +38,7 @@ typedef struct {
 } process_visualization_info_t;
 
 /** Get process visualization information */
-process_visualization_info_t get_process_info(int process_type)
+process_visualization_info_t get_process_info(int process_type, int process_version)
 {
 	process_visualization_info_t info;
 	info.desc = "Unknown";
@@ -51,6 +53,32 @@ process_visualization_info_t get_process_info(int process_type)
 			info.desc = "MachineMonitor";
 			info.proc_num = 2;
 			break;
+#ifdef DEMO_UPGRADE
+		case SISIS_PTYPE_DEMO1_SHIM:
+			info.desc = "Shim";
+			info.proc_num = 3;
+			break;
+		case SISIS_PTYPE_DEMO1_SORT:
+			if (process_version == 2)
+			{
+				info.desc = "Sort_v2";
+				info.proc_num = 5;
+			}
+			else
+			{
+				info.desc = "Sort";
+				info.proc_num = 4;
+			}
+			break;
+		case SISIS_PTYPE_DEMO1_JOIN:
+			info.desc = "Join";
+			info.proc_num = 6;
+			break;
+		case SISIS_PTYPE_DEMO1_VOTER:
+			info.desc = "Voter";
+			info.proc_num = 7;
+			break;
+#else
 		case SISIS_PTYPE_DEMO1_SHIM:
 			info.desc = "Shim";
 			info.proc_num = 3;
@@ -67,6 +95,7 @@ process_visualization_info_t get_process_info(int process_type)
 			info.desc = "Voter";
 			info.proc_num = 6;
 			break;
+#endif
 	}
 	return info;
 }
@@ -84,7 +113,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 			if (prefix == components[0].fixed_val && sisis_version == components[1].fixed_val)
 			{
 				// Get process number and name to send
-				process_visualization_info_t proc_info = get_process_info((int)process_type);
+				process_visualization_info_t proc_info = get_process_info((int)process_type, (int)process_version);
 				
 				// Send message
 				char buf[512];
