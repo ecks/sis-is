@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <errno.h>
 
 #include <pthread.h>
 #include <sys/utsname.h>
