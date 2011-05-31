@@ -176,8 +176,8 @@ int main (int argc, char ** argv)
 		//if (strlen(buf) == 8)
 		{
 			buf[len] = '\0';
-			int request, ptype;
-			sscanf(buf, "%d %d", &request, &ptype);
+			int request, ptype, pversion = -1;
+			sscanf(buf, "%d %d %d", &request, &ptype, &pversion);
 			// TODO: Convert to binary later
 			//int request = ntohl(*(int *)buf);
 			//int ptype = ntohl(*(int*)(buf+4));
@@ -197,13 +197,14 @@ int main (int argc, char ** argv)
 			{
 #define PROCS_DAT_PARSE_FOUND_PROCESS						0x00000001
 #define PROCS_DAT_PARSE_LINE_FOUND_PTYPE				0x00000002
-#define PROCS_DAT_PARSE_LINE_FOUND_PATH					0x00000004
-#define PROCS_DAT_PARSE_LINE_FOUND_ARG0					0x00000008
-#define PROCS_DAT_PARSE_LINE_ESCAPE_SEQ_STARTED	0x00000010
-#define PROCS_DAT_PARSE_LINE_STRING_STARTED			0x00000020
-#define PROCS_DAT_PARSE_LINE_DONE								0x00000040
-#define PROCS_DAT_PARSE_LINE_ERROR							0x00000080
-#define PROCS_DAT_PARSE_LINE_ALL								0x000000fe
+#define PROCS_DAT_PARSE_LINE_FOUND_PVERSION			0x00000004
+#define PROCS_DAT_PARSE_LINE_FOUND_PATH					0x00000008
+#define PROCS_DAT_PARSE_LINE_FOUND_ARG0					0x00000010
+#define PROCS_DAT_PARSE_LINE_ESCAPE_SEQ_STARTED	0x00000020
+#define PROCS_DAT_PARSE_LINE_STRING_STARTED			0x00000040
+#define PROCS_DAT_PARSE_LINE_DONE								0x00000080
+#define PROCS_DAT_PARSE_LINE_ERROR							0x00000100
+#define PROCS_DAT_PARSE_LINE_ALL								0x000001fe
 				// Read in line from file
 				char line[1024];
 				int proc_dat_parse_flags = 0, linenum = 1;
@@ -211,7 +212,7 @@ int main (int argc, char ** argv)
 				{
 					int i = 0, linelen = strlen(line);
 					proc_dat_parse_flags &= ~PROCS_DAT_PARSE_LINE_ALL;
-					unsigned int line_ptype = 0;
+					unsigned int line_ptype = 0, line_pversion = 0;
 					char line_path[1024], line_arg0[128], tmp[32];
 					line_path[0] = line_arg0[0] = tmp[0] = '\0';
 					for (; i < linelen && !(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_ERROR); i++)
@@ -225,7 +226,7 @@ int main (int argc, char ** argv)
 							str = line_arg0;
 							max_strlen = 128;
 						}
-						else if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PTYPE)
+						else if (proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PVERSION)
 						{
 							str = line_path;
 							max_strlen = 1024;
@@ -247,6 +248,23 @@ int main (int argc, char ** argv)
 								sscanf(str, "%d", &line_ptype);
 								str[0] = '\0';
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_FOUND_PTYPE;
+							}
+							else
+								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
+						}
+						// Parsing process type
+						else if (!(proc_dat_parse_flags & PROCS_DAT_PARSE_LINE_FOUND_PVERSION))
+						{
+							// Check max string len
+							if (strlen(str) + 1 == max_strlen)
+								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
+							else if (line[i] >= '0' && line[i] <= '9')
+								sprintf(str, "%s%c", str, line[i]);
+							else if (line[i] == ' ' || line[i] == '\t')
+							{
+								sscanf(str, "%d", &line_pversion);
+								str[0] = '\0';
+								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_FOUND_PVERSION;
 							}
 							else
 								proc_dat_parse_flags |= PROCS_DAT_PARSE_LINE_ERROR;
@@ -303,9 +321,9 @@ int main (int argc, char ** argv)
 						printf("Error processing line %d.\n", linenum);
 					else
 					{
-						printf("Line: %d %s %s\n", line_ptype, line_path, line_arg0);
+						printf("Line: %d %d %s %s\n", line_ptype, line_pversion, line_path, line_arg0);
 						// Check if this is the right process
-						if (ptype == line_ptype)
+						if (ptype == line_ptype && (pversion == -1 || pversion == line_pversion))
 						{
 							if (request == REMOTE_SPAWN_REQ_START)
 							{
