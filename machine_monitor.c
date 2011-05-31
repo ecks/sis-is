@@ -499,13 +499,12 @@ int main (int argc, char ** argv)
 				send_buf_written += snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "Error: PID not specified.\n");
 			else
 			{
+				// TODO: Need security here
 				// Kill process
-				/*if (kill((pid_t)kill_pid, SIGINT) == -1)
+				if (kill((pid_t)kill_pid, SIGINT) == -1)
 					send_buf_written += snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "Error: %s\n", strerror(errno));
 				else
 					send_buf_written += snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "Process #%d killed.\n", kill_pid);
-				*/
-				send_buf_written += snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "Process #%d killed.\n", kill_pid);
 			}
 		}
 		// All other request types
