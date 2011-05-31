@@ -52,4 +52,7 @@ int get_process_type_version_count(uint64_t process_type, uint64_t process_versi
 /** Get list of processes of a given type.  Caller should call FREE_LINKED_LIST on result after. */
 struct list * get_processes_by_type(uint64_t process_type);
 
+/** Get list of processes of a given type and version.  Caller should call FREE_LINKED_LIST on result after. */
+struct list * get_processes_by_type_version(uint64_t process_type, uint64_t process_version);
+
 #endif

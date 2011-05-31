@@ -553,7 +553,7 @@ void check_redundancy()
 	int num_procs = MAX(num_machines*REDUNDANCY_PERCENTAGE/100, MIN_NUM_PROCESSES);
 	
 	// Get list of all processes
-	struct list * proc_addrs = get_processes_by_type(ptype);
+	struct list * proc_addrs = get_processes_by_type_version(ptype, ptype_version);
 	struct listnode * node;
 	
 	// Check current number of processes
