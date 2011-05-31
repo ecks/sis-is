@@ -59,6 +59,9 @@ void stop_redundancy_for_process_type(uint64_t proc_type, uint64_t proc_version)
 				printf("Failed to send message.  Error: %i\n", errno);
 		}
 		
+		// Sleep 1/2 sec until first message is received
+		usleep(500000);
+		
 		// Kill all processes
 		LIST_FOREACH(addrs, node)
 		{
@@ -87,7 +90,7 @@ void stop_redundancy_for_process_type(uint64_t proc_type, uint64_t proc_version)
 							int sockaddr_size = sizeof(sockaddr);
 							memset(&sockaddr, 0, sockaddr_size);
 							sockaddr.sin6_family = AF_INET6;
-							sockaddr.sin6_port = htons(STOP_REDUNDANCY_PORT);
+							sockaddr.sin6_port = htons(MACHINE_MONITOR_PORT);
 							sockaddr.sin6_addr = *(struct in6_addr *)node2->data;
 							
 							// Construct message
@@ -95,7 +98,7 @@ void stop_redundancy_for_process_type(uint64_t proc_type, uint64_t proc_version)
 							sprintf(buf, "kill %llu", kill_pid);
 							
 							// Send message
-							printf("Killing process #%llu on host #%llu ...\n", kill_pid, kill_sys_id);
+							printf("Killing process #%llu on host #%llu...\n", kill_pid, kill_sys_id);
 							if (sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
 								printf("Failed to send message.  Error: %i\n", errno);
 						}
@@ -127,7 +130,7 @@ int main (int argc, char ** argv)
 		stop_redundancy_for_process_type((uint64_t)SISIS_PTYPE_DEMO1_SORT, 1llu);
 	if (argc < 2 || strcmp(argv[1], "sortv2") == 0)
 		stop_redundancy_for_process_type((uint64_t)SISIS_PTYPE_DEMO1_SORT, 2llu);
-	if (argc < 2 || strcmp(argv[1], "sort") == 0)
+	if (argc < 2 || strcmp(argv[1], "join") == 0)
 		stop_redundancy_for_process_type((uint64_t)SISIS_PTYPE_DEMO1_JOIN, 1llu);
 	
 	// Close socket
