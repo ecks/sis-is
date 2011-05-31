@@ -58,7 +58,7 @@ int main (int argc, char ** argv)
 	for (; arg < argc; arg++)
 	{
 		// Help/Usage
-		if (strcmp(argv[arg], "-h") || strcmp(argv[arg], "--help"))
+		if (strcmp(argv[arg], "-h") == 0 || strcmp(argv[arg], "--help") == 0)
 		{
 			printf("Usage: %s [options]\n", argv[0]);
 			printf("Options:\n");
@@ -67,7 +67,7 @@ int main (int argc, char ** argv)
 			exit(0);
 		}
 		// Sleep time
-		else if (strcmp(argv[arg], "-i") || strcmp(argv[arg], "--interval"))
+		else if (strcmp(argv[arg], "-i") == 0 || strcmp(argv[arg], "--interval") == 0)
 		{
 			arg++;
 			float tmp_sleep;
@@ -80,7 +80,7 @@ int main (int argc, char ** argv)
 			}
 		}
 		// Number of processes to kill at each interval
-		else if (strcmp(argv[arg], "-i") || strcmp(argv[arg], "--interval"))
+		else if (strcmp(argv[arg], "-i") == 0 || strcmp(argv[arg], "--interval") == 0)
 		{
 			arg++;
 			if (arg < argc && sscanf(argv[arg], "%d", &num_proc_to_kill) == 1)
