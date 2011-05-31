@@ -48,12 +48,49 @@ void terminate(int signal)
 int main (int argc, char ** argv)
 {
 	// Sleep time
-	unsigned long usleep_time = 5000000;	// 5sec
-	if (argc >= 2)
+	unsigned long usleep_time = 5000000;	// 5 sec
+	
+	// Number of processes to kill at each interval
+	int num_proc_to_kill = 1;
+		
+	// Parse args
+	int arg = 1;
+	for (; arg < argc; arg++)
 	{
-		float tmp_sleep;
-		if (sscanf(argv[1], "%f", &tmp_sleep) == 1)
-			usleep_time = tmp_sleep * 1000000;
+		// Help/Usage
+		if (strcmp(argv[arg], "-h") || strcmp(argv[arg], "--help"))
+		{
+			printf("Usage: %s [options]\n", argv[0]);
+			printf("Options:\n");
+			printf("\t-i <sec>\t(--interval) Number of seconds between killing processes.\n");
+			printf("\t-n <num>\t(--num) Number of processes to kill at each interval.\n");
+			exit(0);
+		}
+		// Sleep time
+		else if (strcmp(argv[arg], "-i") || strcmp(argv[arg], "--interval"))
+		{
+			arg++;
+			float tmp_sleep;
+			if (arg < argc && sscanf(argv[arg], "%f", &tmp_sleep) == 1)
+				usleep_time = tmp_sleep * 1000000;
+			else
+			{
+				printf("Expecting interval after %s.\n", argv[arg-1]);
+				exit(1);
+			}
+		}
+		// Number of processes to kill at each interval
+		else if (strcmp(argv[arg], "-i") || strcmp(argv[arg], "--interval"))
+		{
+			arg++;
+			if (arg < argc && sscanf(argv[arg], "%d", &num_proc_to_kill) == 1)
+			{}
+			else
+			{
+				printf("Expecting number after %s.\n", argv[arg-1]);
+				exit(1);
+			}
+		}
 	}
 	
 	// Set up signal handling
@@ -74,93 +111,98 @@ int main (int argc, char ** argv)
 	// Loop forever
 	while (1)
 	{
-		// Get pid to kill
-		uint64_t kill_pid = 0;
-		uint64_t kill_sys_id = 0;
-		
-		// Address of machine monitor needed to kill the process
-		struct in6_addr mm_remote_addr;
-		short mm_found = 0;
-		
-		do
+		// Kill appropriate number of processes
+		int i;
+		for (i = 0; i < num_proc_to_kill; i++)
 		{
-			// Randomly find a process to kill
+			// Get pid to kill
+			uint64_t kill_pid = 0;
+			uint64_t kill_sys_id = 0;
+			
+			// Address of machine monitor needed to kill the process
+			struct in6_addr mm_remote_addr;
+			short mm_found = 0;
+			
 			do
 			{
-				// Randomly choose between sort and join processes to kill
-				uint64_t kill_ptype = (uint64_t)SISIS_PTYPE_DEMO1_SORT;
-				if (rand() % 2 == 0)
-					kill_ptype = (uint64_t)SISIS_PTYPE_DEMO1_JOIN;
-					
-				// Find all processes
-				printf("Searching for processes to kill...\n");
-				char addr[INET6_ADDRSTRLEN];
-				sisis_create_addr(addr, kill_ptype, (uint64_t)0, (uint64_t)0, (uint64_t)0, (uint64_t)0);
-				struct prefix_ipv6 prefix = sisis_make_ipv6_prefix(addr, 37);
-				struct list * addrs = get_sisis_addrs_for_prefix(&prefix);
-				if (addrs != NULL)
+				// Randomly find a process to kill
+				do
 				{
-					struct listnode * node;
-					LIST_FOREACH(addrs, node)
+					// Randomly choose between sort and join processes to kill
+					uint64_t kill_ptype = (uint64_t)SISIS_PTYPE_DEMO1_SORT;
+					if (rand() % 2 == 0)
+						kill_ptype = (uint64_t)SISIS_PTYPE_DEMO1_JOIN;
+						
+					// Find all processes
+					printf("Searching for processes to kill...\n");
+					char addr[INET6_ADDRSTRLEN];
+					sisis_create_addr(addr, kill_ptype, (uint64_t)0, (uint64_t)0, (uint64_t)0, (uint64_t)0);
+					struct prefix_ipv6 prefix = sisis_make_ipv6_prefix(addr, 37);
+					struct list * addrs = get_sisis_addrs_for_prefix(&prefix);
+					if (addrs != NULL)
 					{
-						// Randomly choose 1
-						if (rand() % addrs->size == 0)
+						struct listnode * node;
+						LIST_FOREACH(addrs, node)
 						{
-							// Get address
-							struct in6_addr * remote_addr = (struct in6_addr *)node->data;
-							
-							// Get system id and PID
-							if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != NULL)
-								if (get_sisis_addr_components(addr, NULL, NULL, NULL, NULL, &kill_sys_id, &kill_pid, NULL) == 0)
-									break;
+							// Randomly choose 1
+							if (rand() % addrs->size == 0)
+							{
+								// Get address
+								struct in6_addr * remote_addr = (struct in6_addr *)node->data;
+								
+								// Get system id and PID
+								if (inet_ntop(AF_INET6, remote_addr, addr, INET6_ADDRSTRLEN) != NULL)
+									if (get_sisis_addr_components(addr, NULL, NULL, NULL, NULL, &kill_sys_id, &kill_pid, NULL) == 0)
+										break;
+							}
 						}
+						
+						// Free memory
+						FREE_LINKED_LIST(addrs);
+					}
+				} while (kill_pid == 0);
+				
+				// Find machine monitor process for the system on which we are killing the process
+				printf("Searching for machine monitor processes...\n");
+				char mm_addr[INET6_ADDRSTRLEN+1];
+				sisis_create_addr(mm_addr, (uint64_t)SISIS_PTYPE_MACHINE_MONITOR, (uint64_t)1, kill_sys_id, (uint64_t)0, (uint64_t)0);
+				struct prefix_ipv6 mm_prefix = sisis_make_ipv6_prefix(mm_addr, 74);
+				struct list * mm_addrs = get_sisis_addrs_for_prefix(&mm_prefix);
+				if (mm_addrs != NULL)
+				{
+					// Send to all mm processes
+					struct listnode * node;
+					LIST_FOREACH(mm_addrs, node)
+					{
+						// Get address
+						memcpy(&mm_remote_addr, (struct in6_addr *)node->data, sizeof mm_remote_addr);
+						
+						// Mark as found
+						mm_found = 1;
 					}
 					
 					// Free memory
-					FREE_LINKED_LIST(addrs);
+					FREE_LINKED_LIST(mm_addrs);
 				}
-			} while (kill_pid == 0);
+			} while (!mm_found);
 			
-			// Find machine monitor process for the system on which we are killing the process
-			printf("Searching for machine monitor processes...\n");
-			char mm_addr[INET6_ADDRSTRLEN+1];
-			sisis_create_addr(mm_addr, (uint64_t)SISIS_PTYPE_MACHINE_MONITOR, (uint64_t)1, kill_sys_id, (uint64_t)0, (uint64_t)0);
-			struct prefix_ipv6 mm_prefix = sisis_make_ipv6_prefix(mm_addr, 74);
-			struct list * mm_addrs = get_sisis_addrs_for_prefix(&mm_prefix);
-			if (mm_addrs != NULL)
-			{
-				// Send to all mm processes
-				struct listnode * node;
-				LIST_FOREACH(mm_addrs, node)
-				{
-					// Get address
-					memcpy(&mm_remote_addr, (struct in6_addr *)node->data, sizeof mm_remote_addr);
-					
-					// Mark as found
-					mm_found = 1;
-				}
-				
-				// Free memory
-				FREE_LINKED_LIST(mm_addrs);
-			}
-		} while (!mm_found);
-		
-		// Set up socket info
-		struct sockaddr_in6 sockaddr;
-		int sockaddr_size = sizeof(sockaddr);
-		memset(&sockaddr, 0, sockaddr_size);
-		sockaddr.sin6_family = AF_INET6;
-		sockaddr.sin6_port = htons(MACHINE_MONITOR_PORT);
-		sockaddr.sin6_addr = mm_remote_addr;
-		
-		// Construct message
-		char buf[64];
-		sprintf(buf, "kill %llu", kill_pid);
-		
-		// Send message
-		printf("Killing process #%llu on host #%llu ...\n", kill_pid, kill_sys_id);
-		if (sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
-			printf("Failed to send message.  Error: %i\n", errno);
+			// Set up socket info
+			struct sockaddr_in6 sockaddr;
+			int sockaddr_size = sizeof(sockaddr);
+			memset(&sockaddr, 0, sockaddr_size);
+			sockaddr.sin6_family = AF_INET6;
+			sockaddr.sin6_port = htons(MACHINE_MONITOR_PORT);
+			sockaddr.sin6_addr = mm_remote_addr;
+			
+			// Construct message
+			char buf[64];
+			sprintf(buf, "kill %llu", kill_pid);
+			
+			// Send message
+			printf("Killing process #%llu on host #%llu ...\n", kill_pid, kill_sys_id);
+			if (sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
+				printf("Failed to send message.  Error: %i\n", errno);
+		}
 		
 		// Sleep
 		usleep(usleep_time);
