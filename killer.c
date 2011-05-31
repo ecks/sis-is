@@ -62,8 +62,8 @@ int main (int argc, char ** argv)
 		{
 			printf("Usage: %s [options]\n", argv[0]);
 			printf("Options:\n");
-			printf("\t-i <sec>\t(--interval) Number of seconds between killing processes.\n");
-			printf("\t-n <num>\t(--num) Number of processes to kill at each interval.\n");
+			printf("\t-i <sec>\t(--interval) Number of seconds between killing processes\n");
+			printf("\t-n <num>\t(--num) Number of processes to kill at each interval\n");
 			exit(0);
 		}
 		// Sleep time
@@ -80,7 +80,7 @@ int main (int argc, char ** argv)
 			}
 		}
 		// Number of processes to kill at each interval
-		else if (strcmp(argv[arg], "-i") == 0 || strcmp(argv[arg], "--interval") == 0)
+		else if (strcmp(argv[arg], "-n") == 0 || strcmp(argv[arg], "--num") == 0)
 		{
 			arg++;
 			if (arg < argc && sscanf(argv[arg], "%d", &num_proc_to_kill) == 1)
@@ -90,6 +90,11 @@ int main (int argc, char ** argv)
 				printf("Expecting number after %s.\n", argv[arg-1]);
 				exit(1);
 			}
+		}
+		else
+		{
+			printf("Unknown option \"%s\".\n", argv[arg]);
+			exit(1);
 		}
 	}
 	
