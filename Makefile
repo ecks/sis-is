@@ -12,7 +12,7 @@ sort: sort.o table.o redundancy.o demo.o
 	$(CC) $(CFLAGS) $(LIBS) -o sort sort.o table.o redundancy.o demo.o $(SISIS_API_C)
 
 sortv2: sortv2.o table_bubblesort.o redundancy.o demo.o
-	$(CC) $(CFLAGS) $(LIBS) -o sort sort.o table.o redundancy.o demo.o $(SISIS_API_C)
+	$(CC) $(CFLAGS) $(LIBS) -o sortv2 sortv2.o table_bubblesort.o redundancy.o demo.o $(SISIS_API_C)
 
 sortv2.o:
 	gcc -DBUBBLE_SORT -o sortv2.o -c sort.c
