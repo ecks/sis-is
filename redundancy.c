@@ -872,7 +872,7 @@ void check_redundancy()
 	#endif
 							// Send request
 							char req[32];
-							sprintf(req, "%d %llu", REMOTE_SPAWN_REQ_START, ptype);
+							sprintf(req, "%d %llu %llu", REMOTE_SPAWN_REQ_START, ptype, ptype_version);
 							if (sendto(spawn_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) == -1)
 							{
 								fprintf(printf_file, "Failed to send message.  Error: %i\n", errno);
