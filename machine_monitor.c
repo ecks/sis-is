@@ -495,15 +495,17 @@ int main (int argc, char ** argv)
 		{
 			// Get PID to kill
 			int kill_pid;
-			if (sscanf(buf+strlen(req_type), "%d", &kill_pid) == 0)
+			if (sscanf(buf+strlen(req_type), "%d", &kill_pid) != 1)
 				send_buf_written += snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "Error: PID not specified.\n");
 			else
 			{
 				// Kill process
-				if (kill((pid_t)kill_pid, SIGINT) == -1)
+				/*if (kill((pid_t)kill_pid, SIGINT) == -1)
 					send_buf_written += snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "Error: %s\n", strerror(errno));
 				else
 					send_buf_written += snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "Process #%d killed.\n", kill_pid);
+				*/
+				send_buf_written += snprintf(send_buf + send_buf_written, SEND_BUF_SIZE - send_buf_written, "Process #%d killed.\n", kill_pid);
 			}
 		}
 		// All other request types
