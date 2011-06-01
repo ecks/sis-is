@@ -356,6 +356,9 @@ main (int argc, char **argv)
   
   /* Clean up rib. */
   rib_weed_tables ();
+	
+	/* Remove SIS-IS Addresses */
+	if_weed_sisis();
 
   /* Exit when zebra is working in batch mode. */
   if (batch_mode)

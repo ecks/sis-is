@@ -1654,6 +1654,35 @@ int if_addr_expired_checker(struct thread* th)
 	return 0;
 }
 
+/* Remove SIS-IS addresses from loopback*/
+void if_weed_sisis()
+{
+	// Get loopback interface
+	struct interface * lo_ifp = if_lookup_by_name("lo");
+	if (lo_ifp != NULL)
+	{
+		struct listnode *node, *node2;
+		struct connected *ifc;
+	
+		for (ALL_LIST_ELEMENTS (ifp->connected, node, node2, ifc))
+		{
+			// Create string of SIS-IS address
+			char buf[INET6_ADDRSTRLEN];
+			prefix2str(ifc->address, buf, sizeof(buf));
+			
+			// Check if this is an SIS-IS address
+			if (strlen(buf) >= 5 && memcmp("fcff:", buf, sizeof(char) * 5) == 0)
+			{
+				zlog_debug ("Address %s removed from loopback interface.", buf);
+				if (ifc->address->family == AF_INET)
+					ip_address_uninstall (NULL, ifp, buf, NULL, NULL);
+				else if (ifc->address->family == AF_INET6)
+					ipv6_address_uninstall (NULL, ifp, buf, NULL, NULL, 0);
+			}
+		}
+	}
+}
+
 
 /* Allocate and initialize interface vector. */
 void
