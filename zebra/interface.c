@@ -1664,7 +1664,7 @@ void if_weed_sisis()
 		struct listnode *node, *node2;
 		struct connected *ifc;
 	
-		for (ALL_LIST_ELEMENTS (ifp->connected, node, node2, ifc))
+		for (ALL_LIST_ELEMENTS (lo_ifp->connected, node, node2, ifc))
 		{
 			// Create string of SIS-IS address
 			char buf[INET6_ADDRSTRLEN];
@@ -1675,9 +1675,9 @@ void if_weed_sisis()
 			{
 				zlog_debug ("Address %s removed from loopback interface.", buf);
 				if (ifc->address->family == AF_INET)
-					ip_address_uninstall (NULL, ifp, buf, NULL, NULL);
+					ip_address_uninstall (NULL, lo_ifp, buf, NULL, NULL);
 				else if (ifc->address->family == AF_INET6)
-					ipv6_address_uninstall (NULL, ifp, buf, NULL, NULL, 0);
+					ipv6_address_uninstall (NULL, lo_ifp, buf, NULL, NULL, 0);
 			}
 		}
 	}
