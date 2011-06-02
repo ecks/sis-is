@@ -1479,7 +1479,6 @@ ipv6_address_uninstall (struct vty *vty, struct interface *ifp,
     {
 			if (vty)
 				vty_out (vty, "%% Malformed address %s", VTY_NEWLINE);
-			zlog_debug ("Malformed address");
       return CMD_WARNING;
     }
 
@@ -1489,16 +1488,12 @@ ipv6_address_uninstall (struct vty *vty, struct interface *ifp,
     {
 			if (vty)
 				vty_out (vty, "%% Can't find address%s", VTY_NEWLINE);
-			zlog_debug ("Can't find address");
       return CMD_WARNING;
     }
 
   /* This is not configured address. */
   if (! CHECK_FLAG (ifc->conf, ZEBRA_IFC_CONFIGURED))
-	{
-		zlog_debug ("Not configured address");
     return CMD_WARNING;
-	}
 
   /* This is not real address or interface is not active. */
   if (! CHECK_FLAG (ifc->conf, ZEBRA_IFC_REAL)
@@ -1506,7 +1501,6 @@ ipv6_address_uninstall (struct vty *vty, struct interface *ifp,
     {
       listnode_delete (ifp->connected, ifc);
       connected_free (ifc);
-			zlog_debug ("Not real address of interface not active");
       return CMD_WARNING;
     }
 
@@ -1517,7 +1511,6 @@ ipv6_address_uninstall (struct vty *vty, struct interface *ifp,
 			if (vty)
 				vty_out (vty, "%% Can't unset interface IP address: %s.%s", 
 	       safe_strerror(errno), VTY_NEWLINE);
-			zlog_debug ("Can't unset interface IP address: %s", safe_strerror(errno));
       return CMD_WARNING;
     }
 
@@ -1682,10 +1675,13 @@ void if_weed_sisis()
 				// Check if this is an SIS-IS address
 				if (strlen(buf) >= 5 && memcmp("fcff:", buf, sizeof(char) * 5) == 0)
 				{
+					// Set ZEBRA_IFC_CONFIGURED flag otherwise it cannot be removed
+					SET_FLAG (ifc->conf, ZEBRA_IFC_CONFIGURED);
+					
 					zlog_debug ("Address %s removed from loopback interface.", buf);
 					int rtn = ipv6_address_uninstall (NULL, lo_ifp, buf, NULL, NULL, 0);
 					if (rtn != CMD_SUCCESS)
-						zlog_debug ("Failed to remove address %s, ipv6_address_uninstall returned %d", buf, rtn);
+						zlog_debug ("Failed to remove address %s", buf);
 				}
 			}
 		}
