@@ -1666,18 +1666,20 @@ void if_weed_sisis()
 	
 		for (ALL_LIST_ELEMENTS (lo_ifp->connected, node, node2, ifc))
 		{
-			// Create string of SIS-IS address
-			char buf[INET6_ADDRSTRLEN];
-			prefix2str(ifc->address, buf, sizeof(buf));
-			
-			// Check if this is an SIS-IS address
-			if (strlen(buf) >= 5 && memcmp("fcff:", buf, sizeof(char) * 5) == 0)
+			if (ifc->address->family == AF_INET6)
 			{
-				zlog_debug ("Address %s removed from loopback interface.", buf);
-				if (ifc->address->family == AF_INET)
-					ip_address_uninstall (NULL, lo_ifp, buf, NULL, NULL);
-				else if (ifc->address->family == AF_INET6)
-					ipv6_address_uninstall (NULL, lo_ifp, buf, NULL, NULL, 0);
+				// Create string of SIS-IS address
+				char buf[INET6_ADDRSTRLEN];
+				prefix2str(ifc->address, buf, sizeof(buf));
+				
+				// Check if this is an SIS-IS address
+				if (strlen(buf) >= 5 && memcmp("fcff:", buf, sizeof(char) * 5) == 0)
+				{
+					zlog_debug ("Address %s removed from loopback interface.", buf);
+					int rtn = ipv6_address_uninstall (NULL, lo_ifp, buf, NULL, NULL, 0);
+					if (rtn != CMD_SUCCESS)
+						zlog_debug ("Failed to remove address %s, ipv6_address_uninstall returned %d", buf, rtn);
+				}
 			}
 		}
 	}
