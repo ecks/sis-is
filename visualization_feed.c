@@ -228,10 +228,10 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 				
 				// Send message
 				char buf[512];
-				if (num_proc_pre_host[sys_id%16]++ == 0 || process_type == (uint64_t)SISIS_PTYPE_MACHINE_MONITOR)
+				if (num_proc_pre_host[sys_id%16] == 0 || process_type == (uint64_t)SISIS_PTYPE_MACHINE_MONITOR)
 				{
 					// Set temporary hostname if the host need to be set to up
-					if (num_proc_pre_host[sys_id%16]++ == 0)
+					if (num_proc_pre_host[sys_id%16] == 0)
 					{
 						char hostname[64];
 						sprintf(hostname, "Host #%llu", sys_id%16);
@@ -249,6 +249,8 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 						pthread_create(&data->thread, NULL, update_hostname, (void*)data);
 					}
 				}
+				
+				num_proc_pre_host[sys_id%16]++;
 				sprintf(buf, "procAdd %llu %i %s\n", sys_id % 16, proc_info.proc_num, proc_info.desc);
 				send(sockfd, buf, strlen(buf), 0);
 			}
