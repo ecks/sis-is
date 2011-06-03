@@ -144,6 +144,13 @@ public class Visualization extends JPanel implements Runnable
 									// Set to up
 									hosts_up[hostIdx] = true;
 								}
+								// Host name update
+								else if (cmd.equalsIgnoreCase("hostname"))
+								{
+									// Get hostname
+									if (scan.hasNextLine())
+										hostnames[hostIdx] = scan.nextLine();
+								}
 								// Add/remove process
 								else if (cmd.equalsIgnoreCase("procAdd") || cmd.equalsIgnoreCase("procDel"))
 								{

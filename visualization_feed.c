@@ -188,8 +188,8 @@ void * update_hostname(void * data_v)
 						if ((match = strstr(buf, hostname_str)) != NULL)
 							sscanf(match+strlen(hostname_str), "%s", hostname);
 						
-						// Set host to up
-						sprintf(buf, "hostUp %llu %s\n", data->sys_id % 16, hostname);
+						// Set hostname
+						sprintf(buf, "hostname %llu %s\n", data->sys_id % 16, hostname);
 						send(sockfd, buf, strlen(buf), 0);
 						
 						// No more attempts needed
