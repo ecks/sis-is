@@ -24,7 +24,7 @@
 
 #define MACHINE_MONITOR_PORT 50000
 
-#define DEMO_UPGRADE
+//#define DEMO_UPGRADE
 
 int sockfd = -1;
 
