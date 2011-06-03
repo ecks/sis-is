@@ -171,8 +171,8 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 								
 								// Timeout information for select call
 								struct timeval select_timeout;
-								select_timeout.tv_sec = 0;
-								select_timeout.tv_usec = 750000;	// 750ms
+								select_timeout.tv_sec = 2;
+								select_timeout.tv_usec = 500000;	// 500ms
 								
 								// Set up socket info
 								struct sockaddr_in6 sockaddr;
