@@ -118,7 +118,7 @@ void * update_hostname(void * data_v)
 	
 	// Get machine monitors
 	char mm_addr[INET6_ADDRSTRLEN+1];
-	sisis_create_addr(mm_addr, (uint64_t)SISIS_PTYPE_MACHINE_MONITOR, (uint64_t)1, data.sys_id, (uint64_t)0, (uint64_t)0);
+	sisis_create_addr(mm_addr, (uint64_t)SISIS_PTYPE_MACHINE_MONITOR, (uint64_t)1, data->sys_id, (uint64_t)0, (uint64_t)0);
 	struct prefix_ipv6 mm_prefix = sisis_make_ipv6_prefix(mm_addr, 74);
 	struct list * monitor_addrs = get_sisis_addrs_for_prefix(&mm_prefix);
 	
@@ -189,7 +189,7 @@ void * update_hostname(void * data_v)
 							sscanf(match+strlen(hostname_str), "%s", hostname);
 						
 						// Set host to up
-						sprintf(buf, "hostUp %llu %s\n", sys_id % 16, hostname);
+						sprintf(buf, "hostUp %llu %s\n", data->sys_id % 16, hostname);
 						send(sockfd, buf, strlen(buf), 0);
 						
 						// No more attempts needed
@@ -239,11 +239,11 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 					}
 					
 					// Get hostname asynchronously
-					update_hostname_data_t data = malloc(sizeof update_hostname_data_t);
+					update_hostname_data_t * data = malloc(sizeof update_hostname_data_t);
 					if (data != NULL)
 					{
 						data.sys_id = sys_id;
-						pthread_create(&data.thread, NULL, update_hostname, data);
+						pthread_create(&data.thread, NULL, update_hostname, (void*)data);
 					}
 				}
 				sprintf(buf, "procAdd %llu %i %s\n", sys_id % 16, proc_info.proc_num, proc_info.desc);
