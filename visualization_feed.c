@@ -16,6 +16,8 @@
 #include <signal.h>
 #include <errno.h>
 
+#include <pthread.h>
+
 #include <stdarg.h>
 #include <time.h>
 #include "../tests/sisis_api.h"
@@ -100,6 +102,112 @@ process_visualization_info_t get_process_info(int process_type, int process_vers
 	return info;
 }
 
+/** Data for update_hostname function */
+typedef struct {
+	pthread_t thread;
+	uint64_t sys_id;
+} update_hostname_data_t;
+
+/** Thread to update hostname */
+void * update_hostname(void * data_v)
+{
+	update_hostname_data_t * data = (update_hostname_data_t *)data_v;
+	
+	// Get hostname
+	char hostname[64];
+	
+	// Get machine monitors
+	char mm_addr[INET6_ADDRSTRLEN+1];
+	sisis_create_addr(mm_addr, (uint64_t)SISIS_PTYPE_MACHINE_MONITOR, (uint64_t)1, data.sys_id, (uint64_t)0, (uint64_t)0);
+	struct prefix_ipv6 mm_prefix = sisis_make_ipv6_prefix(mm_addr, 74);
+	struct list * monitor_addrs = get_sisis_addrs_for_prefix(&mm_prefix);
+	
+	// Find machine monitor
+	struct in6_addr * mm_remote_addr = NULL;
+	if (monitor_addrs != NULL && monitor_addrs->size > 0)
+	{
+		mm_remote_addr = (struct in6_addr *)monitor_addrs->head->data;
+		/*
+		char tmp_addr[INET6_ADDRSTRLEN];
+			if (inet_ntop(AF_INET6, mm_remote_addr, tmp_addr, INET6_ADDRSTRLEN) != NULL)
+				printf("Sending message to machine monitor at %s.\n", tmp_addr);
+		*/
+		// Make new socket
+		int tmp_sock = socket(AF_INET6, SOCK_DGRAM, 0);
+		if (tmp_sock != -1)
+		{
+			short remaining_attempts = 4;
+			while (remaining_attempts > 0)
+			{
+				// Set of sockets for select call
+				fd_set socks;
+				FD_ZERO(&socks);
+				FD_SET(tmp_sock, &socks);
+				
+				// Timeout information for select call
+				struct timeval select_timeout;
+				select_timeout.tv_sec = 2;
+				select_timeout.tv_usec = 500000;	// 500ms
+				
+				// Set up socket info
+				struct sockaddr_in6 sockaddr;
+				int sockaddr_size = sizeof(sockaddr);
+				memset(&sockaddr, 0, sockaddr_size);
+				sockaddr.sin6_family = AF_INET6;
+				sockaddr.sin6_port = htons(MACHINE_MONITOR_PORT);
+				sockaddr.sin6_addr = *mm_remote_addr;
+				
+				// Get stats
+				char * req = "data\n";
+				if (sendto(tmp_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) != -1)
+				{
+					struct sockaddr_in6 fromaddr;
+					int fromaddr_size = sizeof(fromaddr);
+					memset(&fromaddr, 0, fromaddr_size);
+					char buf[65536];
+					int len;
+					
+					// Wait for response
+					if (select(tmp_sock+1, &socks, NULL, NULL, &select_timeout) <= 0)
+					{}
+					else if ((len = recvfrom(tmp_sock, buf, 65536, 0, (struct sockaddr *)&fromaddr, &fromaddr_size)) < 1)
+					{}
+					else if (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0)
+					{}
+					else
+					{
+						// Terminate if needed
+						if (len == 65536)
+							buf[len-1] = '\0';
+						
+						// Parse response
+						char * match;
+						
+						// Get hostname
+						char * hostname_str = "Hostname: ";
+						if ((match = strstr(buf, hostname_str)) != NULL)
+							sscanf(match+strlen(hostname_str), "%s", hostname);
+						
+						// Set host to up
+						sprintf(buf, "hostUp %llu %s\n", sys_id % 16, hostname);
+						send(sockfd, buf, strlen(buf), 0);
+						
+						// No more attempts needed
+						remaining_attempts = 0;
+					}
+					
+					remaining_attempts--;
+				}
+			}
+			
+			// Close socket
+			close(tmp_sock);
+		}
+	}
+	if (monitor_addrs != NULL)
+		FREE_LINKED_LIST(monitor_addrs);
+}
+
 #ifdef HAVE_IPV6
 int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 {
@@ -119,116 +227,24 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 				char buf[512];
 				if (num_proc_pre_host[sys_id%16]++ == 0 || process_type == (uint64_t)SISIS_PTYPE_MACHINE_MONITOR)
 				{
-					/* Get hostname */
-					char hostname[64];
-					sprintf(hostname, "Host #%llu", sys_id%16);
-					
-					// Get machine monitors
-					char mm_addr[INET6_ADDRSTRLEN+1];
-					sisis_create_addr(mm_addr, (uint64_t)SISIS_PTYPE_MACHINE_MONITOR, (uint64_t)1, (uint64_t)0, (uint64_t)0, (uint64_t)0);
-					struct prefix_ipv6 mm_prefix = sisis_make_ipv6_prefix(mm_addr, 42);
-					struct list * monitor_addrs = get_sisis_addrs_for_prefix(&mm_prefix);
-					
-					// Find machine monitor
-					struct in6_addr * mm_remote_addr = NULL;
-					if (monitor_addrs != NULL)
+					// Set temporary hostname if the host need to be set to up
+					if (num_proc_pre_host[sys_id%16]++ == 0)
 					{
-						struct listnode * mm_node;
-						LIST_FOREACH(monitor_addrs, mm_node)
-						{
-							struct in6_addr * remote_addr2 = (struct in6_addr *)mm_node->data;
-							
-							// Get system id
-							uint64_t mm_sys_id;
-							char addr[INET6_ADDRSTRLEN];
-							if (inet_ntop(AF_INET6, remote_addr2, addr, INET6_ADDRSTRLEN) != NULL)
-								if (get_sisis_addr_components(addr, NULL, NULL, NULL, NULL, &mm_sys_id, NULL, NULL) == 0)
-									if (mm_sys_id == sys_id)
-									{
-										mm_remote_addr = remote_addr2;
-										break;
-									}
-						}
+						char hostname[64];
+						sprintf(hostname, "Host #%llu", sys_id%16);
+						
+						// Set host to up
+						sprintf(buf, "hostUp %llu %s\n", sys_id % 16, hostname);
+						send(sockfd, buf, strlen(buf), 0);
 					}
-					if (mm_remote_addr != NULL)
-					{
-						/*
-						char tmp_addr[INET6_ADDRSTRLEN];
-							if (inet_ntop(AF_INET6, mm_remote_addr, tmp_addr, INET6_ADDRSTRLEN) != NULL)
-								printf("Sending message to machine monitor at %s.\n", tmp_addr);
-						*/
-						// Make new socket
-						int tmp_sock = socket(AF_INET6, SOCK_DGRAM, 0);
-						if (tmp_sock != -1)
-						{
-							short remaining_attempts = 2;
-							while (remaining_attempts > 0)
-							{
-								// Set of sockets for select call
-								fd_set socks;
-								FD_ZERO(&socks);
-								FD_SET(tmp_sock, &socks);
-								
-								// Timeout information for select call
-								struct timeval select_timeout;
-								select_timeout.tv_sec = 2;
-								select_timeout.tv_usec = 500000;	// 500ms
-								
-								// Set up socket info
-								struct sockaddr_in6 sockaddr;
-								int sockaddr_size = sizeof(sockaddr);
-								memset(&sockaddr, 0, sockaddr_size);
-								sockaddr.sin6_family = AF_INET6;
-								sockaddr.sin6_port = htons(MACHINE_MONITOR_PORT);
-								sockaddr.sin6_addr = *mm_remote_addr;
-								
-								// Get stats
-								char * req = "data\n";
-								if (sendto(tmp_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) != -1)
-								{
-									struct sockaddr_in6 fromaddr;
-									int fromaddr_size = sizeof(fromaddr);
-									memset(&fromaddr, 0, fromaddr_size);
-									char buf[65536];
-									int len;
-									
-									// Wait for response
-									if (select(tmp_sock+1, &socks, NULL, NULL, &select_timeout) <= 0)
-									{}
-									else if ((len = recvfrom(tmp_sock, buf, 65536, 0, (struct sockaddr *)&fromaddr, &fromaddr_size)) < 1)
-									{}
-									else if (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0)
-									{}
-									else
-									{
-										// Terminate if needed
-										if (len == 65536)
-											buf[len-1] = '\0';
-										
-										// Parse response
-										char * match;
-										
-										// Get hostname
-										char * hostname_str = "Hostname: ";
-										if ((match = strstr(buf, hostname_str)) != NULL)
-											sscanf(match+strlen(hostname_str), "%s", hostname);
-										
-										// No more attempts needed
-										remaining_attempts = 0;
-									}
-									
-									remaining_attempts--;
-								}
-							}
-							
-							// Close socket
-							close(tmp_sock);
-						}
-					}
-					FREE_LINKED_LIST(monitor_addrs);
 					
-					sprintf(buf, "hostUp %llu %s\n", sys_id % 16, hostname);
-					send(sockfd, buf, strlen(buf), 0);
+					// Get hostname asynchronously
+					update_hostname_data_t data = malloc(sizeof update_hostname_data_t);
+					if (data != NULL)
+					{
+						data.sys_id = sys_id;
+						pthread_create(&data.thread, NULL, update_hostname, data);
+					}
 				}
 				sprintf(buf, "procAdd %llu %i %s\n", sys_id % 16, proc_info.proc_num, proc_info.desc);
 				send(sockfd, buf, strlen(buf), 0);
