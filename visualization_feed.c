@@ -239,11 +239,11 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 					}
 					
 					// Get hostname asynchronously
-					update_hostname_data_t * data = malloc(sizeof update_hostname_data_t);
+					update_hostname_data_t * data = malloc(sizeof(update_hostname_data_t));
 					if (data != NULL)
 					{
-						data.sys_id = sys_id;
-						pthread_create(&data.thread, NULL, update_hostname, (void*)data);
+						data->sys_id = sys_id;
+						pthread_create(&data->thread, NULL, update_hostname, (void*)data);
 					}
 				}
 				sprintf(buf, "procAdd %llu %i %s\n", sys_id % 16, proc_info.proc_num, proc_info.desc);
