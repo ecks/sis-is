@@ -169,8 +169,8 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 							
 							// Timeout information for select call
 							struct timeval select_timeout;
-							select_timeout.tv_sec = 0;
-							select_timeout.tv_usec = 250000; // 250ms
+							select_timeout.tv_sec = 1;
+							select_timeout.tv_usec = 0;
 							
 							// Set up socket info
 							struct sockaddr_in6 sockaddr;
@@ -212,6 +212,9 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 										sscanf(match+strlen(hostname_str), "%s", hostname);
 								}
 							}
+							
+							// Close socket
+							close(tmp_sock);
 						}
 					}
 					FREE_LINKED_LIST(monitor_addrs);
