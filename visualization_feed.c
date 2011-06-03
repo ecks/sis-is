@@ -206,6 +206,9 @@ void * update_hostname(void * data_v)
 	}
 	if (monitor_addrs != NULL)
 		FREE_LINKED_LIST(monitor_addrs);
+	
+	// Free data
+	free(data_v);
 }
 
 #ifdef HAVE_IPV6
