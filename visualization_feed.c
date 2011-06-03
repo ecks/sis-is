@@ -161,7 +161,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 						int tmp_sock = socket(AF_INET6, SOCK_DGRAM, 0);
 						if (tmp_sock != -1)
 						{
-							short remaining_attempts = 4;
+							short remaining_attempts = 2;
 							while (remaining_attempts > 0)
 							{
 								// Set of sockets for select call
@@ -172,7 +172,7 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 								// Timeout information for select call
 								struct timeval select_timeout;
 								select_timeout.tv_sec = 0;
-								select_timeout.tv_usec = 250000;
+								select_timeout.tv_usec = 750000;	// 750ms
 								
 								// Set up socket info
 								struct sockaddr_in6 sockaddr;
