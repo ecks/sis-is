@@ -157,59 +157,67 @@ int rib_monitor_add_ipv6_route(struct route_ipv6 * route, void * data)
 							if (inet_ntop(AF_INET6, mm_remote_addr, tmp_addr, INET6_ADDRSTRLEN) != NULL)
 								printf("Sending message to machine monitor at %s.\n", tmp_addr);
 						*/
-						
 						// Make new socket
 						int tmp_sock = socket(AF_INET6, SOCK_DGRAM, 0);
 						if (tmp_sock != -1)
 						{
-							// Set of sockets for select call
-							fd_set socks;
-							FD_ZERO(&socks);
-							FD_SET(tmp_sock, &socks);
-							
-							// Timeout information for select call
-							struct timeval select_timeout;
-							select_timeout.tv_sec = 1;
-							select_timeout.tv_usec = 0;
-							
-							// Set up socket info
-							struct sockaddr_in6 sockaddr;
-							int sockaddr_size = sizeof(sockaddr);
-							memset(&sockaddr, 0, sockaddr_size);
-							sockaddr.sin6_family = AF_INET6;
-							sockaddr.sin6_port = htons(MACHINE_MONITOR_PORT);
-							sockaddr.sin6_addr = *mm_remote_addr;
-							
-							// Get stats
-							char * req = "data\n";
-							if (sendto(tmp_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) != -1)
+							short remaining_attempts = 4;
+							while (remaining_attempts > 0)
 							{
-								struct sockaddr_in6 fromaddr;
-								int fromaddr_size = sizeof(fromaddr);
-								memset(&fromaddr, 0, fromaddr_size);
-								char buf[65536];
-								int len;
+								// Set of sockets for select call
+								fd_set socks;
+								FD_ZERO(&socks);
+								FD_SET(tmp_sock, &socks);
 								
-								// Wait for response
-								if (select(tmp_sock+1, &socks, NULL, NULL, &select_timeout) <= 0)
-								{}
-								else if ((len = recvfrom(tmp_sock, buf, 65536, 0, (struct sockaddr *)&fromaddr, &fromaddr_size)) < 1)
-								{}
-								else if (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0)
-								{}
-								else
+								// Timeout information for select call
+								struct timeval select_timeout;
+								select_timeout.tv_sec = 0;
+								select_timeout.tv_usec = 250000;
+								
+								// Set up socket info
+								struct sockaddr_in6 sockaddr;
+								int sockaddr_size = sizeof(sockaddr);
+								memset(&sockaddr, 0, sockaddr_size);
+								sockaddr.sin6_family = AF_INET6;
+								sockaddr.sin6_port = htons(MACHINE_MONITOR_PORT);
+								sockaddr.sin6_addr = *mm_remote_addr;
+								
+								// Get stats
+								char * req = "data\n";
+								if (sendto(tmp_sock, req, strlen(req), 0, (struct sockaddr *)&sockaddr, sockaddr_size) != -1)
 								{
-									// Terminate if needed
-									if (len == 65536)
-										buf[len-1] = '\0';
+									struct sockaddr_in6 fromaddr;
+									int fromaddr_size = sizeof(fromaddr);
+									memset(&fromaddr, 0, fromaddr_size);
+									char buf[65536];
+									int len;
 									
-									// Parse response
-									char * match;
+									// Wait for response
+									if (select(tmp_sock+1, &socks, NULL, NULL, &select_timeout) <= 0)
+									{}
+									else if ((len = recvfrom(tmp_sock, buf, 65536, 0, (struct sockaddr *)&fromaddr, &fromaddr_size)) < 1)
+									{}
+									else if (sockaddr_size != fromaddr_size || memcmp(&sockaddr, &fromaddr, fromaddr_size) != 0)
+									{}
+									else
+									{
+										// Terminate if needed
+										if (len == 65536)
+											buf[len-1] = '\0';
+										
+										// Parse response
+										char * match;
+										
+										// Get hostname
+										char * hostname_str = "Hostname: ";
+										if ((match = strstr(buf, hostname_str)) != NULL)
+											sscanf(match+strlen(hostname_str), "%s", hostname);
+										
+										// No more attempts needed
+										remaining_attempts = 0;
+									}
 									
-									// Get hostname
-									char * hostname_str = "Hostname: ";
-									if ((match = strstr(buf, hostname_str)) != NULL)
-										sscanf(match+strlen(hostname_str), "%s", hostname);
+									remaining_attempts--;
 								}
 							}
 							
