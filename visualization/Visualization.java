@@ -12,6 +12,9 @@ import java.io.*;
 
 public class Visualization extends JPanel implements Runnable
 {
+	// Font
+	Font font;
+
 	// TODO: Customizatable number of hosts
 	public static final int MAX_HOSTS = 16;
 	boolean [] hosts_up = new boolean[MAX_HOSTS];
@@ -36,6 +39,10 @@ public class Visualization extends JPanel implements Runnable
 	public Visualization()
 	{
 		super();
+
+		// Setup font
+		font = new Font("SansSerif", Font.PLAIN, 10);
+		setFont(font);
 		
 		// Start socket thread
 		new Thread(this).start();
@@ -199,6 +206,9 @@ public class Visualization extends JPanel implements Runnable
 								}
 							}
 						}
+						
+						// Repaint screen
+						repaint();
 					} while (line != null);
 				} catch (IOException e) {
 					System.out.println("IOException");
@@ -292,11 +302,9 @@ public class Visualization extends JPanel implements Runnable
 		
 		// Draw rectangle
 		g2.fillRect(x, y, width, height);
-		
+
 		// Set font and get info
-		Font font = new Font("SansSerif", Font.PLAIN, 10);
 		FontMetrics metrics = g2.getFontMetrics(font);
-		setFont(font);
 		
 		// Write host number text
 		g.setColor(Color.BLACK);
@@ -323,9 +331,7 @@ public class Visualization extends JPanel implements Runnable
 		int y = row * height + (row + 1) * 10;
 		
 		// Set font and get info
-		Font font = new Font("SansSerif", Font.PLAIN, 10);
 		FontMetrics metrics = g2.getFontMetrics(font);
-		setFont(font);
 		
 		// Process start y
 		int procStartY = y + (int)metrics.getHeight() + 4;
