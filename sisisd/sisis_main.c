@@ -221,6 +221,7 @@ int main (int argc, char **argv)
   char *p;
   int opt;
   int daemon_mode = 0;
+  int dryrun = 0;
   char *progname;
   struct thread thread;
   int tmp_port;
@@ -278,6 +279,9 @@ int main (int argc, char **argv)
         print_version (progname);
         exit (0);
         break;
+      case 'C':
+        dryrun = 1;
+        break;
       case 'h':
         usage (progname, 0);
         break;
@@ -299,6 +303,10 @@ int main (int argc, char **argv)
   /* sisis related initialization.  */
   sisis_init();
 
+  /* Start execution only if not in dry-run mode */
+  if(dryrun)
+    return(0);
+  
   /* Turn into daemon if daemon_mode is set. */
   if (daemon_mode && daemon (0, 0) < 0)
   {

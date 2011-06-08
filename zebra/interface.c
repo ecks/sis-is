@@ -1654,6 +1654,40 @@ int if_addr_expired_checker(struct thread* th)
 	return 0;
 }
 
+/* Remove SIS-IS addresses from loopback*/
+void if_weed_sisis()
+{
+	// Get loopback interface
+	struct interface * lo_ifp = if_lookup_by_name("lo");
+	if (lo_ifp != NULL)
+	{
+		struct listnode *node, *node2;
+		struct connected *ifc;
+	
+		for (ALL_LIST_ELEMENTS (lo_ifp->connected, node, node2, ifc))
+		{
+			if (ifc->address->family == AF_INET6)
+			{
+				// Create string of SIS-IS address
+				char buf[INET6_ADDRSTRLEN];
+				prefix2str(ifc->address, buf, sizeof(buf));
+				
+				// Check if this is an SIS-IS address
+				if (strlen(buf) >= 5 && memcmp("fcff:", buf, sizeof(char) * 5) == 0)
+				{
+					// Set ZEBRA_IFC_CONFIGURED flag otherwise it cannot be removed
+					SET_FLAG (ifc->conf, ZEBRA_IFC_CONFIGURED);
+					
+					zlog_debug ("Address %s removed from loopback interface.", buf);
+					int rtn = ipv6_address_uninstall (NULL, lo_ifp, buf, NULL, NULL, 0);
+					if (rtn != CMD_SUCCESS)
+						zlog_debug ("Failed to remove address %s", buf);
+				}
+			}
+		}
+	}
+}
+
 
 /* Allocate and initialize interface vector. */
 void
