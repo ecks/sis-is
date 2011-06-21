@@ -252,6 +252,12 @@ struct memory_list memory_list_sisis[] =
   { -1, NULL }
 };
 
+struct memory_list memory_list_sisis[] =
+{
+  { MTYPE_SHIM,				"SHIM instance"				},
+  { -1, NULL }
+};
+
 struct memory_list memory_list_vtysh[] =
 {
   { MTYPE_VTYSH_CONFIG,		"Vtysh configuration",		},
@@ -269,5 +275,6 @@ struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_isis,	"ISIS"	},
   { memory_list_bgp,	"BGP"	},
   { memory_list_sisis, "SISIS" },
+  { memory_list_sisis, "SHIM" },
   { NULL, NULL},
 };

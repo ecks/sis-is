@@ -5,72 +5,92 @@
 #include "sockunion.h"
 #include "log.h"
 #include "sockopt.h"
+#include "privs.h"
+#include "sigevent.h"
 
 #include "ospfd/ospfd.h"
+
+#include "rib-comparison/shimd.h"
+
+/* ospfd privileges */
+zebra_capabilities_t _caps_p [] =
+{
+  ZCAP_NET_RAW,
+  ZCAP_BIND,
+  ZCAP_NET_ADMIN,
+};
+
+struct zebra_privs_t shimd_privs =
+{
+#if defined(QUAGGA_USER) && defined(QUAGGA_GROUP)
+  .user = QUAGGA_USER,
+  .group = QUAGGA_GROUP,
+#endif
+#if defined(VTY_GROUP)
+  .vty_group = VTY_GROUP,
+#endif
+  .caps_p = _caps_p,
+  .cap_num_p = sizeof(_caps_p)/sizeof(_caps_p[0]),
+  .cap_num_i = 0
+};
+
+struct thread_master *master;
+
+/* SIGHUP handler. */
+static void
+sighup (void)
+{
+  zlog (NULL, LOG_INFO, "SIGHUP received");
+}
+
+/* SIGINT / SIGTERM handler. */
+static void
+sigint (void)
+{
+  zlog_notice ("Terminating on signal");
+  shim_terminate ();
+}
+
+/* SIGUSR1 handler. */
+static void
+sigusr1 (void)
+{
+  zlog_rotate (NULL);
+}
+
+struct quagga_signal_t shim_signals[] =
+{
+  {
+    .signal = SIGHUP,
+    .handler = &sighup,
+  },
+  {
+    .signal = SIGUSR1,
+    .handler = &sigusr1,
+  },
+  {
+    .signal = SIGINT,
+    .handler = &sigint,
+  },
+  {
+    .signal = SIGTERM,
+    .handler = &sigint,
+  },
+};
 
 int
 main (void)
 {
-  int ospf_sock;
-  int ret, hincl = 1;
 
-//  if ( ospfd_privs.change (ZPRIVS_RAISE) )
-//    zlog_err ("ospf_sock_init: could not raise privs, %s",
-//               safe_strerror (errno) );
-    
-  ospf_sock = socket (AF_INET, SOCK_RAW, IPPROTO_OSPFIGP);
-  if (ospf_sock < 0)
-    {
-      int save_errno = errno;
-//      if ( ospfd_privs.change (ZPRIVS_LOWER) )
-//        zlog_err ("ospf_sock_init: could not lower privs, %s",
-//                   safe_strerror (errno) );
-//      zlog_err ("ospf_read_sock_init: socket: %s", safe_strerror (save_errno));
-      exit(1);
-    }
-    
-#ifdef IP_HDRINCL
-  /* we will include IP header with packet */
-  ret = setsockopt (ospf_sock, IPPROTO_IP, IP_HDRINCL, &hincl, sizeof (hincl));
-  if (ret < 0)
-    {
-      int save_errno = errno;
-//      if ( ospfd_privs.change (ZPRIVS_LOWER) )
-//        zlog_err ("ospf_sock_init: could not lower privs, %s",
-//                   safe_strerror (errno) );
-//      zlog_warn ("Can't set IP_HDRINCL option for fd %d: %s",
-//      		 ospf_sock, safe_strerror(save_errno));
-    }
-#elif defined (IPTOS_PREC_INTERNETCONTROL)
-#warning "IP_HDRINCL not available on this system"
-#warning "using IPTOS_PREC_INTERNETCONTROL"
-  ret = setsockopt_ipv4_tos(ospf_sock, IPTOS_PREC_INTERNETCONTROL);
-  if (ret < 0)
-    {
-      int save_errno = errno;
-//      if ( ospfd_privs.change (ZPRIVS_LOWER) )
-//        zlog_err ("ospf_sock_init: could not lower privs, %s",
-//                   safe_strerror (errno) );
-//      zlog_warn ("can't set sockopt IP_TOS %d to socket %d: %s",
-//      		 tos, ospf_sock, safe_strerror(save_errno));
-      close (ospf_sock);	/* Prevent sd leak. */
-      return ret;
-    }
-#else /* !IPTOS_PREC_INTERNETCONTROL */
-#warning "IP_HDRINCL not available, nor is IPTOS_PREC_INTERNETCONTROL"
-//  zlog_warn ("IP_HDRINCL option not available");
-#endif /* IP_HDRINCL */
+  shim_master_init();
 
-//  ret = setsockopt_ifindex (AF_INET, ospf_sock, 1);
+  master = sm->master;
 
-//  if (ret < 0)
-//     zlog_warn ("Can't set pktinfo option for fd %d", ospf_sock);
+  zprivs_init (&shimd_privs);
+  signal_init (master, Q_SIGC(shim_signals), shim_signals);
 
-//  if (ospfd_privs.change (ZPRIVS_LOWER))
-//    {
-//      zlog_err ("ospf_sock_init: could not lower privs, %s",
-//               safe_strerror (errno) );
-//    }
- 
-  return ospf_sock;
+/* Process id file create. */
+//  pid_output (pid_file);
+
+  return 0;
 }
