@@ -26,7 +26,7 @@ shim_recv_packet (int fd, struct interface **ifp, struct stream *ibuf)
   msgh.msg_iovlen = 1;
   msgh.msg_control = (caddr_t) buff;
   msgh.msg_controllen = sizeof (buff);
-  
+
   ret = stream_recvmsg (ibuf, fd, &msgh, 0, OSPF_MAX_PACKET_SIZE+1);
   if (ret < 0)
     {
@@ -87,14 +87,17 @@ shim_read (struct thread * thread)
   struct shim * shim;
   struct interface * ifp;
 
+  zlog_notice("Received packet!");  
+
   /* first of all get interface pointer. */
   shim = THREAD_ARG (thread);
   /* prepare for next packet. */
   shim->t_read = thread_add_read (master, shim_read, shim, shim->fd);
+
   /* read OSPF packet. */
-  stream_reset(shim->ibuf);
-  if (!(ibuf = shim_recv_packet (shim->fd, &ifp, shim->ibuf)))
-    return -1;
+//  stream_reset(shim->ibuf);
+//  if (!(ibuf = shim_recv_packet (shim->fd, &ifp, shim->ibuf)))
+//    return -1;
 
   return 0;
 }

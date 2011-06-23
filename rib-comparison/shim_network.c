@@ -4,6 +4,7 @@
 #include "log.h"
 #include "sockopt.h"
 #include "privs.h"
+#include "prefix.h"
 
 #include "ospfd/ospfd.h"
 
@@ -14,66 +15,48 @@ extern struct zebra_privs_t shimd_privs;
 int
 shim_sock_init(void)
 {
-  int ospf_sock;
-  int ret, hincl = 1;
+  int shim_sock;
 
   if ( shimd_privs.change (ZPRIVS_RAISE) )
-    zlog_err ("ospf_sock_init: could not raise privs, %s",
+    zlog_err ("shim_sock_init: could not raise privs, %s",
                safe_strerror (errno) );
     
-  ospf_sock = socket (AF_INET, SOCK_RAW, IPPROTO_OSPFIGP);
-  if (ospf_sock < 0)
+  shim_sock = socket (AF_INET6, SOCK_RAW, IPPROTO_OSPFIGP);
+  if (shim_sock < 0)
     {
       int save_errno = errno;
       if ( shimd_privs.change (ZPRIVS_LOWER) )
-        zlog_err ("ospf_sock_init: could not lower privs, %s",
+        zlog_err ("shim_sock_init: could not lower privs, %s",
                    safe_strerror (errno) );
-      zlog_err ("ospf_read_sock_init: socket: %s", safe_strerror (save_errno));
+      zlog_err ("shim_sock_init: socket: %s", safe_strerror (save_errno));
       exit(1);
     }
     
-#ifdef IP_HDRINCL
-  /* we will include IP header with packet */
-  ret = setsockopt (ospf_sock, IPPROTO_IP, IP_HDRINCL, &hincl, sizeof (hincl));
-  if (ret < 0)
-    {
-      int save_errno = errno;
-      if ( shimd_privs.change (ZPRIVS_LOWER) )
-        zlog_err ("ospf_sock_init: could not lower privs, %s",
-                   safe_strerror (errno) );
-      zlog_warn ("Can't set IP_HDRINCL option for fd %d: %s",
-      		 ospf_sock, safe_strerror(save_errno));
-    }
-#elif defined (IPTOS_PREC_INTERNETCONTROL)
-#warning "IP_HDRINCL not available on this system"
-#warning "using IPTOS_PREC_INTERNETCONTROL"
-  ret = setsockopt_ipv4_tos(ospf_sock, IPTOS_PREC_INTERNETCONTROL);
-  if (ret < 0)
-    {
-      int save_errno = errno;
-      if ( shimd_privs.change (ZPRIVS_LOWER) )
-        zlog_err ("ospf_sock_init: could not lower privs, %s",
-                   safe_strerror (errno) );
-      zlog_warn ("can't set sockopt IP_TOS %d to socket %d: %s",
-      		 tos, ospf_sock, safe_strerror(save_errno));
-      close (ospf_sock);	/* Prevent sd leak. */
-      return ret;
-    }
-#else /* !IPTOS_PREC_INTERNETCONTROL */
-#warning "IP_HDRINCL not available, nor is IPTOS_PREC_INTERNETCONTROL"
-  zlog_warn ("IP_HDRINCL option not available");
-#endif /* IP_HDRINCL */
-
-  ret = setsockopt_ifindex (AF_INET, ospf_sock, 1);
-
-  if (ret < 0)
-     zlog_warn ("Can't set pktinfo option for fd %d", ospf_sock);
-
   if (shimd_privs.change (ZPRIVS_LOWER))
     {
-      zlog_err ("ospf_sock_init: could not lower privs, %s",
+      zlog_err ("shim_sock_init: could not lower privs, %s",
                safe_strerror (errno) );
     }
- 
-  return ospf_sock;
+
+  sockopt_reuseaddr (shim_sock);
+
+  u_int off = 0;
+  if (setsockopt (shim_sock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
+                  &off, sizeof (u_int)) < 0)
+    zlog_warn ("Network: reset IPV6_MULTICAST_LOOP failed: %s",
+               safe_strerror (errno));
+
+  if (setsockopt_ipv6_pktinfo (shim_sock, 1) < 0)
+     zlog_warn ("Can't set pktinfo option for fd %d", shim_sock);
+
+  int offset = 12;
+#ifndef DISABLE_IPV6_CHECKSUM
+  if (setsockopt (shim_sock, IPPROTO_IPV6, IPV6_CHECKSUM,
+                  &offset, sizeof (offset)) < 0)
+    zlog_warn ("Network: set IPV6_CHECKSUM failed: %s", safe_strerror (errno));
+#else
+  zlog_warn ("Network: Don't set IPV6_CHECKSUM");
+#endif /* DISABLE_IPV6_CHECKSUM */
+
+  return shim_sock;
 }

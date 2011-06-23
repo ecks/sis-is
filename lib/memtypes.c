@@ -252,9 +252,10 @@ struct memory_list memory_list_sisis[] =
   { -1, NULL }
 };
 
-struct memory_list memory_list_sisis[] =
+struct memory_list memory_list_shim[] =
 {
   { MTYPE_SHIM,				"SHIM instance"				},
+  { MTYPE_SHIM_SISIS_LISTENER,		"SHIM SISIS listen socket details"	},
   { -1, NULL }
 };
 

@@ -16,7 +16,7 @@ sbin_PROGRAMS = shim
 #noinst_HEADERS = \
 #	shim.h
 
-shim_SOURCES = shim.c shimd.c shim_network.c shim_packet.c
+shim_SOURCES = shim.c shimd.c shim_network.c shim_packet.c shim_sisis.c
 #rc_LDADD = librc.a ../lib/libzebra.la @LIBCAP@ @LIBM@
 shim_LDADD = ../lib/libzebra.la @LIBCAP@
 
