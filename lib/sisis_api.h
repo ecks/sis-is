@@ -9,9 +9,6 @@
 
 #define USE_IPV6
 
-#include "sisis_structs.h"
-#include <pthread.h>
-
 #define SISIS_VERSION 1
 
 #define SISIS_REREGISTRATION_TIMEOUT			20
@@ -54,8 +51,8 @@ typedef struct {
 } reregistration_info_t;
 
 // IPv4 & IPv6 RIBs
-extern struct list * ipv4_rib_routes;
-extern struct list * ipv6_rib_routes;
+extern struct list_sis * ipv4_rib_routes;
+extern struct list_sis * ipv6_rib_routes;
 
 void sisis_process_message(char * msg, int msg_len);
 
@@ -124,7 +121,7 @@ int sisis_dump_kernel_routes();
  * Dump kernel routing table.
  * Returns zero on success.
  */
-int sisis_dump_kernel_ipv6_routes_to_tables(struct list ** rib);
+int sisis_dump_kernel_ipv6_routes_to_tables(struct list_sis ** rib);
 #endif
 
 int sisis_rib_add_ipv4 (struct route_ipv4 * route, void * data);
@@ -156,7 +153,7 @@ int unsubscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info);
  * Get SIS-IS addresses that match a given IP prefix.  It is the receiver's
  * responsibility to free the list when done with it.
  */
-struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p);
+struct list_sis * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p);
 
 /**
  * Creates an IPv6 prefix
@@ -167,13 +164,13 @@ struct prefix_ipv6 sisis_make_ipv6_prefix(char * addr, int prefix_len);
  * Get SIS-IS addresses for a specific process type.  It is the receivers
  * responsibility to free the list when done with it.
  */
-struct list * get_sisis_addrs_for_process_type(unsigned int ptype);
+struct list_sis * get_sisis_addrs_for_process_type(unsigned int ptype);
 
 /**
  * Get SIS-IS addresses for a specific process type and host.  It is the receivers
  * responsibility to free the list when done with it.
  */
-struct list * get_sisis_addrs_for_process_type_and_host(unsigned int ptype, unsigned int host_num);
+struct list_sis * get_sisis_addrs_for_process_type_and_host(unsigned int ptype, unsigned int host_num);
 #endif // _SISIS_API_H#endif /* USE_IPV6 */
 
 #endif // _SISIS_API_H

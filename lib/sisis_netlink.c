@@ -20,16 +20,27 @@
  * 02111-1307, USA.  
  */
 
-#include "sisis_api.h"
-#include "sisis_netlink.h"
-#include "sisis_structs.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <pthread.h>
+#include <stdint.h>
+#include <unistd.h>
+
+#include <zebra.h>
+#include "prefix.h"
+
+#include "sisis_structs.h"
+#include "sisis_api.h"
+#include "sisis_netlink.h"
 
 /* Socket interface to kernel */
 struct nlsock sisis_netlink_cmd  = { -1, 0, {0}, "netlink-cmd"};        /* command channel */

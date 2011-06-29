@@ -24,4 +24,3 @@ examplesdir = $(exampledir)
 #dist_examples_DATA = sisisd.conf.sample
 
 #EXTRA_DIST = sisis4-MIB.txt
-

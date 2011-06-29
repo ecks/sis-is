@@ -6,8 +6,9 @@
 #include "sockopt.h"
 #include "stream.h"
 
-#include "rib-comparison/shimd.h"
-#include "rib-comparison/shim_packet.h"
+#include "shim/shimd.h"
+#include "shim/shim_packet.h"
+#include "rospf6d/ospf6_message.h"
 
 static struct stream *
 shim_recv_packet (int fd, struct interface **ifp, struct stream *ibuf)
@@ -95,9 +96,9 @@ shim_read (struct thread * thread)
   shim->t_read = thread_add_read (master, shim_read, shim, shim->fd);
 
   /* read OSPF packet. */
-//  stream_reset(shim->ibuf);
-//  if (!(ibuf = shim_recv_packet (shim->fd, &ifp, shim->ibuf)))
-//    return -1;
-
+  stream_reset(shim->ibuf);
+  if (!(ibuf = shim_recv_packet (shim->fd, &ifp, shim->ibuf)))
+    return -1;
+ 
   return 0;
 }

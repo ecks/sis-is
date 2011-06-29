@@ -9,34 +9,24 @@
 #ifndef _SISIS_STRUCTS_H
 #define _SISIS_STRUCTS_H
 
-#include "sisis_api.h"
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <pthread.h>
-#include <stdint.h>
-
 /* Linked list */
-/*
-struct list
+struct list_sis
 {
-	struct listnode * head;
-	struct listnode * tail;
+	struct listnode_sis * head;
+	struct listnode_sis * tail;
 	unsigned int size;
 };
 
-struct listnode
+struct listnode_sis
 {
-	struct listnode * prev;
-	struct listnode * next;
+	struct listnode_sis * prev;
+	struct listnode_sis * next;
 	void * data;
-}; */
+};
 
 #define LIST_APPEND(list,node) { if(!list->head){list->head = list->tail = node;node->prev = node->next = NULL;list->size=1;}else{node->prev=list->tail;node->next=NULL;list->tail->next=node;list->tail=node;list->size++;} }
 #define FREE_LINKED_LIST(list) { \
-	struct listnode * node = list->head, *tmp;\
+	struct listnode_sis * node = list->head, *tmp;\
 	while (node != NULL) {\
 		tmp=node->next;\
 		free(node->data);\
@@ -45,7 +35,7 @@ struct listnode
 	}\
 	free(list); }
 #define FREE_LINKED_LIST_NOT_DATA(list) { \
-	struct listnode * node = list->head, *tmp;\
+	struct listnode_sis * node = list->head, *tmp;\
 	while (node != NULL) {\
 		tmp=node->next;\
 		free(node);\
@@ -75,43 +65,43 @@ struct sisis_addr_components
 #endif /* IPv4 Version */
 
 /* IPv4 prefix structure. */
-struct prefix_ipv4
-{
-  u_char family;
-  u_char prefixlen;
-  struct in_addr prefix __attribute__ ((aligned (8)));
-};
+//struct prefix_ipv4
+//{
+//  u_char family;
+//  u_char prefixlen;
+//  struct in_addr prefix __attribute__ ((aligned (8)));
+//};
 
 /* IPv6 prefix structure. */
-#ifdef HAVE_IPV6
-struct prefix_ipv6
-{
-  u_char family;
-  u_char prefixlen;
-  struct in6_addr prefix __attribute__ ((aligned (8)));
-};
-#endif /* HAVE_IPV6 */
+//#ifdef HAVE_IPV6
+//struct prefix_ipv6
+//{
+//  u_char family;
+//  u_char prefixlen;
+//  struct in6_addr prefix __attribute__ ((aligned (8)));
+//};
+//#endif /* HAVE_IPV6 */
 
 /* IPv4 and IPv6 unified prefix structure. */
-struct prefix
-{
-  u_char family;
-  u_char prefixlen;
-  union 
-  {
-    u_char prefix;
-    struct in_addr prefix4;
-#ifdef HAVE_IPV6
-    struct in6_addr prefix6;
-#endif /* HAVE_IPV6 */
-    struct 
-    {
-      struct in_addr id;
-      struct in_addr adv_router;
-    } lp;
-    u_char val[8];
-  } u __attribute__ ((aligned (8)));
-};
+//struct prefix
+//{
+//  u_char family;
+//  u_char prefixlen;
+//  union 
+//  {
+//    u_char prefix;
+//    struct in_addr prefix4;
+//#ifdef HAVE_IPV6
+//    struct in6_addr prefix6;
+//#endif /* HAVE_IPV6 */
+//    struct 
+//    {
+//      struct in_addr id;
+//      struct in_addr adv_router;
+//    } lp;
+//    u_char val[8];
+//  } u __attribute__ ((aligned (8)));
+//};
 
 struct route_ipv4
 {

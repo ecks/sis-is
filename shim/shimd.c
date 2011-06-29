@@ -6,11 +6,12 @@
 #include "log.h"
 #include "sockopt.h"
 #include "linklist.h"
+#include "stream.h"
 
-#include "rib-comparison/shim_packet.h"
-#include "rib-comparison/shim_network.h"
-#include "rib-comparison/shim_sisis.h"
-#include "rib-comparison/shimd.h"
+#include "shim/shim_packet.h"
+#include "shim/shim_network.h"
+#include "shim/shim_sisis.h"
+#include "shim/shimd.h"
 
 static struct shim_master shim_master;
 

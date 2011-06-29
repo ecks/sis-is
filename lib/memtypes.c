@@ -256,6 +256,7 @@ struct memory_list memory_list_shim[] =
 {
   { MTYPE_SHIM,				"SHIM instance"				},
   { MTYPE_SHIM_SISIS_LISTENER,		"SHIM SISIS listen socket details"	},
+  { MTYPE_ROSPF6_SHIM_MESSAGE,		"ROSPF6 to Shim message"		},
   { -1, NULL }
 };
 
@@ -276,6 +277,6 @@ struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_isis,	"ISIS"	},
   { memory_list_bgp,	"BGP"	},
   { memory_list_sisis, "SISIS" },
-  { memory_list_sisis, "SHIM" },
+  { memory_list_shim, "SHIM" },
   { NULL, NULL},
 };

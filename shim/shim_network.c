@@ -7,10 +7,13 @@
 #include "prefix.h"
 
 #include "ospfd/ospfd.h"
-
+#include "ospf6d/ospf6_proto.h"
 extern struct zebra_privs_t shimd_privs;
 
-#include "rib-comparison/shim_network.h"
+#include "shim/shim_network.h"
+
+struct in6_addr allspfrouters6;
+struct in6_addr alldrouters6;
 
 int
 shim_sock_init(void)
@@ -57,6 +60,9 @@ shim_sock_init(void)
 #else
   zlog_warn ("Network: Don't set IPV6_CHECKSUM");
 #endif /* DISABLE_IPV6_CHECKSUM */
+
+  inet_pton (AF_INET6, ALLSPFROUTERS6, &allspfrouters6);
+  inet_pton (AF_INET6, ALLDROUTERS6, &alldrouters6);
 
   return shim_sock;
 }

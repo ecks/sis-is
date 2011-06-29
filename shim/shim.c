@@ -11,7 +11,7 @@
 
 #include "ospfd/ospfd.h"
 
-#include "rib-comparison/shimd.h"
+#include "shim/shimd.h"
 
 /* ospfd privileges */
 zebra_capabilities_t _caps_p [] =

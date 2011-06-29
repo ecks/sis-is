@@ -4,6 +4,10 @@
  * University of Delaware
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -17,12 +21,14 @@
 #include <sys/time.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <sockunion.h>
 
-#include "sisis_api.h"
+#include <zebra.h>
+#include "prefix.h"
+
 #include "sisis_structs.h"
+#include "sisis_api.h"
 #include "sisis_netlink.h"
-
-
 
 //#define TIME_DEBUG
 
@@ -37,14 +43,16 @@ char * sisis_listener_ip_addr = "127.0.0.1";
 unsigned int next_request_id = 1;
 
 // IPv4/IPv6 Ribs
-struct list * ipv4_rib_routes = NULL;
+struct list_sis * ipv4_rib_routes = NULL;
 #ifdef HAVE_IPV6
-struct list * ipv6_rib_routes = NULL;
+struct list_sis * ipv6_rib_routes = NULL;
 #endif /* HAVE_IPV6 */
 
 #ifdef USE_IPV6
 #include "sisis_addr_format.h"
 #endif /* USE_IPV6 */
+
+int sisis_socket_open();
 
 // Reregistration information
 pthread_mutex_t reregistration_array_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -752,7 +760,7 @@ int sisis_dump_kernel_routes()
  * Dump kernel routing table.
  * Returns zero on success.
  */
-int sisis_dump_kernel_ipv6_routes_to_tables(struct list ** rib)
+int sisis_dump_kernel_ipv6_routes_to_tables(struct list_sis ** rib)
 {
 	// Set up callbacks
 	struct sisis_netlink_routing_table_info info;
@@ -770,17 +778,30 @@ int sisis_dump_kernel_ipv6_routes_to_tables(struct list ** rib)
 /* Add an IPv4 Address to RIB. */
 int sisis_rib_add_ipv4 (struct route_ipv4 * route, void * data)
 {
-	struct list ** rib = &ipv4_rib_routes;
+	struct list_sis ** rib = &ipv4_rib_routes;
 	if (data != NULL)
 		rib = (struct list **)data;
-		
-	struct listnode * node = malloc(sizeof(struct listnode));
-	if (*rib != NULL && node != NULL)
-	{
-		node->data = (void *)route;
-		LIST_APPEND((*rib), node);
-	}
 	
+        struct listnode_sis * node = malloc(sizeof(struct listnode_sis));
+        if (*rib != NULL && node != NULL)	
+        {
+              node->data = (void *)route;
+              if(!(*rib)->head)
+              {
+                (*rib)->head = (*rib)->tail = node;
+                node->prev = node->next = NULL;
+                (*rib)->size=1;
+              }
+              else{
+                node->prev=(*rib)->tail;node->next=NULL;
+                (*rib)->tail->next=node;
+                (*rib)->tail=node;
+                (*rib)->size++;
+              } 
+        }
+//              LIST_APPEND((*rib), node);	
+//        }
+
 	/*
 	// Set up prefix
 	char prefix_str[INET_ADDRSTRLEN];
@@ -794,11 +815,11 @@ int sisis_rib_add_ipv4 (struct route_ipv4 * route, void * data)
 #ifdef HAVE_IPV6
 int sisis_rib_add_ipv6 (struct route_ipv6 * route, void * data)
 {
-	struct list ** rib = &ipv6_rib_routes;
+	struct list_sis ** rib = &ipv6_rib_routes;
 	if (data != NULL)
-		rib = (struct list **)data;
+		rib = (struct list_sis **)data;
 	
-	struct listnode * node = malloc(sizeof(struct listnode));
+	struct listnode_sis * node = malloc(sizeof(struct listnode_sis));
 	if (*rib != NULL && node != NULL)
 	{
 		node->data = (void *)route;
@@ -848,10 +869,10 @@ int unsubscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info)
  * Get SIS-IS addresses that match a given IP prefix.  It is the receiver's
  * responsibility to free the list when done with it.
  */
-struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
+struct list_sis * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 {
 	// Update kernel routes
-	struct list * rib = malloc(sizeof(*rib));
+	struct list_sis * rib = malloc(sizeof(*rib));
 	memset(rib, 0, sizeof(*rib));
 	sisis_dump_kernel_ipv6_routes_to_tables(&rib);
 	
@@ -885,11 +906,11 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 	inet_pton(AF_INET6, prefix_addr_str, &prefix_mask);
 	
 	// Create list of relevant SIS-IS addresses
-	struct list * rtn = malloc(sizeof(struct list));
+	struct list_sis * rtn = malloc(sizeof(struct list_sis));
 	if (rib != NULL && rtn != NULL)
 	{
 		memset(rtn, 0, sizeof(*rtn));
-		struct listnode * node;
+		struct listnode_sis * node;
 		LIST_FOREACH(rib, node)
 		{
 			struct route_ipv6 * route = (struct route_ipv6 *)node->data;
@@ -902,7 +923,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 			if (route->p->prefixlen == 128 && match)
 			{
 				// Add to list
-				struct listnode * new_node = malloc(sizeof(struct listnode));
+				struct listnode_sis * new_node = malloc(sizeof(struct listnode_sis));
 				if (new_node != NULL)
 				{
 					if ((new_node->data = malloc(sizeof(route->p->prefix))) != NULL)
@@ -934,7 +955,7 @@ struct prefix_ipv6 sisis_make_ipv6_prefix(char * addr, int prefix_len)
  * Get SIS-IS addresses that match a given ipv4 prefix.  It is the receivers
  * responsibility to free the list when done with it.
  */
-struct list * get_sisis_addrs_for_prefix(struct prefix_ipv4 * p)
+struct list_sis * get_sisis_addrs_for_prefix(struct prefix_ipv4 * p)
 {
 	// Update kernel routes
 	sisis_dump_kernel_routes();
@@ -949,11 +970,11 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv4 * p)
 	prefix_mask = htonl(prefix_mask);
 	
 	// Create list of relevant SIS-IS addresses
-	struct list * rtn = malloc(sizeof(struct list));
+	struct list_sis * rtn = malloc(sizeof(struct list_sis));
 	if (ipv4_rib_routes != NULL && rtn != NULL)
 	{
 		memset(rtn, 0, sizeof(*rtn));
-		struct listnode * node;
+		struct listnode_sis * node;
 		LIST_FOREACH(ipv4_rib_routes, node)
 		{
 			struct route_ipv4 * route = (struct route_ipv4 *)node->data;
@@ -962,7 +983,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv4 * p)
 			if (route->p->prefixlen == 32 && (route->p->prefix.s_addr & prefix_mask) == (p->prefix.s_addr & prefix_mask))
 			{
 				// Add to list
-				struct listnode * new_node = malloc(sizeof(struct listnode));
+				struct listnode_sis * new_node = malloc(sizeof(struct listnode_sis));
 				if (new_node != NULL)
 				{
 					if ((new_node->data = malloc(sizeof(route->p->prefix))) != NULL)
@@ -982,7 +1003,7 @@ struct list * get_sisis_addrs_for_prefix(struct prefix_ipv4 * p)
  * Get SIS-IS addresses for a specific process type.  It is the receivers
  * responsibility to free the list when done with it.
  */
-struct list * get_sisis_addrs_for_process_type(unsigned int ptype)
+struct list_sis * get_sisis_addrs_for_process_type(unsigned int ptype)
 {
 	// Create prefix
 	char prefix_addr_str[INET_ADDRSTRLEN+1];
@@ -1000,7 +1021,7 @@ struct list * get_sisis_addrs_for_process_type(unsigned int ptype)
  * Get SIS-IS addresses for a specific process type and host.  It is the receivers
  * responsibility to free the list when done with it.
  */
-struct list * get_sisis_addrs_for_process_type_and_host(unsigned int ptype, unsigned int host_num)
+struct list_sis * get_sisis_addrs_for_process_type_and_host(unsigned int ptype, unsigned int host_num)
 {
 	// Create prefix
 	char prefix_addr_str[INET_ADDRSTRLEN+1];
