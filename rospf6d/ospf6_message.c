@@ -29,6 +29,7 @@
 #include "linklist.h"
 #include "stream.h"
 #include "buffer.h"
+#include "sv.h"
 
 #include "ospf6_proto.h"
 #include "ospf6_lsa.h"
@@ -1147,7 +1148,6 @@ int
 ospf6_iobuf_size (unsigned int size)
 {
   u_char *recvnew, *sendnew;
-  u_char *shimrecvnew, *shimsendnew;
   struct stream *obufnew, *ibufnew;
   struct buffer *wbnew;
 
@@ -1155,11 +1155,11 @@ ospf6_iobuf_size (unsigned int size)
     return iobuflen;
 
   recvnew = XMALLOC (MTYPE_OSPF6_MESSAGE, size);
-  obufnew = stream_new(sizeof(recvnew) + sizeof(shimrecvnew));
+  obufnew = stream_new(size + ROSPF6_HEADER_SIZE);
   wbnew = buffer_new(0);
 
   sendnew = XMALLOC (MTYPE_OSPF6_MESSAGE, size);
-  ibufnew = stream_new(size + 8);
+  ibufnew = stream_new(size + ROSPF6_HEADER_SIZE);
 
   if (recvnew == NULL || sendnew == NULL)
     {
@@ -1192,6 +1192,91 @@ ospf6_iobuf_size (unsigned int size)
   iobuflen = size;
 
   return iobuflen;
+}
+
+int
+rospf6_receive (struct thread * thread)
+{
+  int sockfd;
+  int already;
+  struct stream * s;
+  uint16_t length, command;
+
+  printf("Receved message\n");
+
+  /* add next read thread */
+  sockfd = THREAD_FD (thread);
+
+  s = ibuf;
+
+  if ((already = stream_get_endp (s)) < SV_HEADER_SIZE)
+  {
+    ssize_t nbytes;
+    if (((nbytes = stream_read_try (s, sockfd, SV_HEADER_SIZE-already)) == 0) || (nbytes == -1))
+    {   
+      return -1; 
+    }   
+    
+    if(nbytes != (SV_HEADER_SIZE - already))
+    {   
+      thread_add_read (master, rospf6_receive, NULL, sockfd);
+      return 0;
+    }   
+    already = SV_HEADER_SIZE;
+  }
+
+  stream_set_getp(s, 0); 
+ 
+  /* read header packet. */
+  length = stream_getw (s);
+  command = stream_getw (s);
+
+  printf("length: %d\n", length);
+  printf("command: %d\n", command);
+
+  if(length > STREAM_SIZE(s))
+  {
+    struct stream * ns; 
+    zlog_warn("message size exceeds buffer size");
+    ns = stream_new(length);
+    stream_copy(ns, s);
+    stream_free(s);
+    s = ns;
+  }
+
+  if(already < length)
+  {
+    ssize_t nbytes;
+    if(((nbytes = stream_read_try(s, sockfd, length-already)) == 0) || nbytes == -1)
+    {
+      return -1;
+    }
+    if(nbytes != (length-already))
+    {
+      thread_add_read (master, rospf6_receive, NULL, sockfd);
+      return 0;
+    }
+  }
+
+  length -= SV_HEADER_SIZE;
+
+  switch (command)
+  {
+    case ROSPF6_MESSAGE_HELLO:
+      printf("Hello message received\n");  
+      break;
+    default:
+      break;
+  }
+
+  if (sockfd < 0)
+    return -1;
+
+  stream_reset (s); 
+
+  thread_add_read (master, rospf6_receive, NULL, sockfd);
+
+  return 0;
 }
 
 int
@@ -1386,13 +1471,6 @@ ospf6_send (struct in6_addr *src, struct in6_addr *dst,
 }
 
 
-static void
-rospf6_create_header (struct stream * s, uint16_t cmd)
-{
-  stream_putw (s, ROSPF6_HEADER_SIZE);
-  stream_putw (s, cmd);
-}
-
 int 
 rospf6_join_allspfrouters_send(struct thread *thread)
 {
@@ -1402,15 +1480,87 @@ rospf6_join_allspfrouters_send(struct thread *thread)
   oi = (struct ospf6_interface *) THREAD_ARG (thread);
 
   s = obuf;
-  stream_reset (s);
-  rospf6_create_header (s, ROSPF6_JOIN_ALLSPF);
+  sv_create_header (s, ROSPF6_JOIN_ALLSPF);
   stream_putl (s, oi->interface->ifindex);
 
   stream_putw_at(s, 0, stream_get_endp(s));
 
-  printf("Sending join_allspfrouters_msg\n");
+  printf("Sending join_allspfrouters_msg with index %d\n", oi->interface->ifindex);
   
   buffer_write(wb, ospf6_sock, STREAM_DATA(obuf), stream_get_endp(obuf));
+
+  stream_reset (s);
+
+  return 0;
+}
+
+int 
+rospf6_leave_allspfrouters_send(struct thread *thread)
+{
+  struct ospf6_interface *oi;
+  struct stream * s;
+
+  oi = (struct ospf6_interface *) THREAD_ARG (thread);
+
+  s = obuf;
+  sv_create_header (s, ROSPF6_LEAVE_ALLSPF);
+  stream_putl (s, oi->interface->ifindex);
+
+  stream_putw_at(s, 0, stream_get_endp(s));
+
+  printf("Sending leave_allspfrouters_msg with index %d\n", oi->interface->ifindex);
+  
+  buffer_write(wb, ospf6_sock, STREAM_DATA(obuf), stream_get_endp(obuf));
+
+  stream_reset (s);
+
+  return 0;
+}
+
+int 
+rospf6_join_alldrouters_send(struct thread *thread)
+{
+  struct ospf6_interface *oi;
+  struct stream * s;
+
+  oi = (struct ospf6_interface *) THREAD_ARG (thread);
+
+  s = obuf;
+  sv_create_header (s, ROSPF6_JOIN_ALLD);
+  stream_putl (s, oi->interface->ifindex);
+
+  stream_putw_at(s, 0, stream_get_endp(s));
+
+  printf("Sending join_alldrouters_msg with index %d\n", oi->interface->ifindex);
+  
+  buffer_write(wb, ospf6_sock, STREAM_DATA(obuf), stream_get_endp(obuf));
+
+  stream_reset (s);
+
+  return 0;
+}
+
+int 
+rospf6_leave_alldrouters_send(struct thread *thread)
+{
+  struct ospf6_interface *oi;
+  struct stream * s;
+
+  oi = (struct ospf6_interface *) THREAD_ARG (thread);
+
+  s = obuf;
+  sv_create_header (s, ROSPF6_LEAVE_ALLD);
+  stream_putl (s, oi->interface->ifindex);
+
+  stream_putw_at(s, 0, stream_get_endp(s));
+
+  printf("Sending leave_allspfrouters_msg with index %d\n", oi->interface->ifindex);
+  
+  buffer_write(wb, ospf6_sock, STREAM_DATA(obuf), stream_get_endp(obuf));
+
+  stream_reset (s);
+
+  return 0;
 }
 
 int
@@ -1475,7 +1625,79 @@ ospf6_hello_send (struct thread *thread)
   oh->type = OSPF6_MESSAGE_TYPE_HELLO;
   oh->length = htons (p - sendbuf);
 
-  ospf6_send (oi->linklocal_addr, &allspfrouters6, oi, oh);
+// temporarily comment out for now  ospf6_send (oi->linklocal_addr, &allspfrouters6, oi, oh);
+  return 0;
+}
+
+int
+rospf6_create_hello (struct ospf6_interface * oi, struct stream * s)
+{
+  struct listnode *node, *nnode;
+  struct ospf6_neighbor *on;
+
+  stream_putl(s, htonl (oi->interface->ifindex)); 
+  stream_putc(s, oi->priority);
+  stream_putc(s, oi->area->options[0]);
+  stream_putc(s, oi->area->options[1]);
+  stream_putc(s, oi->area->options[2]);
+  stream_putw(s, htons (oi->hello_interval));
+  stream_putw(s, htons (oi->dead_interval));
+  stream_putl(s, oi->drouter);
+  stream_putl(s, oi->bdrouter); 
+
+  for (ALL_LIST_ELEMENTS (oi->neighbor_list, node, nnode, on))
+  {
+    if (on->state < OSPF6_NEIGHBOR_INIT)
+      continue;
+
+    if (stream_get_size (s) > oi->ifmtu)
+    {
+      if (IS_OSPF6_DEBUG_MESSAGE (OSPF6_MESSAGE_TYPE_HELLO, SEND))
+        zlog_debug ("sending Hello message: exceeds I/F MTU");
+      break;
+    }
+    stream_putl(s, on->router_id);
+  }
+
+  return stream_get_size(s);
+}
+
+int
+rospf6_hello_send (struct thread *thread)
+{
+  struct ospf6_interface *oi;
+  struct stream * s;
+  u_int16_t length = ROSPF6_HEADER_SIZE;
+
+  oi = (struct ospf6_interface *) THREAD_ARG (thread);
+  oi->thread_send_hello = (struct thread *) NULL;
+
+  printf("Send hello message from rospf6\n");
+
+  if (oi->state <= OSPF6_INTERFACE_DOWN)
+    {
+      if (IS_OSPF6_DEBUG_MESSAGE (OSPF6_MESSAGE_TYPE_HELLO, SEND))
+        zlog_debug ("Unable to send Hello on down interface %s",
+                   oi->interface->name);
+      return 0;
+    }
+
+  /* set next thread */
+  oi->thread_send_hello = thread_add_timer (master, rospf6_hello_send,
+                                            oi, oi->hello_interval);
+  s = obuf;
+  stream_reset(s);
+
+  sv_create_header (s, ROSPF6_MESSAGE_HELLO);
+
+  length += rospf6_create_hello (oi, s);
+  
+  stream_putw_at(s, 0, stream_get_endp(s));
+
+  buffer_write(wb, ospf6_sock, STREAM_DATA(obuf), stream_get_endp(obuf));
+
+  stream_reset(s);
+
   return 0;
 }
 
@@ -1550,8 +1772,8 @@ ospf6_dbdesc_send (struct thread *thread)
   oh->type = OSPF6_MESSAGE_TYPE_DBDESC;
   oh->length = htons (p - sendbuf);
 
-  ospf6_send (on->ospf6_if->linklocal_addr, &on->linklocal_addr,
-              on->ospf6_if, oh);
+// temporarily comment out for now  ospf6_send (on->ospf6_if->linklocal_addr, &on->linklocal_addr,
+//              on->ospf6_if, oh);
   return 0;
 }
 
@@ -1744,8 +1966,8 @@ ospf6_lsupdate_send_neighbor (struct thread *thread)
   oh->type = OSPF6_MESSAGE_TYPE_LSUPDATE;
   oh->length = htons (p - sendbuf);
 
-  ospf6_send (on->ospf6_if->linklocal_addr, &on->linklocal_addr,
-              on->ospf6_if, oh);
+// temporarily comment out for now  ospf6_send (on->ospf6_if->linklocal_addr, &on->linklocal_addr,
+//              on->ospf6_if, oh);
 
   if (on->lsupdate_list->count != 0 ||
       on->retrans_list->count != 0)
@@ -1890,8 +2112,8 @@ ospf6_lsack_send_neighbor (struct thread *thread)
   oh->type = OSPF6_MESSAGE_TYPE_LSACK;
   oh->length = htons (p - sendbuf);
 
-  ospf6_send (on->ospf6_if->linklocal_addr, &on->linklocal_addr,
-              on->ospf6_if, oh);
+//  ospf6_send (on->ospf6_if->linklocal_addr, &on->linklocal_addr,
+//              on->ospf6_if, oh);
   return 0;
 }
 

@@ -3,6 +3,9 @@
 
 #define OSPF_MAX_PACKET_SIZE  65535U   /* includes IP Header size. */
 
-extern int shim_read (struct thread *thread);
-
+extern int shim_iobuf_size (unsigned int size);
+extern int shim_receive (struct thread *thread);
+extern int shim_hello_send (struct stream * s, struct shim_interface * si);
+extern void shim_send(struct in6_addr * src, struct in6_addr * dst, 
+	              struct shim_interface * si, struct ospf6_header * oh);
 #endif

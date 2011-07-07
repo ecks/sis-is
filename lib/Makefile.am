@@ -13,7 +13,7 @@ libzebra_la_SOURCES = \
 	filter.c routemap.c distribute.c stream.c str.c log.c plist.c \
 	zclient.c sockopt.c smux.c md5.c if_rmap.c keychain.c privs.c \
 	sigevent.c pqueue.c jhash.c memtypes.c workqueue.c \
-	sisis_api.c sisis_netlink.c
+	sisis_api.c sisis_netlink.c sv.c
 
 BUILT_SOURCES = memtypes.h route_types.h
 
@@ -29,7 +29,7 @@ pkginclude_HEADERS = \
 	plist.h zclient.h sockopt.h smux.h md5.h if_rmap.h keychain.h \
 	privs.h sigevent.h pqueue.h jhash.h zassert.h memtypes.h \
 	workqueue.h route_types.h sisis_api.h sisis_netlink.h sisis_structs.h \
-	sisis_process_types.h
+	sisis_process_types.h sv.h
 
 EXTRA_DIST = regex.c regex-gnu.h memtypes.awk route_types.awk route_types.txt
 

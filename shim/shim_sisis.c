@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include "stream.h"
+#include "buffer.h"
 #include <stdlib.h>
 #include <string.h>
 #include <sockopt.h>
@@ -13,6 +14,7 @@
 #include <memory.h>
 #include "log.h"
 #include "linklist.h"
+#include "sv.h"
 
 #include "sisis_structs.h"
 #include "sisis_api.h"
@@ -22,9 +24,13 @@ extern struct zebra_privs_t shimd_privs;
 
 #include "shim/shimd.h"
 #include "shim/shim_sisis.h"
+#include "shim/shim_network.h"
+#include "shim/shim_interface.h"
+#include "shim/shim_packet.h"
 #include "rospf6d/ospf6_message.h"
 
 #define BACKLOG 10
+
 int
 shim_sisis_init (uint64_t host_num)
 {
@@ -89,7 +95,6 @@ shim_sisis_init (uint64_t host_num)
 int
 shim_sisis_listener(int sock, struct sockaddr * sa, socklen_t salen)
 {
-  struct sisis_listener * listener;
   int ret,en;
 
   sockopt_reuseaddr(sock);
@@ -123,12 +128,7 @@ shim_sisis_listener(int sock, struct sockaddr * sa, socklen_t salen)
     return ret;
   }
 
-  listener = XMALLOC (MTYPE_SHIM_SISIS_LISTENER, sizeof(*listener));
-  listener->fd = sock;
-  listener->ibuf = stream_new(1500 + 8);
-  memcpy(&listener->su, sa, salen);
-  listener->thread = thread_add_read (master, shim_sisis_accept, listener, sock);
-  listnode_add (sm->listen_sockets, listener);
+  thread_add_read (master, shim_sisis_accept, NULL, sock);
 
   return 0;
 }
@@ -142,14 +142,13 @@ shim_sisis_accept(struct thread * thread)
   union sockunion su;
   char buf[SU_ADDRSTRLEN];
 
-  listener  = THREAD_ARG(thread);
   accept_sock = THREAD_FD (thread);
   if (accept_sock < 0)
     {   
       zlog_err ("accept_sock is negative value %d", accept_sock);
       return -1; 
     }   
-  listener->thread = thread_add_read (master, shim_sisis_accept, listener, accept_sock);
+  thread_add_read (master, shim_sisis_accept, NULL, accept_sock);
   
   sisis_sock = sockunion_accept(accept_sock, &su);
 
@@ -161,7 +160,14 @@ shim_sisis_accept(struct thread * thread)
   
   zlog_notice ("SISIS connection from host %s", inet_sutop (&su, buf));
 
+  listener = XMALLOC (MTYPE_SHIM_SISIS_LISTENER, sizeof(*listener));
+  listener->fd = accept_sock;
+  listener->ibuf = stream_new (SV_HEADER_SIZE + 1500);
+//  memcpy(&listener->su, sa, salen);
+  listener->sisis_fd = sisis_sock;
   listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
+  listnode_add (sm->listen_sockets, listener);
+
   return 0;
 }
 
@@ -171,7 +177,9 @@ shim_sisis_read(struct thread * thread)
   struct sisis_listener *listener;
   int sisis_sock;
   uint16_t length, command;
-  int nbytes;
+  int already;
+  u_int ifindex;
+  struct shim_interface * si;
 
   zlog_notice("Reading packet from SISIS connection!\n");
 
@@ -179,41 +187,119 @@ shim_sisis_read(struct thread * thread)
   listener = THREAD_ARG (thread);
   sisis_sock = THREAD_FD (thread);
 
-  /* prepare for next packet. */
-  listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
-
-  nbytes = stream_read_unblock (listener->ibuf, sisis_sock, 4);
-
-  if (nbytes < 0)
+  if ((already = stream_get_endp(listener->ibuf)) < SV_HEADER_SIZE)
   {
-    // error
-    return -1;
+    ssize_t nbytes;
+    if (((nbytes = stream_read_try (listener->ibuf, sisis_sock, SV_HEADER_SIZE-already)) == 0) || (nbytes == -1))
+    {
+      return -1;
+    }
+    
+    if(nbytes != (SV_HEADER_SIZE - already))
+    {
+      listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
+      return 0;
+    }
+    already = SV_HEADER_SIZE;
   }
 
-  if (nbytes == 0)
-  {
-    // didnt read anything
-    return -1;
-  }
-
-  if (stream_get_endp (listener->ibuf) != (4))
-  {
-    // didnt read whole stream
-    return -1;
-  }
-
-  /* read OSPF packet. */
+  stream_set_getp(listener->ibuf, 0);
+ 
+  /* read header packet. */
   length = stream_getw (listener->ibuf);
   command = stream_getw (listener->ibuf);
+
+  printf("length: %d\n", length);
+  printf("command: %d\n", command);
+
+  if(length > STREAM_SIZE(listener->ibuf))
+  {
+    struct stream * ns;
+    zlog_warn("message size exceeds buffer size");
+    ns = stream_new(length);
+    stream_copy(ns, listener->ibuf);
+    stream_free(listener->ibuf);
+    listener->ibuf = ns;
+  }
+
+  if(already < length)
+  {
+    ssize_t nbytes;
+    if(((nbytes = stream_read_try(listener->ibuf, sisis_sock, length-already)) == 0) || nbytes == -1)
+    {
+      return -1;
+    } 
+    if(nbytes != (length-already))
+    {
+      listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
+      return 0;
+    }
+  }
+
+  length -= SV_HEADER_SIZE;
 
   switch(command)
   {
     case ROSPF6_JOIN_ALLSPF:
       printf("join allspf received\n");
+      ifindex = stream_getl(listener->ibuf);
+      shim_join_allspfrouters (ifindex);
+      printf("index: %d\n", ifindex);
+      break;
+    case ROSPF6_LEAVE_ALLSPF:
+      printf("leave allspf received\n");
+      ifindex = stream_getl(listener->ibuf);
+      shim_leave_allspfrouters (ifindex);
+      printf("index: %d\n", ifindex);
+      break;
+    case ROSPF6_JOIN_ALLD:
+      printf("join alld received\n");
+      ifindex = stream_getl(listener->ibuf);
+      shim_join_alldrouters (ifindex);
+      printf("index: %d\n", ifindex);
+      break;
+    case ROSPF6_LEAVE_ALLD:
+      printf("leave alld received\n");
+      ifindex = stream_getl(listener->ibuf);
+      shim_leave_alldrouters (ifindex);
+      printf("index: %d\n", ifindex);
+      break;
+    case ROSPF6_MESSAGE_HELLO:
+      printf("hello message received\n");
+      ifindex = ntohl(stream_getl(listener->ibuf));
+      printf("index: %d\n", ifindex);
+      si = shim_interface_lookup_by_ifindex (ifindex);
+      shim_hello_send(listener->ibuf, si);
       break;
     default:
       break;
   }
+
+  if (sisis_sock < 0) 
+    /* Connection was closed during packet processing. */
+    return -1;
+
+  /* Register read thread. */
+  stream_reset(listener->ibuf);
  
+  /* prepare for next packet. */
+  listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
+
+  return 0;
+}
+
+int
+shim_sisis_write (struct stream * obuf, struct buffer * wb)
+{
+  struct listnode * node, * nnode;
+  struct sisis_listener * listener;
+
+  printf("num of listeners %d\n", listcount(sm->listen_sockets));
+  for(ALL_LIST_ELEMENTS (sm->listen_sockets, node,  nnode, listener))
+  {
+    printf("listener fd: %d\n", listener->sisis_fd);
+    buffer_write(wb, listener->sisis_fd, STREAM_DATA(obuf), stream_get_endp(obuf));
+  }
+
   return 0;
 }

@@ -7,17 +7,17 @@ INSTALL_SDATA=@INSTALL@ -m 600
 AM_CFLAGS = $(PICFLAGS)
 AM_LDFLAGS = $(PILDFLAGS)
 
-#noinst_LIBRARIES = librc.a
+noinst_LIBRARIES = libshim.a
 sbin_PROGRAMS = shim
 
-#librc_a_SOURCES = \
-#	r_lsdb.c r_lsa.c
+libshim_a_SOURCES = \
+	shim_zebra.c shimd.c shim_network.c shim_interface.c shim_packet.c shim_sisis.c shim_top.c
 
-#noinst_HEADERS = \
-#	shim.h
+noinst_HEADERS = \
+	shim_zebra.h shimd.h shim_network.h shim_interface.h shim_packet.h shim_sisis.h shim_top.h
 
-shim_SOURCES = shim.c shimd.c shim_network.c shim_packet.c shim_sisis.c
-#rc_LDADD = librc.a ../lib/libzebra.la @LIBCAP@ @LIBM@
+shim_SOURCES = shim.c $(libshim_a_SOURCES)
+
 shim_LDADD = ../lib/libzebra.la @LIBCAP@
 
 examplesdir = $(exampledir)

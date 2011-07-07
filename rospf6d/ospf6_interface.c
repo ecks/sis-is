@@ -190,7 +190,7 @@ ospf6_interface_enable (struct ospf6_interface *oi)
   UNSET_FLAG (oi->flag, OSPF6_INTERFACE_DISABLE);
 
   oi->thread_send_hello =
-    thread_add_event (master, ospf6_hello_send, oi, 0);
+    thread_add_event (master, rospf6_hello_send, oi, 0);
 }
 
 void
@@ -403,7 +403,8 @@ ospf6_interface_state_change (u_char next_state, struct ospf6_interface *oi)
        prev_state != OSPF6_INTERFACE_BDR) &&
       (next_state == OSPF6_INTERFACE_DR ||
        next_state == OSPF6_INTERFACE_BDR))
-    ospf6_join_alldrouters (oi->interface->ifindex);
+//    ospf6_join_alldrouters (oi->interface->ifindex);
+      thread_add_event (master, rospf6_join_alldrouters_send, oi, 0);
 
   OSPF6_ROUTER_LSA_SCHEDULE (oi->area);
   if (next_state == OSPF6_INTERFACE_DOWN)
@@ -620,7 +621,7 @@ interface_up (struct thread *thread)
 
   /* Schedule Hello */
   if (! CHECK_FLAG (oi->flag, OSPF6_INTERFACE_PASSIVE))
-    thread_add_event (master, ospf6_hello_send, oi, 0);
+    thread_add_event (master, rospf6_hello_send, oi, 0);
 
   /* decide next interface state */
   if (if_is_pointopoint (oi->interface))
@@ -708,7 +709,8 @@ interface_down (struct thread *thread)
 
   /* Leave AllSPFRouters */
   if (oi->state > OSPF6_INTERFACE_DOWN)
-    ospf6_leave_allspfrouters (oi->interface->ifindex);
+    thread_add_event (master, rospf6_leave_allspfrouters_send, oi, 0);
+//    ospf6_leave_allspfrouters (oi->interface->ifindex);
 
   ospf6_interface_state_change (OSPF6_INTERFACE_DOWN, oi);
 
@@ -1365,7 +1367,7 @@ DEFUN (no_ipv6_ospf6_passive,
   UNSET_FLAG (oi->flag, OSPF6_INTERFACE_PASSIVE);
   THREAD_OFF (oi->thread_send_hello);
   oi->thread_send_hello =
-    thread_add_event (master, ospf6_hello_send, oi, 0);
+    thread_add_event (master, rospf6_hello_send, oi, 0);
 
   return CMD_SUCCESS;
 }

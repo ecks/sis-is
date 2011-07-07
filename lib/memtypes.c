@@ -257,6 +257,7 @@ struct memory_list memory_list_shim[] =
   { MTYPE_SHIM,				"SHIM instance"				},
   { MTYPE_SHIM_SISIS_LISTENER,		"SHIM SISIS listen socket details"	},
   { MTYPE_ROSPF6_SHIM_MESSAGE,		"ROSPF6 to Shim message"		},
+  { MTYPE_SHIM_IF,                      "SHIM interface"			},
   { -1, NULL }
 };
 

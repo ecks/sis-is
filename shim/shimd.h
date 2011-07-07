@@ -1,13 +1,6 @@
 #ifndef _ZEBRA_SHIMD_H
 #define _ZEBRA_SHIMD_H
 
-struct shim_master
-{
-  struct thread_master *master;
-  struct list * listen_sockets;
-  time_t start_time;
-};
-
 struct shim
 {
   struct thread *t_write;  
@@ -20,8 +13,17 @@ struct shim
   struct stream *obuf;
 };
 
+struct shim_master
+{
+  struct thread_master *master;
+  struct list * listen_sockets;
+  time_t start_time;
+  struct shim * shim;
+};
+
 extern struct shim_master *sm;
 extern struct thread_master *master;
+extern struct shim * shim;
 
 extern void shim_init (uint64_t hostnum);
 extern struct shim * shim_new (uint64_t hostnum);

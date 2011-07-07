@@ -86,6 +86,7 @@ enum node_type
   BGP_IPV6M_NODE,		/* BGP IPv6 multicast address family. */
   OSPF_NODE,			/* OSPF protocol mode */
   OSPF6_NODE,			/* OSPF protocol for IPv6 mode */
+  SHIM_NODE,			/* SHIM protocol mode node */
   ISIS_NODE,			/* ISIS protocol mode */
   MASC_NODE,			/* MASC for multicast.  */
   IRDP_NODE,			/* ICMP Router Discovery Protocol mode. */ 

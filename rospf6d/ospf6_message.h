@@ -24,9 +24,13 @@
 
 #define OSPF6_MESSAGE_BUFSIZ  4096
 
-#define ROSPF6_HEADER_SIZE             6
+#define ROSPF6_HEADER_SIZE             4
 
 #define ROSPF6_JOIN_ALLSPF	       0
+#define ROSPF6_LEAVE_ALLSPF	       1
+#define ROSPF6_JOIN_ALLD	       2
+#define ROSPF6_LEAVE_ALLD	       3
+#define ROSPF6_MESSAGE_HELLO	       4
 
 /* Debug option */
 extern unsigned char conf_debug_ospf6_message[];
@@ -128,8 +132,10 @@ extern void ospf6_lsack_print (struct ospf6_header *);
 
 extern int ospf6_iobuf_size (unsigned int size);
 extern int ospf6_receive (struct thread *thread);
+extern int rospf6_receive (struct thread *thread);
 
 extern int ospf6_hello_send (struct thread *thread);
+extern int rospf6_hello_send (struct thread *thread);
 extern int ospf6_dbdesc_send (struct thread *thread);
 extern int ospf6_dbdesc_send_newone (struct thread *thread);
 extern int ospf6_lsreq_send (struct thread *thread);
@@ -142,5 +148,9 @@ extern int config_write_ospf6_debug_message (struct vty *);
 extern void install_element_ospf6_debug_message (void);
 
 extern int rospf6_join_allspfrouters_send(struct thread *thread);
+extern int rospf6_leave_allspfrouters_send(struct thread *thread);
+extern int rospf6_join_alldrouters_send(struct thread *thread);
+extern int rospf6_leave_alldrouters_send(struct thread *thread);
+
 #endif /* OSPF6_MESSAGE_H */
 

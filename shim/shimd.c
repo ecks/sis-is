@@ -8,19 +8,27 @@
 #include "linklist.h"
 #include "stream.h"
 
+#include "shim/shim_interface.h"
+#include "rospf6d/ospf6_message.h"
 #include "shim/shim_packet.h"
 #include "shim/shim_network.h"
 #include "shim/shim_sisis.h"
+#include "shim/shim_zebra.h"
 #include "shim/shimd.h"
 
 static struct shim_master shim_master;
 
 struct shim_master *sm;
 
+struct shim * shim;
+
 void
 shim_init (uint64_t host_num)
 {
+  shim_top_init ();
+  shim_zebra_init ();
   struct shim * ns = shim_new (host_num);
+  shim = ns;
 //  listnode_add(sm->listen_sockets, ns); // is this necessary ?
 }
 
@@ -43,7 +51,7 @@ shim_new (uint64_t host_num)
              OSPF_MAX_PACKET_SIZE+1);
     exit(1);
   }
-  new->t_read = thread_add_read (master, shim_read, new, new->fd);
+  new->t_read = thread_add_read (master, shim_receive, new, new->fd);
 
   // internal socket to sisis
   if ((new->sis_fd = shim_sisis_init(host_num)) < 0)
@@ -90,5 +98,6 @@ shim_master_init()
   sm = &shim_master;
   sm->master = thread_master_create ();
   sm->listen_sockets = list_new();
+  sm->shim = NULL;
   sm->start_time = quagga_time (NULL);
 }

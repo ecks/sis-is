@@ -145,6 +145,7 @@ ospf6_serv_sock (void)
   return 0;
 }
 
+// deprecated
 void
 ospf6_join_allspfrouters (u_int ifindex)
 {
@@ -172,20 +173,21 @@ ospf6_join_allspfrouters (u_int ifindex)
 #endif
 }
 
+// deprecated
 void
 ospf6_leave_allspfrouters (u_int ifindex)
 {
-  struct ipv6_mreq mreq6;
+//  struct ipv6_mreq mreq6;
 
-  assert (ifindex);
-  mreq6.ipv6mr_interface = ifindex;
-  memcpy (&mreq6.ipv6mr_multiaddr, &allspfrouters6,
-          sizeof (struct in6_addr));
+//  assert (ifindex);
+//  mreq6.ipv6mr_interface = ifindex;
+//  memcpy (&mreq6.ipv6mr_multiaddr, &allspfrouters6,
+//          sizeof (struct in6_addr));
 
-  if (setsockopt (ospf6_sock, IPPROTO_IPV6, IPV6_LEAVE_GROUP,
-                  &mreq6, sizeof (mreq6)) < 0)
-    zlog_warn ("Network: Leave AllSPFRouters on ifindex %d Failed: %s",
-               ifindex, safe_strerror (errno));
+//  if (setsockopt (ospf6_sock, IPPROTO_IPV6, IPV6_LEAVE_GROUP,
+//                  &mreq6, sizeof (mreq6)) < 0)
+//    zlog_warn ("Network: Leave AllSPFRouters on ifindex %d Failed: %s",
+//               ifindex, safe_strerror (errno));
 #if 0
   else
     zlog_debug ("Network: Leave AllSPFRouters on ifindex %d", ifindex);
