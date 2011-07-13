@@ -266,7 +266,6 @@ shim_recvmsg(struct in6_addr * src, struct in6_addr * dst,
   if (ifindex)
   {
     *ifindex = pktinfo->ipi6_ifindex;
-    printf("ifindex: %d\n", *ifindex);
   }
   if (dst)
     memcpy (dst, &pktinfo->ipi6_addr, sizeof (struct in6_addr));

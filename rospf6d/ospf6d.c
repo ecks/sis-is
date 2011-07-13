@@ -1758,7 +1758,7 @@ DEFUN (show_ipv6_ospf6_linkstate_detail,
 
 /* Install ospf related commands. */
 void
-ospf6_init (void)
+ospf6_init (uint64_t host_num)
 {
   ospf6_top_init ();
   ospf6_area_init ();
@@ -1885,8 +1885,7 @@ ospf6_init (void)
   INSTALL (ENABLE, database_type_self_originated_linkstate_id_detail_cmd);
 
   /* Make ospf protocol socket. */
-  ospf6_serv_sock ();
-  printf("sockfd: %d\n", ospf6_sock);
+  ospf6_serv_sock (host_num);
   thread_add_read (master, rospf6_receive, NULL, ospf6_sock);
 }
 

@@ -26,8 +26,8 @@ extern struct zebra_privs_t shimd_privs;
 #include "shim/shim_sisis.h"
 #include "shim/shim_network.h"
 #include "shim/shim_interface.h"
-#include "shim/shim_packet.h"
 #include "rospf6d/ospf6_message.h"
+#include "shim/shim_packet.h"
 
 #define BACKLOG 10
 
@@ -90,6 +90,66 @@ shim_sisis_init (uint64_t host_num)
 //  }
 
   return sockfd;
+}
+
+unsigned int
+number_of_sisis_addrs_for_process_type (unsigned int ptype) 
+{
+  char addr[INET6_ADDRSTRLEN+1];  
+  unsigned int lsize;
+
+  sisis_create_addr(addr, (uint64_t)ptype, (uint64_t)0, (uint64_t)0, (uint64_t)0, (uint64_t)0); 
+  struct prefix_ipv6 prefix = sisis_make_ipv6_prefix(addr, 37);
+  struct list_sis * addrs = get_sisis_addrs_for_prefix(&prefix);
+
+  lsize = addrs->size;
+
+  FREE_LINKED_LIST (addrs);
+  return lsize;
+}
+
+unsigned int
+are_checksums_same (void)
+{
+  int same = 0;
+  struct listnode * node, * nnode;
+  struct sisis_listener * listener;
+  struct sisis_listener * listener_swp = (struct sisis_listener *)listgetdata(listhead(sm->listen_sockets));
+  u_int16_t chsum_swp = listener_swp->chksum;
+
+  for(ALL_LIST_ELEMENTS (sm->listen_sockets, node, nnode, listener))
+  {
+    zlog_debug("checksum: %d\n", listener->chksum);
+    if(listener->chksum == chsum_swp)
+    {
+      same = 1;
+      chsum_swp = listener->chksum;
+    }
+    else
+    {
+      return 0;
+     } 
+  }  
+
+  return same;
+}
+
+void
+reset_checksums (void)
+{
+  struct listnode * node, * nnode;
+  struct sisis_listener * listener;
+
+  for(ALL_LIST_ELEMENTS (sm->listen_sockets, node, nnode, listener))
+  {
+    listener->chksum = 0;
+  }
+}
+
+unsigned int 
+number_of_listeners (void)
+{
+  return listcount(sm->listen_sockets);
 }
 
 int
@@ -176,10 +236,12 @@ shim_sisis_read(struct thread * thread)
 {
   struct sisis_listener *listener;
   int sisis_sock;
-  uint16_t length, command;
+  uint16_t length, command, checksum;
   int already;
   u_int ifindex;
   struct shim_interface * si;
+  struct in6_addr src;
+  struct in6_addr dst;
 
   zlog_notice("Reading packet from SISIS connection!\n");
 
@@ -209,8 +271,13 @@ shim_sisis_read(struct thread * thread)
   length = stream_getw (listener->ibuf);
   command = stream_getw (listener->ibuf);
 
-  printf("length: %d\n", length);
-  printf("command: %d\n", command);
+  // will be 0 so may be discarded
+  stream_get (&src, listener->ibuf, sizeof (struct in6_addr));
+  stream_get (&dst, listener->ibuf, sizeof (struct in6_addr));
+
+  checksum = stream_getw (listener->ibuf);
+
+  zlog_debug("SISIS: length: %d, command: %d, checksum: %d on sock %d\n", length, command, checksum, sisis_sock);
 
   if(length > STREAM_SIZE(listener->ibuf))
   {
@@ -240,36 +307,56 @@ shim_sisis_read(struct thread * thread)
 
   switch(command)
   {
-    case ROSPF6_JOIN_ALLSPF:
-      printf("join allspf received\n");
+    case SV_JOIN_ALLSPF:
+      zlog_debug("join allspf received");
       ifindex = stream_getl(listener->ibuf);
       shim_join_allspfrouters (ifindex);
-      printf("index: %d\n", ifindex);
+      zlog_debug("index: %d", ifindex);
       break;
-    case ROSPF6_LEAVE_ALLSPF:
-      printf("leave allspf received\n");
+    case SV_LEAVE_ALLSPF:
+      zlog_debug("leave allspf received");
       ifindex = stream_getl(listener->ibuf);
       shim_leave_allspfrouters (ifindex);
-      printf("index: %d\n", ifindex);
+      zlog_debug("index: %d\n", ifindex);
       break;
-    case ROSPF6_JOIN_ALLD:
-      printf("join alld received\n");
+    case SV_JOIN_ALLD:
+      zlog_debug("join alld received");
       ifindex = stream_getl(listener->ibuf);
       shim_join_alldrouters (ifindex);
-      printf("index: %d\n", ifindex);
+      zlog_debug("index: %d", ifindex);
       break;
-    case ROSPF6_LEAVE_ALLD:
-      printf("leave alld received\n");
+    case SV_LEAVE_ALLD:
+      zlog_debug("leave alld received");
       ifindex = stream_getl(listener->ibuf);
       shim_leave_alldrouters (ifindex);
-      printf("index: %d\n", ifindex);
+      zlog_debug("index: %d", ifindex);
       break;
-    case ROSPF6_MESSAGE_HELLO:
-      printf("hello message received\n");
-      ifindex = ntohl(stream_getl(listener->ibuf));
-      printf("index: %d\n", ifindex);
-      si = shim_interface_lookup_by_ifindex (ifindex);
-      shim_hello_send(listener->ibuf, si);
+    case SV_MESSAGE:
+      zlog_debug("SISIS hello message received");
+      unsigned int num_of_addrs = number_of_sisis_addrs_for_process_type(SISIS_PTYPE_RIBCOMP_OSPF6);
+      unsigned int num_of_listeners = number_of_listeners();
+      zlog_debug("num of listeners: %d, num of addrs: %d", num_of_listeners, num_of_addrs);
+      float received_ratio = num_of_listeners/num_of_addrs;;
+      listener->chksum = checksum;
+      if(received_ratio > (1/2))
+      { 
+        if(are_checksums_same())
+        {
+          ifindex = ntohl(stream_getl(listener->ibuf));
+          zlog_debug("index: %d", ifindex);
+          si = shim_interface_lookup_by_ifindex (ifindex);
+          reset_checksums();
+          shim_hello_send(listener->ibuf, si);
+        }
+        else
+        { 
+          zlog_notice("Checksums are not all the same");
+        }
+      } 
+      else
+      {
+        zlog_notice("Not enough processes have sent their data: buffering ...");
+      }
       break;
     default:
       break;

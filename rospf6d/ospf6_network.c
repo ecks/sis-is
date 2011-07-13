@@ -79,7 +79,7 @@ ospf6_set_checksum (void)
 
 /* Make ospf6d's server socket. */
 int
-ospf6_serv_sock (void)
+ospf6_serv_sock (uint64_t host_num)
 {
   struct in6_addr * shim_addr;
   char  s_addr[INET6_ADDRSTRLEN+1];
@@ -95,6 +95,8 @@ ospf6_serv_sock (void)
 
   inet_ntop(AF_INET6, shim_addr, s_addr, INET6_ADDRSTRLEN+1);
   printf("done getting shim addr: %s\n", s_addr);
+
+  rospf6_sisis_register(host_num);
   
   // Set up socket address info
   struct addrinfo hints, *addr;
@@ -127,6 +129,8 @@ ospf6_serv_sock (void)
 
   if (ospf6d_privs.change (ZPRIVS_LOWER))
       zlog_err ("ospf_sock_init: could not lower privs");
+
+  sleep(1);  // wait for all other processes to register
 
   /* set socket options */
 //#if 1

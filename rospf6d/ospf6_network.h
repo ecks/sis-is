@@ -34,7 +34,7 @@ extern void ospf6_reset_mcastloop (void);
 extern void ospf6_set_pktinfo (void);
 extern void ospf6_set_checksum (void);
 
-extern int ospf6_serv_sock (void);
+extern int ospf6_serv_sock (uint64_t host_num);
 
 extern void ospf6_join_allspfrouters (u_int);
 extern void ospf6_leave_allspfrouters (u_int);

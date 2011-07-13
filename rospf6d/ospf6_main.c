@@ -78,7 +78,8 @@ struct option longopts[] =
   { "group",       required_argument, NULL, 'g'},
   { "version",     no_argument,       NULL, 'v'},
   { "dryrun",      no_argument,       NULL, 'C'},
-  { "help",        no_argument,       NULL, 'h'},
+  { "help",        no_argument,       NULL, 'h'}, 
+  { "host_num",    no_argument,       NULL, 'n'},
   { 0 }
 };
 
@@ -114,6 +115,7 @@ Daemon which manages OSPF version 3.\n\n\
 -P, --vty_port     Set vty's port number\n\
 -u, --user         User to run as\n\
 -g, --group        Group to run as\n\
+-n, --host_num     Host on which process is running\n\
 -v, --version      Print program version\n\
 -C, --dryrun       Check configuration for validity and exit\n\
 -h, --help         Display this help and exit\n\
@@ -187,6 +189,7 @@ main (int argc, char *argv[], char *envp[])
   char *config_file = NULL;
   struct thread thread;
   int dryrun = 0;
+  uint64_t host_num = 1;
 
   /* Set umask before anything for security */
   umask (0027);
@@ -197,7 +200,7 @@ main (int argc, char *argv[], char *envp[])
   /* Command line argument treatment. */
   while (1) 
     {
-      opt = getopt_long (argc, argv, "df:i:hp:A:P:u:g:vC", longopts, 0);
+      opt = getopt_long (argc, argv, "df:i:hp:A:P:u:g:vCn:", longopts, 0);
     
       if (opt == EOF)
         break;
@@ -246,6 +249,8 @@ main (int argc, char *argv[], char *envp[])
         case 'h':
           usage (progname, 0);
           break;
+        case 'n': 
+          host_num = optarg;
         default:
           usage (progname, 1);
           break;
@@ -270,7 +275,7 @@ main (int argc, char *argv[], char *envp[])
   prefix_list_init ();
 
   /* initialize ospf6 */
-  ospf6_init ();
+  ospf6_init (host_num);
 
   /* sort command vector */
   sort_node ();

@@ -153,6 +153,10 @@ main (int argc, char *argv[], char *envp[])
   shim_master_init();
   master = sm->master;
 
+  /* Initialization */
+  zlog_default = openzlog (progname, ZLOG_SHIM,
+                           LOG_CONS|LOG_NDELAY|LOG_PID,
+                           LOG_DAEMON);
   zprivs_init (&shimd_privs);
   signal_init (master, Q_SIGC(shim_signals), shim_signals);
   cmd_init(1);

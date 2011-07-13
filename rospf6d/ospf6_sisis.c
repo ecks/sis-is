@@ -24,3 +24,27 @@ get_shim_addr()
   } 
   return NULL;
 }
+
+void
+rospf6_sisis_register (uint64_t host_num)
+{
+  uint64_t ptype, ptype_version, pid, timestamp;
+  char sisis_addr[INET6_ADDRSTRLEN];
+
+  // Store process type
+  ptype = (uint64_t)SISIS_PTYPE_RIBCOMP_OSPF6;
+  ptype_version = (uint64_t)VERSION;
+
+  // Get pid
+  pid = getpid();        // Get start time
+  struct timeval tv; 
+  gettimeofday(&tv, NULL);
+  timestamp = (tv.tv_sec * 100 + (tv.tv_usec / 10000)) & 0x00000000ffffffffLLU;   // In 100ths of seconds
+
+  // Register SIS-IS address
+  if (sisis_register(sisis_addr, ptype, ptype_version, host_num, pid, timestamp) != 0)
+  {
+    zlog_notice("Failed to register SIS-IS address.");
+    exit(1);    
+  }
+}

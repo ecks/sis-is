@@ -17,6 +17,9 @@
 #include "shim/shim_packet.h"
 #include "shim/shim_sisis.h"
 
+const char *ospf6_message_type_str[] =
+  { "Unknown", "Hello", "DbDesc", "LSReq", "LSUpdate", "LSAck" };
+
 static u_char * recvbuf = NULL;
 static u_char * sendbuf = NULL;
 static struct buffer * wb = NULL;
@@ -59,6 +62,57 @@ shim_iobuf_size (unsigned int size)
   return iobuflen;
 }
 
+
+static void
+shim_header_print (struct ospf6_header *oh)
+{
+  char router_id[16], area_id[16];
+  inet_ntop (AF_INET, &oh->router_id, router_id, sizeof (router_id));
+  inet_ntop (AF_INET, &oh->area_id, area_id, sizeof (area_id));
+
+  zlog_debug ("    OSPFv%d Type:%d Len:%hu Router-ID:%s",
+             oh->version, oh->type, ntohs (oh->length), router_id);
+  zlog_debug ("    Area-ID:%s Cksum:%hx Instance-ID:%d",
+             area_id, ntohs (oh->checksum), oh->instance_id);
+}
+
+void
+shim_hello_print (struct ospf6_header *oh)
+{
+  struct ospf6_hello *hello;
+  char options[16];
+  char drouter[16], bdrouter[16], neighbor[16];
+  char *p;
+
+  shim_header_print (oh);
+  assert (oh->type == OSPF6_MESSAGE_TYPE_HELLO);
+
+  hello = (struct ospf6_hello *)
+    ((caddr_t) oh + sizeof (struct ospf6_header));
+
+  inet_ntop (AF_INET, &hello->drouter, drouter, sizeof (drouter));
+  inet_ntop (AF_INET, &hello->bdrouter, bdrouter, sizeof (bdrouter));
+//  ospf6_options_printbuf (hello->options, options, sizeof (options)); 
+  char * opt = "N/A";
+  memcpy(options, opt, sizeof("N/A"));
+  zlog_debug ("    I/F-Id:%ld Priority:%d Option:%s",
+             (u_long) ntohl (hello->interface_id), hello->priority, options);
+  zlog_debug ("    HelloInterval:%hu DeadInterval:%hu",
+             ntohs (hello->hello_interval), ntohs (hello->dead_interval));
+  zlog_debug ("    DR:%s BDR:%s", drouter, bdrouter);
+
+  for (p = (char *) ((caddr_t) hello + sizeof (struct ospf6_hello));
+       p + sizeof (u_int32_t) <= OSPF6_MESSAGE_END (oh);
+       p += sizeof (u_int32_t))
+    {
+      inet_ntop (AF_INET, (void *) p, neighbor, sizeof (neighbor));
+      zlog_debug ("    Neighbor: %s", neighbor);
+    }
+
+  if (p != OSPF6_MESSAGE_END (oh))
+    zlog_debug ("Trailing garbage exists");
+}
+
 int 
 shim_receive (struct thread * thread)
 {
@@ -93,15 +147,15 @@ shim_receive (struct thread * thread)
   ifindex = 0;
 //  memset (recvbuf, 0, iobuflen);
 //  iovector[0].iov_base = recvbuf;
-  iovector[0].iov_len = iobuflen;
+//  iovector[0].iov_len = iobuflen;
 //  iovector[1].iov_base = NULL;
 //  iovector[1].iov_len = 0;
 
-  obuf = stream_new (SV_HEADER_SIZE + iobuflen);
-  sv_create_header (obuf, ROSPF6_MESSAGE_HELLO);
+//  obuf = stream_new (SV_HEADER_SIZE + iobuflen);
+//  sv_create_header (obuf, SV_MESSAGE);
 
-  printf("iobuflen: %d\n", iobuflen);
-  len = shim_recvmsg (&src, &dst, &ifindex, iovector, shim->fd, obuf, iobuflen);
+  obuf = stream_new (2000);
+  len = shim_recvmsg (&src, &dst, &ifindex, iovector, shim->fd, obuf, 2000);
   if (len > iobuflen)
   {    
     zlog_err ("Excess message read");
@@ -115,6 +169,11 @@ shim_receive (struct thread * thread)
 
   stream_putw_at(obuf, 0, stream_get_endp(obuf));
 
+  size_t endp = stream_get_endp (obuf);
+  obuf->endp = 4; 
+  stream_put (obuf, &src, sizeof (struct in6_addr));
+  stream_put (obuf, &dst, sizeof (struct in6_addr));
+
   si = shim_interface_lookup_by_ifindex (ifindex);
   if (si == NULL)
   {    
@@ -122,10 +181,32 @@ shim_receive (struct thread * thread)
     return 0;
   } 
 
-  shim_sisis_write (obuf, wb); 
-/*  oh = (struct ospf6_header *) STREAM_DATA(ibuf);
-
+/*  oh = (struct ospf6_header *) STREAM_DATA(obuf);
   switch (oh->type)
+  {    
+    case OSPF6_MESSAGE_TYPE_HELLO:
+      shim_hello_print (oh);
+      break;
+    case OSPF6_MESSAGE_TYPE_DBDESC:
+//      ospf6_dbdesc_print (oh);
+      break;
+    case OSPF6_MESSAGE_TYPE_LSREQ:
+//      ospf6_lsreq_print (oh);
+      break;
+    case OSPF6_MESSAGE_TYPE_LSUPDATE:
+//      ospf6_lsupdate_print (oh);
+      break;
+    case OSPF6_MESSAGE_TYPE_LSACK:
+//      ospf6_lsack_print (oh);
+      break;
+    default:
+      zlog_debug ("Unknown message");
+      break;
+  } */
+
+  shim_sisis_write (obuf, wb); 
+
+/*  switch (oh->type)
   {
     case OSPF6_MESSAGE_TYPE_HELLO:
       zlog_notice("hello");
@@ -193,6 +274,7 @@ shim_send(struct in6_addr * src, struct in6_addr * dst,
 	  struct shim_interface * si, struct ospf6_header * oh)
 {
   int len;
+  char srcname[64], dstname[64];
   struct iovec iovector[2];
     /* initialize */
   iovector[0].iov_base = (caddr_t) oh;
@@ -210,6 +292,42 @@ shim_send(struct in6_addr * src, struct in6_addr * dst,
   oh->instance_id = si->instance_id;
   oh->reserved = 0;
 
+  /* Log */
+//  if (IS_OSPF6_DEBUG_MESSAGE (oh->type, SEND))
+//  {    
+    inet_ntop (AF_INET6, dst, dstname, sizeof (dstname));
+    if (src)
+      inet_ntop (AF_INET6, src, srcname, sizeof (srcname));
+    else 
+      memset (srcname, 0, sizeof (srcname));
+    zlog_debug ("%s send on %s",
+               OSPF6_MESSAGE_TYPE_NAME (oh->type), si->interface->name);
+    zlog_debug ("    src: %s", srcname);
+    zlog_debug ("    dst: %s", dstname);
+
+    switch (oh->type)
+    {    
+      case OSPF6_MESSAGE_TYPE_HELLO:
+        shim_hello_print (oh);
+        break;
+      case OSPF6_MESSAGE_TYPE_DBDESC:
+//        ospf6_dbdesc_print (oh);
+        break;
+      case OSPF6_MESSAGE_TYPE_LSREQ:
+//        ospf6_lsreq_print (oh);
+         break;
+      case OSPF6_MESSAGE_TYPE_LSUPDATE:
+//        ospf6_lsupdate_print (oh);
+        break;
+      case OSPF6_MESSAGE_TYPE_LSACK:
+//          ospf6_lsack_print (oh);
+          break;
+      default:
+        zlog_debug ("Unknown message");
+        assert (0); 
+        break;
+    }
+//  }    
     /* send message */
   len = shim_sendmsg (src, dst, &si->interface->ifindex, iovector);
   if (len != ntohs (oh->length))

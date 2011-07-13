@@ -24,14 +24,6 @@
 
 #define OSPF6_MESSAGE_BUFSIZ  4096
 
-#define ROSPF6_HEADER_SIZE             4
-
-#define ROSPF6_JOIN_ALLSPF	       0
-#define ROSPF6_LEAVE_ALLSPF	       1
-#define ROSPF6_JOIN_ALLD	       2
-#define ROSPF6_LEAVE_ALLD	       3
-#define ROSPF6_MESSAGE_HELLO	       4
-
 /* Debug option */
 extern unsigned char conf_debug_ospf6_message[];
 #define OSPF6_DEBUG_MESSAGE_SEND 0x01

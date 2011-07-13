@@ -29,6 +29,7 @@
 #include "linklist.h"
 #include "stream.h"
 #include "buffer.h"
+#include "checksum.h"
 #include "sv.h"
 
 #include "ospf6_proto.h"
@@ -1155,11 +1156,11 @@ ospf6_iobuf_size (unsigned int size)
     return iobuflen;
 
   recvnew = XMALLOC (MTYPE_OSPF6_MESSAGE, size);
-  obufnew = stream_new(size + ROSPF6_HEADER_SIZE);
+  obufnew = stream_new(size + SV_HEADER_SIZE);
   wbnew = buffer_new(0);
 
   sendnew = XMALLOC (MTYPE_OSPF6_MESSAGE, size);
-  ibufnew = stream_new(size + ROSPF6_HEADER_SIZE);
+  ibufnew = stream_new(size + SV_HEADER_SIZE);
 
   if (recvnew == NULL || sendnew == NULL)
     {
@@ -1200,14 +1201,20 @@ rospf6_receive (struct thread * thread)
   int sockfd;
   int already;
   struct stream * s;
+  struct in6_addr src;
+  struct in6_addr dst;
+  unsigned int ifindex;
+  struct ospf6_header * oh;
+  struct ospf6_interface * oi;
   uint16_t length, command;
 
-  printf("Receved message\n");
+  zlog_debug("Receved message");
 
   /* add next read thread */
   sockfd = THREAD_FD (thread);
 
   s = ibuf;
+  oh = (struct ospf6_header *)recvbuf; 
 
   if ((already = stream_get_endp (s)) < SV_HEADER_SIZE)
   {
@@ -1231,8 +1238,14 @@ rospf6_receive (struct thread * thread)
   length = stream_getw (s);
   command = stream_getw (s);
 
-  printf("length: %d\n", length);
-  printf("command: %d\n", command);
+  stream_get ( &src, s, sizeof (struct in6_addr));
+  stream_get ( &dst, s, sizeof (struct in6_addr));
+
+  ifindex = stream_getl (s);
+  oi = ospf6_interface_lookup_by_ifindex (ifindex);
+
+  zlog_debug("length: %d\n", length);
+  zlog_debug("command: %d\n", command);
 
   if(length > STREAM_SIZE(s))
   {
@@ -1262,8 +1275,14 @@ rospf6_receive (struct thread * thread)
 
   switch (command)
   {
-    case ROSPF6_MESSAGE_HELLO:
-      printf("Hello message received\n");  
+    case SV_MESSAGE:
+      zlog_notice("Hello message received\n");  
+      stream_get (oh, s, length);
+      if(oh->type == OSPF6_MESSAGE_TYPE_HELLO)
+      {
+        ospf6_hello_print (oh);
+        ospf6_hello_recv (&src, &dst, oi, oh);
+      }
       break;
     default:
       break;
@@ -1480,12 +1499,12 @@ rospf6_join_allspfrouters_send(struct thread *thread)
   oi = (struct ospf6_interface *) THREAD_ARG (thread);
 
   s = obuf;
-  sv_create_header (s, ROSPF6_JOIN_ALLSPF);
+  sv_create_header (s, SV_JOIN_ALLSPF);
   stream_putl (s, oi->interface->ifindex);
 
   stream_putw_at(s, 0, stream_get_endp(s));
 
-  printf("Sending join_allspfrouters_msg with index %d\n", oi->interface->ifindex);
+  zlog_debug("Sending join_allspfrouters_msg with index %d\n", oi->interface->ifindex);
   
   buffer_write(wb, ospf6_sock, STREAM_DATA(obuf), stream_get_endp(obuf));
 
@@ -1503,12 +1522,12 @@ rospf6_leave_allspfrouters_send(struct thread *thread)
   oi = (struct ospf6_interface *) THREAD_ARG (thread);
 
   s = obuf;
-  sv_create_header (s, ROSPF6_LEAVE_ALLSPF);
+  sv_create_header (s, SV_LEAVE_ALLSPF);
   stream_putl (s, oi->interface->ifindex);
 
   stream_putw_at(s, 0, stream_get_endp(s));
 
-  printf("Sending leave_allspfrouters_msg with index %d\n", oi->interface->ifindex);
+  zlog_debug("Sending leave_allspfrouters_msg with index %d\n", oi->interface->ifindex);
   
   buffer_write(wb, ospf6_sock, STREAM_DATA(obuf), stream_get_endp(obuf));
 
@@ -1526,12 +1545,12 @@ rospf6_join_alldrouters_send(struct thread *thread)
   oi = (struct ospf6_interface *) THREAD_ARG (thread);
 
   s = obuf;
-  sv_create_header (s, ROSPF6_JOIN_ALLD);
+  sv_create_header (s, SV_JOIN_ALLD);
   stream_putl (s, oi->interface->ifindex);
 
   stream_putw_at(s, 0, stream_get_endp(s));
 
-  printf("Sending join_alldrouters_msg with index %d\n", oi->interface->ifindex);
+  zlog_debug("Sending join_alldrouters_msg with index %d\n", oi->interface->ifindex);
   
   buffer_write(wb, ospf6_sock, STREAM_DATA(obuf), stream_get_endp(obuf));
 
@@ -1549,12 +1568,12 @@ rospf6_leave_alldrouters_send(struct thread *thread)
   oi = (struct ospf6_interface *) THREAD_ARG (thread);
 
   s = obuf;
-  sv_create_header (s, ROSPF6_LEAVE_ALLD);
+  sv_create_header (s, SV_LEAVE_ALLD);
   stream_putl (s, oi->interface->ifindex);
 
   stream_putw_at(s, 0, stream_get_endp(s));
 
-  printf("Sending leave_allspfrouters_msg with index %d\n", oi->interface->ifindex);
+  zlog_debug("Sending leave_allspfrouters_msg with index %d\n", oi->interface->ifindex);
   
   buffer_write(wb, ospf6_sock, STREAM_DATA(obuf), stream_get_endp(obuf));
 
@@ -1576,7 +1595,7 @@ ospf6_hello_send (struct thread *thread)
   oi = (struct ospf6_interface *) THREAD_ARG (thread);
   oi->thread_send_hello = (struct thread *) NULL;
 
-  printf("Send hello message\n");
+  zlog_debug("Send hello message\n");
 
   if (oi->state <= OSPF6_INTERFACE_DOWN)
     {
@@ -1667,12 +1686,13 @@ rospf6_hello_send (struct thread *thread)
 {
   struct ospf6_interface *oi;
   struct stream * s;
-  u_int16_t length = ROSPF6_HEADER_SIZE;
+  u_int16_t length = SV_HEADER_SIZE;
+  u_int16_t checksum;
 
   oi = (struct ospf6_interface *) THREAD_ARG (thread);
   oi->thread_send_hello = (struct thread *) NULL;
 
-  printf("Send hello message from rospf6\n");
+  zlog_debug("Send hello message from rospf6\n");
 
   if (oi->state <= OSPF6_INTERFACE_DOWN)
     {
@@ -1688,12 +1708,17 @@ rospf6_hello_send (struct thread *thread)
   s = obuf;
   stream_reset(s);
 
-  sv_create_header (s, ROSPF6_MESSAGE_HELLO);
+  sv_create_header (s, SV_MESSAGE);
 
   length += rospf6_create_hello (oi, s);
   
   stream_putw_at(s, 0, stream_get_endp(s));
 
+  checksum = in_cksum(STREAM_DATA(s), length);
+  stream_putw_at(s, 36, checksum);
+
+  zlog_debug("checksum: %d", checksum);
+  zlog_debug("on interface %d", oi->interface->ifindex);
   buffer_write(wb, ospf6_sock, STREAM_DATA(obuf), stream_get_endp(obuf));
 
   stream_reset(s);
