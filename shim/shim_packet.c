@@ -126,8 +126,6 @@ shim_receive (struct thread * thread)
   struct ospf6_header * oh;
   struct ip * iph;
 
-  zlog_notice("Received packet!");  
-
   /* first of all get interface pointer. */
   shim = THREAD_ARG (thread);
 
@@ -145,17 +143,19 @@ shim_receive (struct thread * thread)
   memset (&src, 0, sizeof(src));
   memset (&dst, 0, sizeof(dst));
   ifindex = 0;
-//  memset (recvbuf, 0, iobuflen);
-//  iovector[0].iov_base = recvbuf;
-//  iovector[0].iov_len = iobuflen;
-//  iovector[1].iov_base = NULL;
-//  iovector[1].iov_len = 0;
 
-//  obuf = stream_new (SV_HEADER_SIZE + iobuflen);
-//  sv_create_header (obuf, SV_MESSAGE);
+  obuf = stream_new (SV_HEADER_SIZE + iobuflen);
+  sv_create_header (obuf, SV_MESSAGE);
 
-  obuf = stream_new (2000);
-  len = shim_recvmsg (&src, &dst, &ifindex, iovector, shim->fd, obuf, 2000);
+  iovector[0].iov_base = (obuf->data + obuf->endp);
+  iovector[0].iov_len = iobuflen;
+  iovector[1].iov_base = NULL;
+  iovector[1].iov_len = 0;
+
+  obuf = stream_new (SV_HEADER_SIZE + iobuflen);
+  sv_create_header (obuf, SV_MESSAGE);
+
+  len = shim_recvmsg (&src, &dst, &ifindex, iovector, shim->fd, obuf, iobuflen);
   if (len > iobuflen)
   {    
     zlog_err ("Excess message read");
@@ -169,10 +169,13 @@ shim_receive (struct thread * thread)
 
   stream_putw_at(obuf, 0, stream_get_endp(obuf));
 
-  size_t endp = stream_get_endp (obuf);
+  size_t endp_save = stream_get_endp (obuf);
   obuf->endp = 4; 
   stream_put (obuf, &src, sizeof (struct in6_addr));
   stream_put (obuf, &dst, sizeof (struct in6_addr));
+  obuf->endp = endp_save;
+
+  stream_putl_at (obuf, 36, ifindex);
 
   si = shim_interface_lookup_by_ifindex (ifindex);
   if (si == NULL)
@@ -181,7 +184,12 @@ shim_receive (struct thread * thread)
     return 0;
   } 
 
-/*  oh = (struct ospf6_header *) STREAM_DATA(obuf);
+  zlog_notice("Received packet on int %d", ifindex);  
+
+  struct stream * obuf_d = stream_dup (obuf);
+  stream_forward_getp (obuf_d, SV_HEADER_SIZE);
+  oh = (struct ospf6_header *) recvbuf;
+  stream_get(oh, obuf_d, len);
   switch (oh->type)
   {    
     case OSPF6_MESSAGE_TYPE_HELLO:
@@ -200,9 +208,9 @@ shim_receive (struct thread * thread)
 //      ospf6_lsack_print (oh);
       break;
     default:
-      zlog_debug ("Unknown message");
+      zlog_debug ("Unknown message, type: %d", oh->type);
       break;
-  } */
+  }
 
   shim_sisis_write (obuf, wb); 
 

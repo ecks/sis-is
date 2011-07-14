@@ -275,9 +275,10 @@ shim_sisis_read(struct thread * thread)
   stream_get (&src, listener->ibuf, sizeof (struct in6_addr));
   stream_get (&dst, listener->ibuf, sizeof (struct in6_addr));
 
+  ifindex = stream_getl(listener->ibuf); 
   checksum = stream_getw (listener->ibuf);
 
-  zlog_debug("SISIS: length: %d, command: %d, checksum: %d on sock %d\n", length, command, checksum, sisis_sock);
+  zlog_debug("SISIS: length: %d, command: %d, ifindex: %d, checksum: %d on sock %d\n", length, command, ifindex, checksum, sisis_sock);
 
   if(length > STREAM_SIZE(listener->ibuf))
   {
@@ -309,9 +310,7 @@ shim_sisis_read(struct thread * thread)
   {
     case SV_JOIN_ALLSPF:
       zlog_debug("join allspf received");
-      ifindex = stream_getl(listener->ibuf);
       shim_join_allspfrouters (ifindex);
-      zlog_debug("index: %d", ifindex);
       break;
     case SV_LEAVE_ALLSPF:
       zlog_debug("leave allspf received");

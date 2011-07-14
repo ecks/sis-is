@@ -1244,8 +1244,9 @@ rospf6_receive (struct thread * thread)
   ifindex = stream_getl (s);
   oi = ospf6_interface_lookup_by_ifindex (ifindex);
 
-  zlog_debug("length: %d\n", length);
-  zlog_debug("command: %d\n", command);
+  stream_forward_getp(s, 2); // ignore the checksum
+
+  zlog_debug("length: %d, command: %d, ifindex: %d", length, command, ifindex);
 
   if(length > STREAM_SIZE(s))
   {
@@ -1276,8 +1277,8 @@ rospf6_receive (struct thread * thread)
   switch (command)
   {
     case SV_MESSAGE:
-      zlog_notice("Hello message received\n");  
       stream_get (oh, s, length);
+      zlog_notice("SV message received with type: %d\n", oh->type);  
       if(oh->type == OSPF6_MESSAGE_TYPE_HELLO)
       {
         ospf6_hello_print (oh);
@@ -1285,6 +1286,7 @@ rospf6_receive (struct thread * thread)
       }
       break;
     default:
+      zlog_notice("Unknown command: %d", command);
       break;
   }
 
@@ -1500,9 +1502,9 @@ rospf6_join_allspfrouters_send(struct thread *thread)
 
   s = obuf;
   sv_create_header (s, SV_JOIN_ALLSPF);
-  stream_putl (s, oi->interface->ifindex);
 
-  stream_putw_at(s, 0, stream_get_endp(s));
+  stream_putw_at (s, 0, stream_get_endp(s));
+  stream_putl_at (s, 36, oi->interface->ifindex); // it is part of the header
 
   zlog_debug("Sending join_allspfrouters_msg with index %d\n", oi->interface->ifindex);
   
@@ -1802,6 +1804,83 @@ ospf6_dbdesc_send (struct thread *thread)
   return 0;
 }
 
+int
+rospf6_dbdesc_send (struct thread *thread)
+{
+  struct ospf6_neighbor *on;
+  struct ospf6_header *oh;
+  struct ospf6_dbdesc *dbdesc;
+  u_char *p;
+  struct ospf6_lsa *lsa;
+
+  zlog_debug("Sending DB DESC");
+
+  on = (struct ospf6_neighbor *) THREAD_ARG (thread);
+  on->thread_send_dbdesc = (struct thread *) NULL;
+
+  if (on->state < OSPF6_NEIGHBOR_EXSTART)
+    {
+      if (IS_OSPF6_DEBUG_MESSAGE (OSPF6_MESSAGE_TYPE_DBDESC, SEND))
+        zlog_debug ("Quit to send DbDesc to neighbor %s state %s",
+		    on->name, ospf6_neighbor_state_str[on->state]);
+      return 0;
+    }
+
+  /* set next thread if master */
+  if (CHECK_FLAG (on->dbdesc_bits, OSPF6_DBDESC_MSBIT))
+    on->thread_send_dbdesc =
+      thread_add_timer (master, ospf6_dbdesc_send, on,
+                        on->ospf6_if->rxmt_interval);
+
+  memset (sendbuf, 0, iobuflen);
+  oh = (struct ospf6_header *) sendbuf;
+  dbdesc = (struct ospf6_dbdesc *)((caddr_t) oh +
+                                   sizeof (struct ospf6_header));
+
+  /* if this is initial one, initialize sequence number for DbDesc */
+  if (CHECK_FLAG (on->dbdesc_bits, OSPF6_DBDESC_IBIT))
+    {
+      struct timeval tv;
+      if (quagga_gettime (QUAGGA_CLK_MONOTONIC, &tv) < 0)
+        tv.tv_sec = 1;
+      on->dbdesc_seqnum = tv.tv_sec;
+    }
+
+  dbdesc->options[0] = on->ospf6_if->area->options[0];
+  dbdesc->options[1] = on->ospf6_if->area->options[1];
+  dbdesc->options[2] = on->ospf6_if->area->options[2];
+  dbdesc->ifmtu = htons (on->ospf6_if->ifmtu);
+  dbdesc->bits = on->dbdesc_bits;
+  dbdesc->seqnum = htonl (on->dbdesc_seqnum);
+
+  /* if this is not initial one, set LSA headers in dbdesc */
+  p = (u_char *)((caddr_t) dbdesc + sizeof (struct ospf6_dbdesc));
+  if (! CHECK_FLAG (on->dbdesc_bits, OSPF6_DBDESC_IBIT))
+    {
+      for (lsa = ospf6_lsdb_head (on->dbdesc_list); lsa;
+           lsa = ospf6_lsdb_next (lsa))
+        {
+          ospf6_lsa_age_update_to_send (lsa, on->ospf6_if->transdelay);
+
+          /* MTU check */
+          if (p - sendbuf + sizeof (struct ospf6_lsa_header) >
+              on->ospf6_if->ifmtu)
+            {
+              ospf6_lsa_unlock (lsa);
+              break;
+            }
+          memcpy (p, lsa->header, sizeof (struct ospf6_lsa_header));
+          p += sizeof (struct ospf6_lsa_header);
+        }
+    }
+
+  oh->type = OSPF6_MESSAGE_TYPE_DBDESC;
+  oh->length = htons (p - sendbuf);
+
+// temporarily comment out for now  ospf6_send (on->ospf6_if->linklocal_addr, &on->linklocal_addr,
+//              on->ospf6_if, oh);
+  return 0;
+}
 int
 ospf6_dbdesc_send_newone (struct thread *thread)
 {
