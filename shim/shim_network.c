@@ -215,7 +215,7 @@ shim_sendmsg (struct in6_addr *src, struct in6_addr *dst,
   smsghdr.msg_control = (caddr_t) cmsgbuf;
   smsghdr.msg_controllen = sizeof (cmsgbuf);
 
-  retval = stream_sendmsg (buf, fd, &smsghdr, 0, stream_get_size(buf));
+  retval = stream_sendmsg (buf, fd, &smsghdr, 0, len);
   if (retval != iov_totallen (message))
     zlog_warn ("sendmsg failed: ifindex: %d: %s (%d)",
                *ifindex, safe_strerror (errno), errno);

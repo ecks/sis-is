@@ -1213,7 +1213,11 @@ rospf6_receive (struct thread * thread)
   /* add next read thread */
   sockfd = THREAD_FD (thread);
 
-  s = ibuf;
+  if(ibuf)
+    s = ibuf;
+  else
+    return -1; // we are not ready yet
+
   oh = (struct ospf6_header *)recvbuf; 
 
   if ((already = stream_get_endp (s)) < SV_HEADER_SIZE)
@@ -1503,7 +1507,7 @@ rospf6_join_allspfrouters_send(struct thread *thread)
   sv_create_header (s, SV_JOIN_ALLSPF);
 
   stream_putw_at (s, 0, stream_get_endp(s));
-  stream_putl_at (s, 36, oi->interface->ifindex); // it is part of the header
+  stream_putl_at (s, 36, oi->interface->ifindex);
 
   zlog_debug("Sending join_allspfrouters_msg with index %d\n", oi->interface->ifindex);
   
@@ -1524,9 +1528,9 @@ rospf6_leave_allspfrouters_send(struct thread *thread)
 
   s = obuf;
   sv_create_header (s, SV_LEAVE_ALLSPF);
-  stream_putl (s, oi->interface->ifindex);
 
   stream_putw_at(s, 0, stream_get_endp(s));
+  stream_putl_at(s, 36, oi->interface->ifindex);
 
   zlog_debug("Sending leave_allspfrouters_msg with index %d\n", oi->interface->ifindex);
   
@@ -1547,9 +1551,9 @@ rospf6_join_alldrouters_send(struct thread *thread)
 
   s = obuf;
   sv_create_header (s, SV_JOIN_ALLD);
-  stream_putl (s, oi->interface->ifindex);
 
   stream_putw_at(s, 0, stream_get_endp(s));
+  stream_putl_at(s, 36, oi->interface->ifindex);
 
   zlog_debug("Sending join_alldrouters_msg with index %d\n", oi->interface->ifindex);
   
@@ -1570,9 +1574,9 @@ rospf6_leave_alldrouters_send(struct thread *thread)
 
   s = obuf;
   sv_create_header (s, SV_LEAVE_ALLD);
-  stream_putl (s, oi->interface->ifindex);
 
   stream_putw_at(s, 0, stream_get_endp(s));
+  stream_putl_at(s, 36, oi->interface->ifindex);
 
   zlog_debug("Sending leave_allspfrouters_msg with index %d\n", oi->interface->ifindex);
   
@@ -1655,7 +1659,6 @@ rospf6_create_hello (struct ospf6_interface * oi, struct stream * s)
   struct listnode *node, *nnode;
   struct ospf6_neighbor *on;
 
-  stream_putl(s, htonl (oi->interface->ifindex)); 
   stream_putc(s, oi->priority);
   stream_putc(s, oi->area->options[0]);
   stream_putc(s, oi->area->options[1]);

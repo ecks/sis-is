@@ -279,7 +279,7 @@ shim_send(struct stream * s, struct shim_interface * si)
 
 void
 shim_send(struct in6_addr * src, struct in6_addr * dst, 
-	  struct shim_interface * si, struct stream * ibuf)
+	  struct shim_interface * si, struct stream * ibuf, uint16_t length)
 {
   int len;
   char srcname[64], dstname[64];
@@ -287,7 +287,7 @@ shim_send(struct in6_addr * src, struct in6_addr * dst,
 
   /* initialize */
   iovector[0].iov_base = (ibuf->data + ibuf->getp);
-  iovector[0].iov_len = stream_get_size(ibuf);
+  iovector[0].iov_len = length;
   iovector[1].iov_base = NULL;
   iovector[1].iov_len = 0;
 
@@ -338,7 +338,7 @@ shim_send(struct in6_addr * src, struct in6_addr * dst,
     } */
 //  }    
     /* send message */
-  len = shim_sendmsg (src, dst, &si->interface->ifindex, iovector, shim->fd, ibuf, stream_get_size(ibuf));
-  if (len != stream_get_size(ibuf))
+  len = shim_sendmsg (src, dst, &si->interface->ifindex, iovector, shim->fd, ibuf, length);
+  if (len != length)
     zlog_err ("Could not send entire message");
 }

@@ -841,9 +841,9 @@ stream_sendmsg (struct stream * s, int fd, struct msghdr * msgh, int flags,
   STREAM_VERIFY_SANE(s);
   assert (msgh->msg_iovlen > 0);
 
-  if (STREAM_WRITEABLE (s) < size)
+  if (STREAM_READABLE(s) < size)
   {
-    STREAM_BOUND_WARN(s, "put");
+    STREAM_BOUND_WARN(s, "get");
     return -1;
   }
 

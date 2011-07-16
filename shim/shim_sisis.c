@@ -314,19 +314,16 @@ shim_sisis_read(struct thread * thread)
       break;
     case SV_LEAVE_ALLSPF:
       zlog_debug("leave allspf received");
-      ifindex = stream_getl(listener->ibuf);
       shim_leave_allspfrouters (ifindex);
       zlog_debug("index: %d\n", ifindex);
       break;
     case SV_JOIN_ALLD:
       zlog_debug("join alld received");
-      ifindex = stream_getl(listener->ibuf);
       shim_join_alldrouters (ifindex);
       zlog_debug("index: %d", ifindex);
       break;
     case SV_LEAVE_ALLD:
       zlog_debug("leave alld received");
-      ifindex = stream_getl(listener->ibuf);
       shim_leave_alldrouters (ifindex);
       zlog_debug("index: %d", ifindex);
       break;
@@ -343,7 +340,7 @@ shim_sisis_read(struct thread * thread)
         {
           si = shim_interface_lookup_by_ifindex (ifindex);
           reset_checksums();
-          shim_send(si->linklocal_addr, &allspfrouters6, si, listener->ibuf);
+          shim_send(si->linklocal_addr, &allspfrouters6, si, listener->ibuf, length);
         }
         else
         { 
