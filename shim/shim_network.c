@@ -5,6 +5,7 @@
 #include "sockopt.h"
 #include "privs.h"
 #include "prefix.h"
+#include "stream.h"
 
 #include "ospfd/ospfd.h"
 #include "ospf6d/ospf6_proto.h"
@@ -165,7 +166,8 @@ static int iov_totallen (struct iovec *iov)
 
 int
 shim_sendmsg (struct in6_addr *src, struct in6_addr *dst,
-               unsigned int *ifindex, struct iovec *message)
+              unsigned int *ifindex, struct iovec *message, 
+              unsigned int fd, struct stream * buf, unsigned int len)
 {
   int retval;
   struct msghdr smsghdr;
@@ -213,7 +215,7 @@ shim_sendmsg (struct in6_addr *src, struct in6_addr *dst,
   smsghdr.msg_control = (caddr_t) cmsgbuf;
   smsghdr.msg_controllen = sizeof (cmsgbuf);
 
-  retval = sendmsg (shim->fd, &smsghdr, 0);
+  retval = stream_sendmsg (buf, fd, &smsghdr, 0, stream_get_size(buf));
   if (retval != iov_totallen (message))
     zlog_warn ("sendmsg failed: ifindex: %d: %s (%d)",
                *ifindex, safe_strerror (errno), errno);

@@ -276,7 +276,7 @@ shim_sisis_read(struct thread * thread)
   stream_get (&dst, listener->ibuf, sizeof (struct in6_addr));
 
   ifindex = stream_getl(listener->ibuf); 
-  checksum = stream_getw (listener->ibuf);
+  checksum = stream_getw(listener->ibuf);
 
   zlog_debug("SISIS: length: %d, command: %d, ifindex: %d, checksum: %d on sock %d\n", length, command, ifindex, checksum, sisis_sock);
 
@@ -331,7 +331,7 @@ shim_sisis_read(struct thread * thread)
       zlog_debug("index: %d", ifindex);
       break;
     case SV_MESSAGE:
-      zlog_debug("SISIS hello message received");
+      zlog_debug("SISIS message received");
       unsigned int num_of_addrs = number_of_sisis_addrs_for_process_type(SISIS_PTYPE_RIBCOMP_OSPF6);
       unsigned int num_of_listeners = number_of_listeners();
       zlog_debug("num of listeners: %d, num of addrs: %d", num_of_listeners, num_of_addrs);
@@ -341,11 +341,9 @@ shim_sisis_read(struct thread * thread)
       { 
         if(are_checksums_same())
         {
-          ifindex = ntohl(stream_getl(listener->ibuf));
-          zlog_debug("index: %d", ifindex);
           si = shim_interface_lookup_by_ifindex (ifindex);
           reset_checksums();
-          shim_hello_send(listener->ibuf, si);
+          shim_send(si->linklocal_addr, &allspfrouters6, si, listener->ibuf);
         }
         else
         { 

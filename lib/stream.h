@@ -197,6 +197,8 @@ extern ssize_t stream_read_try(struct stream *s, int fd, size_t size);
 
 extern ssize_t stream_recvmsg (struct stream *s, int fd, struct msghdr *,
                                int flags, size_t size);
+extern ssize_t stream_sendmsg (struct stream *s, int fd, struct msghdr *,
+                               int flags, size_t size);
 extern ssize_t stream_recvfrom (struct stream *s, int fd, size_t len, 
                                 int flags, struct sockaddr *from, 
                                 socklen_t *fromlen);

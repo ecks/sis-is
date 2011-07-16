@@ -189,6 +189,7 @@ ospf6_interface_enable (struct ospf6_interface *oi)
 {
   UNSET_FLAG (oi->flag, OSPF6_INTERFACE_DISABLE);
 
+  zlog_debug("about to send hello message...");
   oi->thread_send_hello =
     thread_add_event (master, rospf6_hello_send, oi, 0);
 }
@@ -618,6 +619,8 @@ interface_up (struct thread *thread)
 
   /* Update interface route */
   ospf6_interface_connected_route_update (oi->interface);
+
+  zlog_debug("about to send hello message...");
 
   /* Schedule Hello */
   if (! CHECK_FLAG (oi->flag, OSPF6_INTERFACE_PASSIVE))
@@ -1366,6 +1369,8 @@ DEFUN (no_ipv6_ospf6_passive,
 
   UNSET_FLAG (oi->flag, OSPF6_INTERFACE_PASSIVE);
   THREAD_OFF (oi->thread_send_hello);
+
+  zlog_debug("about to send hello message...");
   oi->thread_send_hello =
     thread_add_event (master, rospf6_hello_send, oi, 0);
 

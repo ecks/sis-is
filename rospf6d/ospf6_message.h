@@ -130,6 +130,7 @@ extern int ospf6_hello_send (struct thread *thread);
 extern int rospf6_hello_send (struct thread *thread);
 extern int ospf6_dbdesc_send (struct thread *thread);
 extern int rospf6_dbdesc_send (struct thread *thread);
+extern int rospf6_dbdesc_send_newone (struct thread *thread);
 extern int ospf6_dbdesc_send_newone (struct thread *thread);
 extern int rospf6_dbdesc_send_newone (struct thread *thread);
 extern int ospf6_lsreq_send (struct thread *thread);

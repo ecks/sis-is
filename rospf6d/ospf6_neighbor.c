@@ -249,7 +249,7 @@ twoway_received (struct thread *thread)
 
   THREAD_OFF (on->thread_send_dbdesc);
   on->thread_send_dbdesc =
-    thread_add_event (master, ospf6_dbdesc_send, on, 0);
+    thread_add_event (master, rospf6_dbdesc_send, on, 0);
 
   return 0;
 }
@@ -396,7 +396,7 @@ adj_ok (struct thread *thread)
 
       THREAD_OFF (on->thread_send_dbdesc);
       on->thread_send_dbdesc =
-        thread_add_event (master, ospf6_dbdesc_send, on, 0);
+        thread_add_event (master, rospf6_dbdesc_send, on, 0);
 
     }
   else if (on->state >= OSPF6_NEIGHBOR_EXSTART &&
@@ -447,7 +447,7 @@ seqnumber_mismatch (struct thread *thread)
 
   THREAD_OFF (on->thread_send_dbdesc);
   on->thread_send_dbdesc =
-    thread_add_event (master, ospf6_dbdesc_send, on, 0);
+    thread_add_event (master, rospf6_dbdesc_send, on, 0);
 
   return 0;
 }
@@ -483,7 +483,7 @@ bad_lsreq (struct thread *thread)
 
   THREAD_OFF (on->thread_send_dbdesc);
   on->thread_send_dbdesc =
-    thread_add_event (master, ospf6_dbdesc_send, on, 0);
+    thread_add_event (master, rospf6_dbdesc_send, on, 0);
 
   return 0;
 }

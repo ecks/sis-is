@@ -830,6 +830,34 @@ stream_recvmsg (struct stream *s, int fd, struct msghdr *msgh, int flags,
   
   return nbytes;
 }
+
+ssize_t
+stream_sendmsg (struct stream * s, int fd, struct msghdr * msgh, int flags,
+                size_t size)
+{
+  int nbytes;
+  struct iovec * iov;
+
+  STREAM_VERIFY_SANE(s);
+  assert (msgh->msg_iovlen > 0);
+
+  if (STREAM_WRITEABLE (s) < size)
+  {
+    STREAM_BOUND_WARN(s, "put");
+    return -1;
+  }
+
+  iov = &(msgh->msg_iov[0]);
+  iov->iov_base = (s->data + s->getp);
+  iov->iov_len = size;
+
+  nbytes = sendmsg (fd, msgh, flags);
+
+  if (nbytes > 0)
+    s->getp += nbytes;
+
+  return nbytes;
+}
   
 /* Write data to buffer. */
 size_t

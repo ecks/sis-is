@@ -240,8 +240,8 @@ shim_receive (struct thread * thread)
   return 0;
 }
 
-int
-shim_hello_send(struct stream * s, struct shim_interface * si)
+/*int
+shim_send(struct stream * s, struct shim_interface * si)
 {
   struct ospf6_header * oh;
   struct ospf6_hello * hello;
@@ -275,34 +275,35 @@ shim_hello_send(struct stream * s, struct shim_interface * si)
   oh->length = htons (p - sendbuf); 
   shim_send (si->linklocal_addr, &allspfrouters6, si, oh);
   return 0;
-}
+} */
 
 void
 shim_send(struct in6_addr * src, struct in6_addr * dst, 
-	  struct shim_interface * si, struct ospf6_header * oh)
+	  struct shim_interface * si, struct stream * ibuf)
 {
   int len;
   char srcname[64], dstname[64];
   struct iovec iovector[2];
-    /* initialize */
-  iovector[0].iov_base = (caddr_t) oh;
-  iovector[0].iov_len = ntohs (oh->length);
+
+  /* initialize */
+  iovector[0].iov_base = (ibuf->data + ibuf->getp);
+  iovector[0].iov_len = stream_get_size(ibuf);
   iovector[1].iov_base = NULL;
   iovector[1].iov_len = 0;
 
     /* fill OSPF header */
-  oh->version = OSPFV3_VERSION;
+//  oh->version = OSPFV3_VERSION;                     // need to fill in for later
   /* message type must be set before */
   /* message length must be set before */
 //  oh->router_id = si->area->ospf6->router_id;
 //  oh->area_id = si->area->area_id;
   /* checksum is calculated by kernel */
-  oh->instance_id = si->instance_id;
-  oh->reserved = 0;
+//  oh->instance_id = si->instance_id;                // need to fill in for later
+//  oh->reserved = 0;                                 // need to fill in for later
 
   /* Log */
-//  if (IS_OSPF6_DEBUG_MESSAGE (oh->type, SEND))
-//  {    
+/*  if (IS_OSPF6_DEBUG_MESSAGE (oh->type, SEND))
+  {    
     inet_ntop (AF_INET6, dst, dstname, sizeof (dstname));
     if (src)
       inet_ntop (AF_INET6, src, srcname, sizeof (srcname));
@@ -334,10 +335,10 @@ shim_send(struct in6_addr * src, struct in6_addr * dst,
         zlog_debug ("Unknown message");
         assert (0); 
         break;
-    }
+    } */
 //  }    
     /* send message */
-  len = shim_sendmsg (src, dst, &si->interface->ifindex, iovector);
-  if (len != ntohs (oh->length))
+  len = shim_sendmsg (src, dst, &si->interface->ifindex, iovector, shim->fd, ibuf, stream_get_size(ibuf));
+  if (len != stream_get_size(ibuf))
     zlog_err ("Could not send entire message");
 }
