@@ -313,7 +313,7 @@ ospf6_interface_connected_route_update (struct interface *ifp)
   struct ospf6_route *route;
   struct connected *c;
   struct listnode *node, *nnode;
-
+  char linklocal[INET6_ADDRSTRLEN];
   oi = (struct ospf6_interface *) ifp->info;
   if (oi == NULL)
     return;
@@ -321,13 +321,23 @@ ospf6_interface_connected_route_update (struct interface *ifp)
   /* reset linklocal pointer */
   oi->linklocal_addr = ospf6_interface_get_linklocal_address (ifp);
 
+  if(oi->linklocal_addr)
+  {
+    inet_ntop(AF_INET6, oi->linklocal_addr, linklocal, sizeof(linklocal));
+    zlog_debug("linklocal interface: %s", linklocal);
+  }
+  else
+  {
+    zlog_debug("linklocal interface: 0");
+  }
+
   /* if area is null, do not make connected-route list */
   if (oi->area == NULL)
     return;
 
   /* update "route to advertise" interface route table */
   ospf6_route_remove_all (oi->route_connected);
-
+  
   for (ALL_LIST_ELEMENTS (oi->interface->connected, node, nnode, c))
     {
       if (c->address->family != AF_INET6)

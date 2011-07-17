@@ -1654,41 +1654,57 @@ ospf6_hello_send (struct thread *thread)
 }
 
 int
-rospf6_create_hello (struct ospf6_interface * oi, struct stream * s)
+rospf6_create_hello (struct ospf6_interface * oi, struct stream * s, struct ospf6_header * oh)
 {
+  struct ospf6_hello *hello;
+  u_int16_t length;
+  u_char * p;
   struct listnode *node, *nnode;
   struct ospf6_neighbor *on;
 
-  stream_putc(s, oi->priority);
-  stream_putc(s, oi->area->options[0]);
-  stream_putc(s, oi->area->options[1]);
-  stream_putc(s, oi->area->options[2]);
-  stream_putw(s, htons (oi->hello_interval));
-  stream_putw(s, htons (oi->dead_interval));
-  stream_putl(s, oi->drouter);
-  stream_putl(s, oi->bdrouter); 
+  hello = (struct ospf6_hello *)((caddr_t) oh + sizeof (struct ospf6_header));
+
+  hello->interface_id = htonl (oi->interface->ifindex);
+  hello->priority = oi->priority;
+  hello->options[0] = oi->area->options[0];
+  hello->options[1] = oi->area->options[1];
+  hello->options[2] = oi->area->options[2];
+  hello->hello_interval = htons (oi->hello_interval);
+  hello->dead_interval = htons (oi->dead_interval);
+  hello->drouter = oi->drouter;
+  hello->bdrouter = oi->bdrouter;
+
+  p = (u_char *)((caddr_t) hello + sizeof (struct ospf6_hello));
 
   for (ALL_LIST_ELEMENTS (oi->neighbor_list, node, nnode, on))
   {
     if (on->state < OSPF6_NEIGHBOR_INIT)
       continue;
 
-    if ((stream_get_size (s) + SV_HEADER_SIZE) > oi->ifmtu)
+    if (p - sendbuf + sizeof (u_int32_t) > oi->ifmtu)
     {
       if (IS_OSPF6_DEBUG_MESSAGE (OSPF6_MESSAGE_TYPE_HELLO, SEND))
         zlog_debug ("sending Hello message: exceeds I/F MTU");
       break;
     }
-    stream_putl(s, on->router_id);
+    memcpy (p, &on->router_id, sizeof (u_int32_t));
+    p += sizeof (u_int32_t);
   }
 
-  return stream_get_size(s);
+  oh->type = OSPF6_MESSAGE_TYPE_HELLO;
+
+  length = p - sendbuf;
+  oh->length = htons (length);
+
+  stream_put (s, oh, length); 
+  return length; 
 }
 
 int
 rospf6_hello_send (struct thread *thread)
 {
-  struct ospf6_interface *oi;
+  struct ospf6_interface * oi;
+  struct ospf6_header * oh;
   struct stream * s;
   u_int16_t length = SV_HEADER_SIZE;
   u_int16_t checksum;
@@ -1709,14 +1725,24 @@ rospf6_hello_send (struct thread *thread)
   /* set next thread */
   oi->thread_send_hello = thread_add_timer (master, rospf6_hello_send,
                                             oi, oi->hello_interval);
+  memset (sendbuf, 0, iobuflen);
+  oh = (struct ospf6_header *)sendbuf;
+
   s = obuf;
   stream_reset(s);
 
   sv_create_header (s, SV_MESSAGE);
 
-  length += rospf6_create_hello (oi, s);
+  length += rospf6_create_hello (oi, s, oh);
   
   stream_putw_at(s, 0, stream_get_endp(s));
+
+  size_t endp_save = stream_get_endp(s);
+  s->endp = 4;
+  stream_put (s, oi->linklocal_addr, sizeof(struct in6_addr));
+  stream_put (s, &allspfrouters6, sizeof(struct in6_addr));
+  s->endp = endp_save;
+
 
   stream_putl_at(s, 36, oi->interface->ifindex); 
 
