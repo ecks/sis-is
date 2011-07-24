@@ -14,6 +14,7 @@
 
 #include "rospf6d/ospf6_message.h"
 #include "rospf6d/ospf6_proto.h"
+#include "rospf6d/ospf6_lsa.h"
 #include "shim/shim_packet.h"
 #include "shim/shim_sisis.h"
 
@@ -113,6 +114,153 @@ shim_hello_print (struct ospf6_header *oh)
     zlog_debug ("Trailing garbage exists");
 }
 
+const char *
+ospf6_lstype_name (u_int16_t type)
+{
+  static char buf[8];
+  struct ospf6_lsa_handler *handler;
+
+//  handler = ospf6_get_lsa_handler (type);
+//  if (handler && handler != &unknown_handler)
+//    return handler->name;
+
+  snprintf (buf, sizeof (buf), "0x%04hx", ntohs (type));
+  return buf;
+}
+
+void
+shim_lsa_header_print_raw (struct ospf6_lsa_header *header)
+{
+  char id[16], adv_router[16];
+  inet_ntop (AF_INET, &header->id, id, sizeof (id));
+  inet_ntop (AF_INET, &header->adv_router, adv_router,
+             sizeof (adv_router));
+  zlog_debug ("    [%s Id:%s Adv:%s]",
+	      ospf6_lstype_name (header->type), id, adv_router);
+  zlog_debug ("    Age: %4hu SeqNum: %#08lx Cksum: %04hx Len: %d",
+	      ntohs (header->age), (u_long) ntohl (header->seqnum),
+	      ntohs (header->checksum), ntohs (header->length));
+}
+
+void
+shim_dbdesc_print (struct ospf6_header *oh)
+{
+  struct ospf6_dbdesc *dbdesc;
+  char options[16];
+  char *p;
+
+  shim_header_print (oh);
+  assert (oh->type == OSPF6_MESSAGE_TYPE_DBDESC);
+
+  dbdesc = (struct ospf6_dbdesc *)
+    ((caddr_t) oh + sizeof (struct ospf6_header));
+
+//  ospf6_options_printbuf (dbdesc->options, options, sizeof (options));
+
+  zlog_debug ("    MBZ: %#x Option: %s IfMTU: %hu",
+             dbdesc->reserved1, options, ntohs (dbdesc->ifmtu));
+  zlog_debug ("    MBZ: %#x Bits: %s%s%s SeqNum: %#lx",
+             dbdesc->reserved2,
+             (CHECK_FLAG (dbdesc->bits, OSPF6_DBDESC_IBIT) ? "I" : "-"),
+             (CHECK_FLAG (dbdesc->bits, OSPF6_DBDESC_MBIT) ? "M" : "-"),
+             (CHECK_FLAG (dbdesc->bits, OSPF6_DBDESC_MSBIT) ? "m" : "s"),
+             (u_long) ntohl (dbdesc->seqnum));
+
+  for (p = (char *) ((caddr_t) dbdesc + sizeof (struct ospf6_dbdesc));
+       p + sizeof (struct ospf6_lsa_header) <= OSPF6_MESSAGE_END (oh);
+       p += sizeof (struct ospf6_lsa_header))
+    shim_lsa_header_print_raw ((struct ospf6_lsa_header *) p);
+
+  if (p != OSPF6_MESSAGE_END (oh))
+    zlog_debug ("Trailing garbage exists");
+}
+
+void
+shim_lsreq_print (struct ospf6_header *oh) 
+{
+  char id[16], adv_router[16];
+  char *p;
+
+  shim_header_print (oh);
+  assert (oh->type == OSPF6_MESSAGE_TYPE_LSREQ);
+
+  for (p = (char *) ((caddr_t) oh + sizeof (struct ospf6_header));
+       p + sizeof (struct ospf6_lsreq_entry) <= OSPF6_MESSAGE_END (oh);
+       p += sizeof (struct ospf6_lsreq_entry))
+  {    
+      struct ospf6_lsreq_entry *e = (struct ospf6_lsreq_entry *) p;
+      inet_ntop (AF_INET, &e->adv_router, adv_router, sizeof (adv_router));      
+      inet_ntop (AF_INET, &e->id, id, sizeof (id));      
+      zlog_debug ("    [%s Id:%s Adv:%s]",
+                 ospf6_lstype_name (e->type), id, adv_router);    
+  }
+    
+  if (p != OSPF6_MESSAGE_END (oh))
+    zlog_debug ("Trailing garbage exists");
+}
+
+void
+shim_lsupdate_print (struct ospf6_header *oh)
+{
+  struct ospf6_lsupdate *lsupdate;  u_long num;
+  char *p;
+
+  shim_header_print (oh);
+  assert (oh->type == OSPF6_MESSAGE_TYPE_LSUPDATE);
+
+  lsupdate = (struct ospf6_lsupdate *)
+    ((caddr_t) oh + sizeof (struct ospf6_header));
+  num = ntohl (lsupdate->lsa_number);
+  zlog_debug ("    Number of LSA: %ld", num);  for (p = (char *) ((caddr_t) lsupdate + sizeof (struct ospf6_lsupdate));       p < OSPF6_MESSAGE_END (oh) &&
+       p + OSPF6_LSA_SIZE (p) <= OSPF6_MESSAGE_END (oh);       p += OSPF6_LSA_SIZE (p))    {      shim_lsa_header_print_raw ((struct ospf6_lsa_header *) p);
+      if (OSPF6_LSA_SIZE (p) < sizeof (struct ospf6_lsa_header))
+        {
+          zlog_debug ("    Malformed LSA length, quit printing");
+          break;
+        }
+    }
+
+  if (p != OSPF6_MESSAGE_END (oh))
+    {
+      char buf[32];
+
+      int num = 0;
+      memset (buf, 0, sizeof (buf));
+
+      zlog_debug ("    Trailing garbage exists");
+      while (p < OSPF6_MESSAGE_END (oh))
+        {
+          snprintf (buf, sizeof (buf), "%s %2x", buf, *p++);
+          num++;
+          if (num == 8)
+            {
+              zlog_debug ("    %s", buf);
+              memset (buf, 0, sizeof (buf));
+              num = 0;
+            }
+        }
+      if (num)
+        zlog_debug ("    %s", buf);
+    }
+}
+
+void
+shim_lsack_print (struct ospf6_header *oh) 
+{
+  char *p;
+
+  shim_header_print (oh);
+  assert (oh->type == OSPF6_MESSAGE_TYPE_LSACK);
+
+  for (p = (char *) ((caddr_t) oh + sizeof (struct ospf6_header));
+       p + sizeof (struct ospf6_lsa_header) <= OSPF6_MESSAGE_END (oh);
+       p += sizeof (struct ospf6_lsa_header))
+    shim_lsa_header_print_raw ((struct ospf6_lsa_header *) p);
+
+  if (p != OSPF6_MESSAGE_END (oh))
+    zlog_debug ("Trailing garbage exists");
+}
+
 int 
 shim_receive (struct thread * thread)
 {
@@ -193,10 +341,12 @@ shim_receive (struct thread * thread)
   switch (oh->type)
   {    
     case OSPF6_MESSAGE_TYPE_HELLO:
-      shim_hello_print (oh);
+//      zlog_debug("Received OSPF6 hello");
+//      shim_hello_print (oh);
       break;
     case OSPF6_MESSAGE_TYPE_DBDESC:
-//      ospf6_dbdesc_print (oh);
+//      zlog_debug("Received DBDESC");
+//      shim_dbdesc_print (oh);
       break;
     case OSPF6_MESSAGE_TYPE_LSREQ:
 //      ospf6_lsreq_print (oh);
@@ -213,29 +363,6 @@ shim_receive (struct thread * thread)
   }
 
   shim_sisis_write (obuf, wb); 
-
-/*  switch (oh->type)
-  {
-    case OSPF6_MESSAGE_TYPE_HELLO:
-      zlog_notice("hello");
-//      shim_hello_recv (&src, &dst, si, oh, len);
-      break;
-    case OSPF6_MESSAGE_TYPE_DBDESC:
-      zlog_notice("dbdesc\n");
-      break;
-    case OSPF6_MESSAGE_TYPE_LSREQ:
-      zlog_notice("lsreq\n");
-      break;
-    case OSPF6_MESSAGE_TYPE_LSUPDATE:
-      zlog_notice("lsupdate\n");
-      break; 
-    case OSPF6_MESSAGE_TYPE_LSACK:
-      zlog_notice("lsack\n");
-      break;
-    default:
-      zlog_notice("Unknown message\n");
-      break;
-  } */
 
   return 0;
 }
@@ -283,6 +410,7 @@ shim_send(struct in6_addr * src, struct in6_addr * dst,
 {
   int len;
   char srcname[64], dstname[64];
+  struct ospf6_header * oh;
   struct iovec iovector[2];
 
   /* initialize */
@@ -291,6 +419,35 @@ shim_send(struct in6_addr * src, struct in6_addr * dst,
   iovector[1].iov_base = NULL;
   iovector[1].iov_len = 0;
 
+  oh = (ibuf->data + ibuf->getp);
+
+  switch (oh->type)
+  {    
+      case OSPF6_MESSAGE_TYPE_HELLO:
+        zlog_debug("Sending Hello");
+        shim_hello_print(oh);
+        break;
+      case OSPF6_MESSAGE_TYPE_DBDESC:
+        zlog_debug("Sending DBDESC");
+        shim_dbdesc_print(oh);
+        break;
+      case OSPF6_MESSAGE_TYPE_LSREQ:
+        zlog_debug("Sending LSREQ");
+        shim_lsreq_print (oh);
+        break;
+      case OSPF6_MESSAGE_TYPE_LSUPDATE:
+        zlog_debug("Sending LSUPDATE");
+        shim_lsupdate_print (oh);
+        break;
+      case OSPF6_MESSAGE_TYPE_LSACK:
+        zlog_debug("Sending LSACK");
+        shim_lsack_print (oh);
+        break;
+      default:
+        zlog_debug ("Unknown message");
+        assert (0); 
+        break;
+  } 
     /* fill OSPF header */
 //  oh->version = OSPFV3_VERSION;                     // need to fill in for later
   /* message type must be set before */

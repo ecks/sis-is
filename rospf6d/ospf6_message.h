@@ -130,13 +130,17 @@ extern int ospf6_hello_send (struct thread *thread);
 extern int rospf6_hello_send (struct thread *thread);
 extern int ospf6_dbdesc_send (struct thread *thread);
 extern int rospf6_dbdesc_send (struct thread *thread);
-extern int rospf6_dbdesc_send_newone (struct thread *thread);
 extern int ospf6_dbdesc_send_newone (struct thread *thread);
 extern int rospf6_dbdesc_send_newone (struct thread *thread);
 extern int ospf6_lsreq_send (struct thread *thread);
+extern int rospf6_lsreq_send (struct thread *thread);
 extern int ospf6_lsupdate_send_interface (struct thread *thread);
+extern int rospf6_lsupdate_send_interface (struct thread *thread);
 extern int ospf6_lsupdate_send_neighbor (struct thread *thread);
+extern int rospf6_lsupdate_send_neighbor (struct thread *thread);
 extern int ospf6_lsack_send_interface (struct thread *thread);
+extern int rospf6_lsack_send_interface (struct thread *thread);
+extern int rospf6_lsack_send_neighbor (struct thread *thread);
 extern int ospf6_lsack_send_neighbor (struct thread *thread);
 
 extern int config_write_ospf6_debug_message (struct vty *);

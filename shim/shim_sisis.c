@@ -244,7 +244,6 @@ shim_sisis_read(struct thread * thread)
   char src_buf[INET6_ADDRSTRLEN];
   struct in6_addr dst;
   char dst_buf[INET6_ADDRSTRLEN];
-  char linklocal[INET6_ADDRSTRLEN];
 
   zlog_notice("Reading packet from SISIS connection!\n");
 
@@ -345,8 +344,6 @@ shim_sisis_read(struct thread * thread)
         if(are_checksums_same())
         {
           si = shim_interface_lookup_by_ifindex (ifindex);
-//          inet_ntop(AF_INET6, si->linklocal_addr, linklocal, sizeof(linklocal));
-          zlog_debug("linklocal addr: %s", linklocal);
           reset_checksums();
           shim_send(&src, &dst, si, listener->ibuf, length);
 //          shim_send(si->linklocal_addr, &dst, si, listener->ibuf, length);

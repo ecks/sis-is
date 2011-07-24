@@ -245,6 +245,7 @@ twoway_received (struct thread *thread)
   ospf6_neighbor_state_change (OSPF6_NEIGHBOR_EXSTART, on);
   SET_FLAG (on->dbdesc_bits, OSPF6_DBDESC_MSBIT);
   SET_FLAG (on->dbdesc_bits, OSPF6_DBDESC_MBIT);
+  zlog_notice("2WAY: IBIT about to be set");
   SET_FLAG (on->dbdesc_bits, OSPF6_DBDESC_IBIT);
 
   THREAD_OFF (on->thread_send_dbdesc);
@@ -318,6 +319,7 @@ negotiation_done (struct thread *thread)
         ospf6_lsdb_add (ospf6_lsa_copy (lsa), on->summary_list);
     }
 
+  zlog_notice("ND: IBIT about to be unset");
   UNSET_FLAG (on->dbdesc_bits, OSPF6_DBDESC_IBIT);
   ospf6_neighbor_state_change (OSPF6_NEIGHBOR_EXCHANGE, on);
 
@@ -392,6 +394,7 @@ adj_ok (struct thread *thread)
       ospf6_neighbor_state_change (OSPF6_NEIGHBOR_EXSTART, on);
       SET_FLAG (on->dbdesc_bits, OSPF6_DBDESC_MSBIT);
       SET_FLAG (on->dbdesc_bits, OSPF6_DBDESC_MBIT);
+      zlog_notice("AdjOK: IBIT about to be set");
       SET_FLAG (on->dbdesc_bits, OSPF6_DBDESC_IBIT);
 
       THREAD_OFF (on->thread_send_dbdesc);
@@ -434,6 +437,7 @@ seqnumber_mismatch (struct thread *thread)
   ospf6_neighbor_state_change (OSPF6_NEIGHBOR_EXSTART, on);
   SET_FLAG (on->dbdesc_bits, OSPF6_DBDESC_MSBIT);
   SET_FLAG (on->dbdesc_bits, OSPF6_DBDESC_MBIT);
+  zlog_notice("SNM: IBIT about to be set");
   SET_FLAG (on->dbdesc_bits, OSPF6_DBDESC_IBIT);
 
   ospf6_lsdb_remove_all (on->summary_list);
@@ -470,6 +474,7 @@ bad_lsreq (struct thread *thread)
   ospf6_neighbor_state_change (OSPF6_NEIGHBOR_EXSTART, on);
   SET_FLAG (on->dbdesc_bits, OSPF6_DBDESC_MSBIT);
   SET_FLAG (on->dbdesc_bits, OSPF6_DBDESC_MBIT);
+  zlog_notice("BLSR: IBIT about to be set");
   SET_FLAG (on->dbdesc_bits, OSPF6_DBDESC_IBIT);
 
   ospf6_lsdb_remove_all (on->summary_list);

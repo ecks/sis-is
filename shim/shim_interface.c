@@ -96,12 +96,34 @@ shim_interface_up (struct thread * thread)
   struct shim_interface * si;
  
   si = (struct shim_interface *) THREAD_ARG (thread);
-  
+ 
+//  assert (si & si->interface);
+
+//  if (IS_OSPF6_DEBUG_INTERFACE)
+//    zlog_debug ("Interface Event %s: [InterfaceUp]",
+//		si->interface->name);
+
   if (! if_is_up (si->interface))
   {
     printf("interface %s is down\n", si->interface->name);
     return 0;
   }
+
+  /* Join AllSPFRouters */
+//  shim_join_allspfrouters(si->interface->index);
+
+  return 0;
+}
+
+int 
+shim_interface_down (struct thread * thread)
+{
+  struct shim_interface * si;
+  
+  si = (struct shim_interface *) THREAD_ARG (thread);
+//  assert (si & si->interface);
+ 
+//  shim_leave_allspfrouters (si->interface->index);
 
   return 0;
 }
