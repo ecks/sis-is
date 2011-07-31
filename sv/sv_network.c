@@ -9,10 +9,10 @@
 
 #include "ospfd/ospfd.h"
 #include "ospf6d/ospf6_proto.h"
-extern struct zebra_privs_t shimd_privs;
+extern struct zebra_privs_t svd_privs;
 
-#include "shim/shimd.h"
-#include "shim/shim_network.h"
+#include "sv/svd.h"
+#include "sv/sv_network.h"
 
 struct in6_addr allspfrouters6;
 struct in6_addr alldrouters6;
@@ -22,7 +22,7 @@ shim_sock_init(void)
 {
   int shim_sock;
 
-  if ( shimd_privs.change (ZPRIVS_RAISE) )
+  if ( svd_privs.change (ZPRIVS_RAISE) )
     zlog_err ("shim_sock_init: could not raise privs, %s",
                safe_strerror (errno) );
     
@@ -30,14 +30,14 @@ shim_sock_init(void)
   if (shim_sock < 0)
     {
       int save_errno = errno;
-      if ( shimd_privs.change (ZPRIVS_LOWER) )
+      if ( svd_privs.change (ZPRIVS_LOWER) )
         zlog_err ("shim_sock_init: could not lower privs, %s",
                    safe_strerror (errno) );
       zlog_err ("shim_sock_init: socket: %s", safe_strerror (save_errno));
       exit(1);
     }
     
-  if (shimd_privs.change (ZPRIVS_LOWER))
+  if (svd_privs.change (ZPRIVS_LOWER))
     {
       zlog_err ("shim_sock_init: could not lower privs, %s",
                safe_strerror (errno) );

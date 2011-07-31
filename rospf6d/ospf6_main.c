@@ -35,6 +35,7 @@
 #include "privs.h"
 #include "sigevent.h"
 
+#include "rospf6d/ospf6_sisis.h"
 #include "ospf6d.h"
 
 /* Default configuration file name for ospf6d. */
@@ -182,6 +183,8 @@ struct quagga_signal_t ospf6_signals[] =
 int
 main (int argc, char *argv[], char *envp[])
 {
+  struct in6_addr * svz_addr;
+  char s_addr[INET6_ADDRSTRLEN+1];
   char *p;
   int opt;
   char *vty_addr = NULL;
@@ -274,8 +277,15 @@ main (int argc, char *argv[], char *envp[])
   access_list_init ();
   prefix_list_init ();
 
+  /* get shim addr */
+  svz_addr = get_svz_addr();
+
+  inet_ntop(AF_INET6, svz_addr, s_addr, INET6_ADDRSTRLEN+1);
+  printf("done getting svz addr: %s\n", s_addr);
+
   /* initialize ospf6 */
-  ospf6_init (host_num);
+  ospf6_init (host_num, svz_addr);
+//  ospf6_init (host_num, sv_addr);
 
   /* sort command vector */
   sort_node ();

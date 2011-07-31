@@ -115,8 +115,6 @@ extern struct thread_master *master;
 extern struct route_node *route_prev (struct route_node *node);
 
 extern void ospf6_debug (void);
-extern void ospf6_init (uint64_t host_num);
+extern void ospf6_init (uint64_t host_num, struct in6_addr * svz_addr);
 
 #endif /* OSPF6D_H */
-
-

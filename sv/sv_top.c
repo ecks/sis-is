@@ -5,8 +5,8 @@
 #include "memory.h"
 #include "vty.h"
 
-#include "shim/shimd.h"
-#include "shim/shim_interface.h"
+#include "sv/svd.h"
+#include "sv/sv_interface.h"
 
 DEFUN (router_shim,
        router_shim_cmd,

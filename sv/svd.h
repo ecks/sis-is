@@ -1,5 +1,5 @@
-#ifndef _ZEBRA_SHIMD_H
-#define _ZEBRA_SHIMD_H
+#ifndef SVD_H
+#define SVD_H
 
 struct shim
 {
@@ -25,7 +25,7 @@ extern struct shim_master *sm;
 extern struct thread_master *master;
 extern struct shim * shim;
 
-extern void shim_init (uint64_t hostnum);
+extern void shim_init (uint64_t hostnum, struct in6_addr * sv_addr);
 extern struct shim * shim_new (uint64_t hostnum);
 extern void shim_terminate (void);
 extern void shim_master_init (void);

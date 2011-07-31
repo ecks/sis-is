@@ -7,18 +7,18 @@ INSTALL_SDATA=@INSTALL@ -m 600
 AM_CFLAGS = $(PICFLAGS)
 AM_LDFLAGS = $(PILDFLAGS)
 
-noinst_LIBRARIES = libshim.a
-sbin_PROGRAMS = shim
+noinst_LIBRARIES = libsvz.a
+sbin_PROGRAMS = svz
 
-libshim_a_SOURCES = \
-	shim_zebra.c shimd.c shim_network.c shim_interface.c shim_packet.c shim_sisis.c shim_top.c
+libsvz_a_SOURCES = \
+	svz_zebra.c svzd.c svz_network.c svz_interface.c svz_packet.c svz_sisis.c svz_top.c
 
 noinst_HEADERS = \
-	shim_zebra.h shimd.h shim_network.h shim_interface.h shim_packet.h shim_sisis.h shim_top.h
+	svz_zebra.h svzd.h svz_network.h svz_interface.h svz_packet.h svz_sisis.h svz_top.h
 
-shim_SOURCES = shim.c $(libshim_a_SOURCES)
+svz_SOURCES = svz.c $(libsvz_a_SOURCES)
 
-shim_LDADD = ../lib/libzebra.la @LIBCAP@
+svz_LDADD = ../lib/libzebra.la @LIBCAP@
 
 examplesdir = $(exampledir)
 #dist_examples_DATA = sisisd.conf.sample

@@ -8,15 +8,15 @@
 #include "stream.h"
 #include "buffer.h"
 #include "sv.h"
-#include "shim/shimd.h"
-#include "shim/shim_interface.h"
-#include "shim/shim_network.h"
+#include "sv/svd.h"
+#include "sv/sv_interface.h"
+#include "sv/sv_network.h"
 
 #include "rospf6d/ospf6_message.h"
 #include "rospf6d/ospf6_proto.h"
 #include "rospf6d/ospf6_lsa.h"
-#include "shim/shim_packet.h"
-#include "shim/shim_sisis.h"
+#include "sv/sv_packet.h"
+#include "sv/sv_sisis.h"
 
 const char *ospf6_message_type_str[] =
   { "Unknown", "Hello", "DbDesc", "LSReq", "LSUpdate", "LSAck" };

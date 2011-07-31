@@ -20,14 +20,14 @@
 #include "sisis_api.h"
 #include "sisis_process_types.h"
 
-extern struct zebra_privs_t shimd_privs;
+extern struct zebra_privs_t svd_privs;
 
-#include "shim/shimd.h"
-#include "shim/shim_sisis.h"
-#include "shim/shim_network.h"
-#include "shim/shim_interface.h"
+#include "sv/svd.h"
+#include "sv/sv_sisis.h"
+#include "sv/sv_network.h"
+#include "sv/sv_interface.h"
 #include "rospf6d/ospf6_message.h"
-#include "shim/shim_packet.h"
+#include "sv/sv_packet.h"
 
 #define BACKLOG 10
 
@@ -39,10 +39,10 @@ shim_sisis_init (uint64_t host_num)
   char sisis_addr[INET6_ADDRSTRLEN];
 
   // Store process type
-  ptype = (uint64_t)SISIS_PTYPE_RIBCOMP_SHIM;
+  ptype = (uint64_t)SISIS_PTYPE_RIBCOMP_SV;
   ptype_version = (uint64_t)VERSION;
 
-  // Get pid
+  //       // Get pid
   pid = getpid();        // Get start time
   struct timeval tv;
   gettimeofday(&tv, NULL);
@@ -52,9 +52,9 @@ shim_sisis_init (uint64_t host_num)
   if (sisis_register(sisis_addr, ptype, ptype_version, host_num, pid, timestamp) != 0)
   {
     printf("Failed to register SIS-IS address.\n");
-    exit(1);        
+    exit(1);
   }
-  
+
   printf("Opening socket at %s on port %i.\n", sisis_addr, SHIM_SISIS_PORT);
 
   // Set up socket address info
@@ -93,12 +93,12 @@ shim_sisis_init (uint64_t host_num)
 }
 
 unsigned int
-number_of_sisis_addrs_for_process_type (unsigned int ptype) 
+number_of_sisis_addrs_for_process_type (unsigned int ptype)
 {
-  char addr[INET6_ADDRSTRLEN+1];  
+  char addr[INET6_ADDRSTRLEN+1];
   unsigned int lsize;
 
-  sisis_create_addr(addr, (uint64_t)ptype, (uint64_t)0, (uint64_t)0, (uint64_t)0, (uint64_t)0); 
+  sisis_create_addr(addr, (uint64_t)ptype, (uint64_t)0, (uint64_t)0, (uint64_t)0, (uint64_t)0);
   struct prefix_ipv6 prefix = sisis_make_ipv6_prefix(addr, 37);
   struct list_sis * addrs = get_sisis_addrs_for_prefix(&prefix);
 
@@ -128,8 +128,8 @@ are_checksums_same (void)
     else
     {
       return 0;
-     } 
-  }  
+     }
+  }
 
   return same;
 }
@@ -146,7 +146,7 @@ reset_checksums (void)
   }
 }
 
-unsigned int 
+unsigned int
 number_of_listeners (void)
 {
   return listcount(sm->listen_sockets);
@@ -160,19 +160,19 @@ shim_sisis_listener(int sock, struct sockaddr * sa, socklen_t salen)
   sockopt_reuseaddr(sock);
   sockopt_reuseport(sock);
 
-  if (sa->sa_family == AF_INET6) 
+  if (sa->sa_family == AF_INET6)
   {
     int on = 1;
     setsockopt (sock, IPPROTO_IPV6, IPV6_V6ONLY,
                 (void *) &on, sizeof (on));
   }
 
-  if (shimd_privs.change (ZPRIVS_RAISE) )
+  if (svd_privs.change (ZPRIVS_RAISE) )
     zlog_err ("shim_sisis_listener: could not raise privs");
 
   ret = bind (sock, sa, salen);
   en = errno;
-  if (shimd_privs.change (ZPRIVS_LOWER) )
+  if (svd_privs.change (ZPRIVS_LOWER) )
     zlog_err ("shim_sisis_listener: could not lower privs");
 
   if (ret < 0)
@@ -204,20 +204,20 @@ shim_sisis_accept(struct thread * thread)
 
   accept_sock = THREAD_FD (thread);
   if (accept_sock < 0)
-    {   
+    {
       zlog_err ("accept_sock is negative value %d", accept_sock);
-      return -1; 
-    }   
+      return -1;
+    }
   thread_add_read (master, shim_sisis_accept, NULL, accept_sock);
-  
+
   sisis_sock = sockunion_accept(accept_sock, &su);
 
   if (sisis_sock < 0)
     {
       zlog_err ("[Error] SISIS socket accept failed (%s)", safe_strerror (errno));
       return -1;
-    } 
-  
+    }
+
   zlog_notice ("SISIS connection from host %s", inet_sutop (&su, buf));
 
   listener = XMALLOC (MTYPE_SHIM_SISIS_LISTENER, sizeof(*listener));
@@ -231,7 +231,7 @@ shim_sisis_accept(struct thread * thread)
   return 0;
 }
 
-int 
+int
 shim_sisis_read(struct thread * thread)
 {
   struct sisis_listener *listener;
@@ -258,7 +258,7 @@ shim_sisis_read(struct thread * thread)
     {
       return -1;
     }
-    
+
     if(nbytes != (SV_HEADER_SIZE - already))
     {
       listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
@@ -268,7 +268,7 @@ shim_sisis_read(struct thread * thread)
   }
 
   stream_set_getp(listener->ibuf, 0);
- 
+
   /* read header packet. */
   length = stream_getw (listener->ibuf);
   command = stream_getw (listener->ibuf);
@@ -277,9 +277,9 @@ shim_sisis_read(struct thread * thread)
   stream_get (&src, listener->ibuf, sizeof (struct in6_addr));
   stream_get (&dst, listener->ibuf, sizeof (struct in6_addr));
 
-  ifindex = stream_getl(listener->ibuf); 
+  ifindex = stream_getl(listener->ibuf);
   checksum = stream_getw(listener->ibuf);
- 
+
   inet_ntop(AF_INET6, &src, src_buf, sizeof(src_buf));
   inet_ntop(AF_INET6, &dst, dst_buf, sizeof(dst_buf));
 
@@ -301,7 +301,7 @@ shim_sisis_read(struct thread * thread)
     if(((nbytes = stream_read_try(listener->ibuf, sisis_sock, length-already)) == 0) || nbytes == -1)
     {
       return -1;
-    } 
+    }
     if(nbytes != (length-already))
     {
       listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
@@ -337,10 +337,10 @@ shim_sisis_read(struct thread * thread)
       unsigned int num_of_addrs = number_of_sisis_addrs_for_process_type(SISIS_PTYPE_RIBCOMP_OSPF6);
       unsigned int num_of_listeners = number_of_listeners();
       zlog_debug("num of listeners: %d, num of addrs: %d", num_of_listeners, num_of_addrs);
-      float received_ratio = num_of_listeners/num_of_addrs;;
+      float received_ratio = num_of_listeners/num_of_addrs;
       listener->chksum = checksum;
       if(received_ratio > (1/2))
-      { 
+      {
         if(are_checksums_same())
         {
           si = shim_interface_lookup_by_ifindex (ifindex);
@@ -349,10 +349,10 @@ shim_sisis_read(struct thread * thread)
 //          shim_send(si->linklocal_addr, &dst, si, listener->ibuf, length);
         }
         else
-        { 
+        {
           zlog_notice("Checksums are not all the same");
         }
-      } 
+      }
       else
       {
         zlog_notice("Not enough processes have sent their data: buffering ...");
@@ -362,13 +362,13 @@ shim_sisis_read(struct thread * thread)
       break;
   }
 
-  if (sisis_sock < 0) 
+  if (sisis_sock < 0)
     /* Connection was closed during packet processing. */
     return -1;
 
   /* Register read thread. */
   stream_reset(listener->ibuf);
- 
+
   /* prepare for next packet. */
   listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
 

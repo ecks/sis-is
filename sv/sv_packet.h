@@ -1,5 +1,5 @@
-#ifndef _ZEBRA_SHIM_PACKET_H
-#define _ZEBRA_SHIM_PACKET_H
+#ifndef SV_PACKET_H
+#define SV_PACKET_H
 
 #define OSPF_MAX_PACKET_SIZE  65535U   /* includes IP Header size. */
 

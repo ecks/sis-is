@@ -7,9 +7,9 @@
 #include "stream.h"
 
 #include "rospf6d/ospf6_message.h"
-#include "shim/shimd.h"
-#include "shim/shim_interface.h"
-#include "shim/shim_packet.h"
+#include "sv/svd.h"
+#include "sv/sv_interface.h"
+#include "sv/sv_packet.h"
 
 struct shim_interface *
 shim_interface_lookup_by_ifindex (int ifindex)

@@ -8,13 +8,14 @@
 #include "linklist.h"
 #include "stream.h"
 
-#include "shim/shim_interface.h"
+#include "svz/svzd.h"
+#include "svz/svz_interface.h"
 #include "rospf6d/ospf6_message.h"
-#include "shim/shim_packet.h"
-#include "shim/shim_network.h"
-#include "shim/shim_sisis.h"
-#include "shim/shim_zebra.h"
-#include "shim/shimd.h"
+#include "svz/svz_packet.h"
+#include "svz/svz_top.h"
+#include "svz/svz_network.h"
+#include "svz/svz_sisis.h"
+#include "svz/svz_zebra.h"
 
 static struct shim_master shim_master;
 
@@ -23,10 +24,10 @@ struct shim_master *sm;
 struct shim * shim;
 
 void
-shim_init (uint64_t host_num)
+shim_init (uint64_t host_num, struct in6_addr * sv_addr)
 {
   shim_top_init ();
-  shim_zebra_init ();
+  shim_zebra_init (sv_addr);
   struct shim * ns = shim_new (host_num);
   shim = ns;
 //  listnode_add(sm->listen_sockets, ns); // is this necessary ?
@@ -91,7 +92,7 @@ shim_terminate ()
 }
 
 void
-shim_master_init()
+shim_master_init ()
 {
   memset (&shim_master, 0, sizeof (struct shim_master));
 

@@ -22,7 +22,8 @@
 #ifndef OSPF6_NETWORK_H
 #define OSPF6_NETWORK_H
 
-#define SHIM_SISIS_PORT 50000
+#define SV_SISIS_PORT 50000
+#define SVZ_SISIS_PORT 50001
 
 extern int ospf6_sock;
 extern struct in6_addr allspfrouters6;

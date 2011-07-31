@@ -1241,9 +1241,11 @@ case "${enable_sisisd}" in
 esac
 
 case "${enable_rib_comp}" in
-  "yes") RIBCOMPSHIM="shim"
+  "yes") RIBCOMPSV="sv"
+         RIBCOMPSVZ="svz"
          RIBCOMPOSPF6="rospf6d";;
-  "no" ) RIBCOMPSHIM=""
+  "no" ) RIBCOMPSV=""
+         RIBCOMPSVZ=""
          RIBCOMPOSPF6="";;
   *    ) ;;
 esac
@@ -1271,7 +1273,8 @@ AC_SUBST(OSPF6D)
 AC_SUBST(WATCHQUAGGA)
 AC_SUBST(ISISD)
 AC_SUBST(SISISD)
-AC_SUBST(RIBCOMPSHIM)
+AC_SUBST(RIBCOMPSV)
+AC_SUBST(RIBCOMPSVZ)
 AC_SUBST(RIBCOMPOSPF6)
 AC_SUBST(SOLARIS)
 AC_SUBST(VTYSH)
@@ -1515,7 +1518,8 @@ AC_DEFINE_UNQUOTED(PATH_RIPD_PID, "$quagga_statedir/ripd.pid",ripd PID)
 AC_DEFINE_UNQUOTED(PATH_RIPNGD_PID, "$quagga_statedir/ripngd.pid",ripngd PID)
 AC_DEFINE_UNQUOTED(PATH_BGPD_PID, "$quagga_statedir/bgpd.pid",bgpd PID)
 AC_DEFINE_UNQUOTED(PATH_SISISD_PID, "$quagga_statedir/sisisd.pid",sisisd PID)
-AC_DEFINE_UNQUOTED(PATH_SHIM_PID, "$quagga_statedir/shim.pid",shim PID)
+AC_DEFINE_UNQUOTED(PATH_SV_PID, "$quagga_statedir/sv.pid",sv PID)
+AC_DEFINE_UNQUOTED(PATH_SVZ_PID, "$quagga_statedir/svz.pid",svz PID)
 AC_DEFINE_UNQUOTED(PATH_ROSPF6D_PID, "$quagga_statedir/rospf6d.pid",rospf6d PID)
 AC_DEFINE_UNQUOTED(PATH_OSPFD_PID, "$quagga_statedir/ospfd.pid",ospfd PID)
 AC_DEFINE_UNQUOTED(PATH_OSPF6D_PID, "$quagga_statedir/ospf6d.pid",ospf6d PID)
@@ -1552,7 +1556,7 @@ AC_MSG_RESULT($ac_cv_htonl_works)
 
 AC_CONFIG_FILES([Makefile lib/Makefile zebra/Makefile ripd/Makefile 
 	  ripngd/Makefile bgpd/Makefile ospfd/Makefile watchquagga/Makefile
-	  ospf6d/Makefile isisd/Makefile sisisd/Makefile shim/Makefile rospf6d/Makefile vtysh/Makefile doc/Makefile 
+	  ospf6d/Makefile isisd/Makefile sisisd/Makefile sv/Makefile svz/Makefile rospf6d/Makefile vtysh/Makefile doc/Makefile 
 	  ospfclient/Makefile tests/Makefile m4/Makefile redhat/Makefile
 	  pkgsrc/Makefile
 	  redhat/quagga.spec 

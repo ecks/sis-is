@@ -1,5 +1,5 @@
-#ifndef _ZEBRA_SHIM_NETWORK_H
-#define _ZEBRA_SHIM_NETWORK_H
+#ifndef SV_NETWORK_H
+#define SV_NETWORK_H
 
 extern struct in6_addr allspfrouters6;
 extern struct in6_addr alldrouters6;

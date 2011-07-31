@@ -12,9 +12,10 @@
 
 #include "ospfd/ospfd.h"
 
-#include "shim/shimd.h"
+#include "sv/sv_sisis.h"
+#include "sv/svd.h"
 
-#define SHIM_DEFAULT_CONFIG       "shimd.conf"
+#define SV_DEFAULT_CONFIG       "svd.conf"
 
 /* ospfd privileges */
 zebra_capabilities_t _caps_p [] =
@@ -23,7 +24,8 @@ zebra_capabilities_t _caps_p [] =
   ZCAP_BIND,
 };
 
-struct zebra_privs_t shimd_privs =
+
+struct zebra_privs_t svd_privs =
 {
 #if defined(QUAGGA_USER) && defined(QUAGGA_GROUP)
   .user = QUAGGA_USER,
@@ -44,14 +46,14 @@ struct option longopts[] =
   { 0 }
 };
 
-char config_default[] = SYSCONFDIR SHIM_DEFAULT_CONFIG;
+char config_default[] = SYSCONFDIR SV_DEFAULT_CONFIG;
 
 char * progname;
 
 struct thread_master *master;
 
 /* Process ID saved for use by init system */
-const char *pid_file = PATH_SHIM_PID;
+const char *pid_file = PATH_SV_PID;
 
 static void
 usage (char * progname, int status)
@@ -77,7 +79,6 @@ sighup (void)
 {
   zlog (NULL, LOG_INFO, "SIGHUP received");
 }
-
 /* SIGINT / SIGTERM handler. */
 static void
 sigint (void)
@@ -85,7 +86,6 @@ sigint (void)
   zlog_notice ("Terminating on signal");
   shim_terminate ();
 }
-
 /* SIGUSR1 handler. */
 static void
 sigusr1 (void)
@@ -116,6 +116,7 @@ struct quagga_signal_t shim_signals[] =
 int
 main (int argc, char *argv[], char *envp[])
 {
+  struct in6_addr * sv_addr;
   char * p;
   struct thread thread;
   int opt;
@@ -123,7 +124,6 @@ main (int argc, char *argv[], char *envp[])
   uint64_t host_num = 1;
 
   progname = ((p = strrchr (argv[0], '/')) ? ++p : argv[0]);
-
   /* Command line argument treatment. */
   while (1)
   {
@@ -157,14 +157,16 @@ main (int argc, char *argv[], char *envp[])
   zlog_default = openzlog (progname, ZLOG_SHIM,
                            LOG_CONS|LOG_NDELAY|LOG_PID,
                            LOG_DAEMON);
-  zprivs_init (&shimd_privs);
+  zprivs_init (&svd_privs);
   signal_init (master, Q_SIGC(shim_signals), shim_signals);
   cmd_init(1);
   vty_init(master);
   memory_init ();
   if_init ();
 
-  shim_init(host_num);
+  sv_addr = htonl (INADDR_LOOPBACK);
+
+  shim_init(host_num, sv_addr);
 
   sort_node();
 

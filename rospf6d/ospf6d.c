@@ -1758,13 +1758,13 @@ DEFUN (show_ipv6_ospf6_linkstate_detail,
 
 /* Install ospf related commands. */
 void
-ospf6_init (uint64_t host_num)
+ospf6_init (uint64_t host_num, struct in6_addr * svz_addr)
 {
   ospf6_top_init ();
   ospf6_area_init ();
   ospf6_interface_init ();
   ospf6_neighbor_init ();
-  ospf6_zebra_init ();
+  ospf6_zebra_init (svz_addr);
 
   ospf6_lsa_init ();
   ospf6_spf_init ();

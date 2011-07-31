@@ -1,7 +1,8 @@
-#ifndef SHIM_SISIS_H
-#define SHIM_SISIS_H
+#ifndef SV_SISIS_H
+#define SV_SISIS_H
 
-#define SHIM_SISIS_PORT 50000
+#define SV_SISIS_PORT 50000
+#define SVZ_SISIS_PORT 50001
 
 struct sisis_listener
 {

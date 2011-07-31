@@ -1,5 +1,5 @@
-#ifndef _ZEBRA_SHIM_INTERFACE_H
-#define _ZEBRA_SHIM_INTERFACE_H
+#ifndef SV_INTERFACE_H
+#define SV_INTERFACE_H
 
 struct shim_interface 
 {

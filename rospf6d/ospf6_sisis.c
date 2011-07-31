@@ -8,18 +8,33 @@
 #include <sisis_api.h>
 #include <sisis_process_types.h>
 
-#include "ospf6_sisis.h"
+#include "rospf6d/ospf6_sisis.h"
 
 struct in6_addr * 
-get_shim_addr()
+get_sv_addr()
 {
-  char shim_addr[INET6_ADDRSTRLEN+1];
-  sisis_create_addr(shim_addr, (uint64_t)SISIS_PTYPE_RIBCOMP_SHIM, (uint64_t)0, (uint64_t)0, (uint64_t)0, (uint64_t)0); 
-  struct prefix_ipv6 shim_prefix = sisis_make_ipv6_prefix(shim_addr, 37);
-  struct list_sis * shim_addrs = get_sisis_addrs_for_prefix(&shim_prefix);
-  if(shim_addrs->size == 1)
+  char sv_addr[INET6_ADDRSTRLEN+1];
+  sisis_create_addr(sv_addr, (uint64_t)SISIS_PTYPE_RIBCOMP_SV, (uint64_t)0, (uint64_t)0, (uint64_t)0, (uint64_t)0); 
+  struct prefix_ipv6 sv_prefix = sisis_make_ipv6_prefix(sv_addr, 37);
+  struct list_sis * sv_addrs = get_sisis_addrs_for_prefix(&sv_prefix);
+  if(sv_addrs->size == 1)
   {
-    struct listnode_sis * node = shim_addrs->head;
+    struct listnode_sis * node = sv_addrs->head;
+    return (struct in6_addr *)node->data;
+  } 
+  return NULL;
+}
+
+struct in6_addr * 
+get_svz_addr()
+{
+  char svz_addr[INET6_ADDRSTRLEN+1];
+  sisis_create_addr(svz_addr, (uint64_t)SISIS_PTYPE_RIBCOMP_SVZ, (uint64_t)0, (uint64_t)0, (uint64_t)0, (uint64_t)0); 
+  struct prefix_ipv6 svz_prefix = sisis_make_ipv6_prefix(svz_addr, 37);
+  struct list_sis * svz_addrs = get_sisis_addrs_for_prefix(&svz_prefix);
+  if(svz_addrs->size == 1)
+  {
+    struct listnode_sis * node = svz_addrs->head;
     return (struct in6_addr *)node->data;
   } 
   return NULL;

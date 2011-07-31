@@ -81,20 +81,18 @@ ospf6_set_checksum (void)
 int
 ospf6_serv_sock (uint64_t host_num)
 {
-  struct in6_addr * shim_addr;
+  struct in6_addr * sv_addr;
   char  s_addr[INET6_ADDRSTRLEN+1];
   int status;
 
   if (ospf6d_privs.change (ZPRIVS_RAISE))
     zlog_err ("ospf6_serv_sock: could not raise privs");
 
-  printf("getting shim addr\n");
 
-  // get sisis address here
-  shim_addr = get_shim_addr();
+  sv_addr = get_sv_addr();
 
-  inet_ntop(AF_INET6, shim_addr, s_addr, INET6_ADDRSTRLEN+1);
-  printf("done getting shim addr: %s\n", s_addr);
+  inet_ntop(AF_INET6, sv_addr, s_addr, INET6_ADDRSTRLEN+1);
+  printf("done getting sv addr: %s\n", s_addr);
 
   rospf6_sisis_register(host_num);
   
@@ -104,7 +102,7 @@ ospf6_serv_sock (uint64_t host_num)
   hints.ai_family = AF_INET6;     // IPv6
   hints.ai_socktype = SOCK_STREAM;  // TCP
   char port_str[8];
-  sprintf(port_str, "%u", SHIM_SISIS_PORT);
+  sprintf(port_str, "%u", SV_SISIS_PORT);
   if((status = getaddrinfo(s_addr, port_str, &hints, &addr)) != 0)
   {
     fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(status));
