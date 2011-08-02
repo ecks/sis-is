@@ -26,7 +26,6 @@
 #include "command.h"
 #include "prefix.h"
 #include "stream.h"
-#include "zclient.h"
 #include "svz_client.h"
 #include "memory.h"
 
@@ -43,20 +42,19 @@
 unsigned char conf_debug_ospf6_zebra = 0;
 
 /* information about zebra. */
-struct zclient *zclient = NULL;
 struct svzclient *svzclient = NULL;
  
 struct in_addr router_id_zebra;
 
 /* Router-id update message from zebra. */
 static int
-ospf6_router_id_update_zebra (int command, struct zclient *svzclient,
+ospf6_router_id_update_zebra (int command, struct svzclient *svzclient,
 			      zebra_size_t length)
 {
   struct prefix router_id;
   struct ospf6 *o = ospf6;
 
-  zebra_router_id_update_read(svzclient->ibuf,&router_id);
+  svzebra_router_id_update_read(svzclient->ibuf,&router_id);
   router_id_zebra = router_id.u.prefix4;
 
   if (o == NULL)
@@ -72,30 +70,30 @@ ospf6_router_id_update_zebra (int command, struct zclient *svzclient,
 void
 ospf6_zebra_redistribute (int type)
 {
-  if (zclient->redist[type])
+  if (svzclient->redist[type])
     return;
-  zclient->redist[type] = 1;
-  if (zclient->sock > 0)
-    zebra_redistribute_send (ZEBRA_REDISTRIBUTE_ADD, zclient, type);
+  svzclient->redist[type] = 1;
+  if (svzclient->sock > 0)
+    svzebra_redistribute_send (ZEBRA_REDISTRIBUTE_ADD, svzclient, type);
 }
 
 void
 ospf6_zebra_no_redistribute (int type)
 {
-  if (! zclient->redist[type])
+  if (! svzclient->redist[type])
     return;
-  zclient->redist[type] = 0;
-  if (zclient->sock > 0)
-    zebra_redistribute_send (ZEBRA_REDISTRIBUTE_DELETE, zclient, type);
+  svzclient->redist[type] = 0;
+  if (svzclient->sock > 0)
+    svzebra_redistribute_send (ZEBRA_REDISTRIBUTE_DELETE, svzclient, type);
 }
 
 /* Inteface addition message from zebra. */
 static int
-ospf6_zebra_if_add (int command, struct zclient *svzclient, zebra_size_t length)
+ospf6_zebra_if_add (int command, struct svzclient *svzclient, zebra_size_t length)
 {
   struct interface *ifp;
 
-  ifp = zebra_interface_add_read (svzclient->ibuf);
+  ifp = svzebra_interface_add_read (svzclient->ibuf);
   if (IS_OSPF6_DEBUG_ZEBRA (RECV))
     zlog_debug ("Zebra Interface add: %s index %d mtu %d",
 		ifp->name, ifp->ifindex, ifp->mtu6);
@@ -108,7 +106,7 @@ ospf6_zebra_if_del (int command, struct svzclient *svzclient, zebra_size_t lengt
 {
   struct interface *ifp;
 
-  if (!(ifp = zebra_interface_state_read(svzclient->ibuf)))
+  if (!(ifp = svzebra_interface_state_read(svzclient->ibuf)))
     return 0;
 
   if (if_is_up (ifp))
@@ -133,7 +131,7 @@ ospf6_zebra_if_state_update (int command, struct svzclient *svzclient,
 {
   struct interface *ifp;
 
-  ifp = zebra_interface_state_read (svzclient->ibuf);
+  ifp = svzebra_interface_state_read (svzclient->ibuf);
   if (IS_OSPF6_DEBUG_ZEBRA (RECV))
     zlog_debug ("Zebra Interface state change: "
                 "%s index %d flags %llx metric %d mtu %d",
@@ -151,7 +149,7 @@ ospf6_zebra_if_address_update_add (int command, struct svzclient *svzclient,
   struct connected *c;
   char buf[128];
 
-  c = zebra_interface_address_read (ZEBRA_INTERFACE_ADDRESS_ADD, svzclient->ibuf);
+  c = svzebra_interface_address_read (ZEBRA_INTERFACE_ADDRESS_ADD, svzclient->ibuf);
   if (c == NULL)
     return 0;
 
@@ -174,7 +172,7 @@ ospf6_zebra_if_address_update_delete (int command, struct svzclient *svzclient,
   struct connected *c;
   char buf[128];
 
-  c = zebra_interface_address_read (ZEBRA_INTERFACE_ADDRESS_DELETE, svzclient->ibuf);
+  c = svzebra_interface_address_read (ZEBRA_INTERFACE_ADDRESS_DELETE, svzclient->ibuf);
   if (c == NULL)
     return 0;
 
@@ -195,7 +193,7 @@ ospf6_zebra_read_ipv6 (int command, struct svzclient *svzclient,
                        zebra_size_t length)
 {
   struct stream *s;
-  struct zapi_ipv6 api;
+  struct svzapi_ipv6 api;
   unsigned long ifindex;
   struct prefix_ipv6 p;
   struct in6_addr *nexthop;
@@ -274,7 +272,7 @@ DEFUN (show_zebra,
        "Zebra information\n")
 {
   int i;
-  if (zclient == NULL)
+  if (svzclient == NULL)
     {
       vty_out (vty, "Not connected to zebra%s", VNL);
       return CMD_SUCCESS;
@@ -282,13 +280,13 @@ DEFUN (show_zebra,
 
   vty_out (vty, "Zebra Infomation%s", VNL);
   vty_out (vty, "  enable: %d fail: %d%s",
-           zclient->enable, zclient->fail, VNL);
-  vty_out (vty, "  redistribute default: %d%s", zclient->redist_default,
+           svzclient->enable, svzclient->fail, VNL);
+  vty_out (vty, "  redistribute default: %d%s", svzclient->redist_default,
            VNL);
   vty_out (vty, "  redistribute:");
   for (i = 0; i < ZEBRA_ROUTE_MAX; i++)
     {
-      if (zclient->redist[i])
+      if (svzclient->redist[i])
         vty_out (vty, " %s", zebra_route_string(i));
     }
   vty_out (vty, "%s", VNL);
@@ -302,8 +300,8 @@ DEFUN (router_zebra,
        "Make connection to zebra daemon\n")
 {
   vty->node = ZEBRA_NODE;
-  zclient->enable = 1;
-  zclient_start (zclient);
+  svzclient->enable = 1;
+  svzclient_start (svzclient);
   return CMD_SUCCESS;
 }
 
@@ -314,8 +312,8 @@ DEFUN (no_router_zebra,
        "Configure routing process\n"
        "Disable connection to zebra daemon\n")
 {
-  zclient->enable = 0;
-  zclient_stop (zclient);
+  svzclient->enable = 0;
+  svzclient_stop (svzclient);
   return CMD_SUCCESS;
 }
 
@@ -323,12 +321,12 @@ DEFUN (no_router_zebra,
 static int
 config_write_ospf6_zebra (struct vty *vty)
 {
-  if (! zclient->enable)
+  if (! svzclient->enable)
     {
       vty_out (vty, "no router zebra%s", VNL);
       vty_out (vty, "!%s", VNL);
     }
-  else if (! zclient->redist[ZEBRA_ROUTE_OSPF6])
+  else if (! svzclient->redist[ZEBRA_ROUTE_OSPF6])
     {
       vty_out (vty, "router zebra%s", VNL);
       vty_out (vty, " no redistribute ospf6%s", VNL);
@@ -349,7 +347,7 @@ static struct cmd_node zebra_node =
 static void
 ospf6_zebra_route_update (int type, struct ospf6_route *request)
 {
-  struct zapi_ipv6 api;
+  struct svzapi_ipv6 api;
   char buf[64];
   int nhcount;
   struct in6_addr **nexthops;
@@ -364,7 +362,7 @@ ospf6_zebra_route_update (int type, struct ospf6_route *request)
 		  (type == REM ? "remove" : "add"), buf);
     }
 
-  if (zclient->sock < 0)
+  if (svzclient->sock < 0)
     {
       if (IS_OSPF6_DEBUG_ZEBRA (SEND))
         zlog_debug ("  Not connected to Zebra");
@@ -462,9 +460,9 @@ ospf6_zebra_route_update (int type, struct ospf6_route *request)
 
   dest = (struct prefix_ipv6 *) &request->prefix;
   if (type == REM)
-    ret = zapi_ipv6_route (ZEBRA_IPV6_ROUTE_DELETE, zclient, dest, &api);
+    ret = svzapi_ipv6_route (ZEBRA_IPV6_ROUTE_DELETE, svzclient, dest, &api);
   else
-    ret = zapi_ipv6_route (ZEBRA_IPV6_ROUTE_ADD, zclient, dest, &api);
+    ret = svzapi_ipv6_route (ZEBRA_IPV6_ROUTE_ADD, svzclient, dest, &api);
 
   if (ret < 0)
     zlog_err ("zapi_ipv6_route() %s failed: %s",
@@ -479,7 +477,7 @@ ospf6_zebra_route_update (int type, struct ospf6_route *request)
 void
 ospf6_zebra_route_update_add (struct ospf6_route *request)
 {
-  if (! zclient->redist[ZEBRA_ROUTE_OSPF6])
+  if (! svzclient->redist[ZEBRA_ROUTE_OSPF6])
     {
       ospf6->route_table->hook_add = NULL;
       ospf6->route_table->hook_remove = NULL;
@@ -491,7 +489,7 @@ ospf6_zebra_route_update_add (struct ospf6_route *request)
 void
 ospf6_zebra_route_update_remove (struct ospf6_route *request)
 {
-  if (! zclient->redist[ZEBRA_ROUTE_OSPF6])
+  if (! svzclient->redist[ZEBRA_ROUTE_OSPF6])
     {
       ospf6->route_table->hook_add = NULL;
       ospf6->route_table->hook_remove = NULL;
@@ -508,10 +506,10 @@ DEFUN (redistribute_ospf6,
 {
   struct ospf6_route *route;
 
-  if (zclient->redist[ZEBRA_ROUTE_OSPF6])
+  if (svzclient->redist[ZEBRA_ROUTE_OSPF6])
     return CMD_SUCCESS;
 
-  zclient->redist[ZEBRA_ROUTE_OSPF6] = 1;
+  svzclient->redist[ZEBRA_ROUTE_OSPF6] = 1;
 
   if (ospf6 == NULL)
     return CMD_SUCCESS;
@@ -536,10 +534,10 @@ DEFUN (no_redistribute_ospf6,
 {
   struct ospf6_route *route;
 
-  if (! zclient->redist[ZEBRA_ROUTE_OSPF6])
+  if (! svzclient->redist[ZEBRA_ROUTE_OSPF6])
     return CMD_SUCCESS;
 
-  zclient->redist[ZEBRA_ROUTE_OSPF6] = 0;
+  svzclient->redist[ZEBRA_ROUTE_OSPF6] = 0;
 
   if (ospf6 == NULL)
     return CMD_SUCCESS;
@@ -573,11 +571,11 @@ ospf6_zebra_init (struct in6_addr * svz_addr)
   svzclient->ipv6_route_delete = ospf6_zebra_read_ipv6;
 
   /* Allocate zebra structure. */
-  zclient = zclient_new ();
-  zclient_init (zclient, ZEBRA_ROUTE_OSPF6, svz_addr);
+//  zclient = zclient_new ();
+//  zclient_init (zclient, ZEBRA_ROUTE_OSPF6);
 
   /* redistribute connected route by default */
-  /* ospf6_zebra_redistribute (ZEBRA_ROUTE_CONNECT); */
+   ospf6_zebra_redistribute (ZEBRA_ROUTE_CONNECT);
 
   /* Install zebra node. */
   install_node (&zebra_node, config_write_ospf6_zebra);
@@ -695,5 +693,3 @@ install_element_ospf6_debug_zebra (void)
   install_element (CONFIG_NODE, &debug_ospf6_zebra_sendrecv_cmd);
   install_element (CONFIG_NODE, &no_debug_ospf6_zebra_sendrecv_cmd);
 }
-
-

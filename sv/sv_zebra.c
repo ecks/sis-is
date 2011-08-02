@@ -1,8 +1,10 @@
 #include <zebra.h>
 
 #include "prefix.h"
+#include "log.h"
 #include "zclient.h"
 
+#include "sv/sv_interface.h"
 #include "sv/sv_zebra.h"
 
 struct zclient * zclient = NULL;
@@ -49,7 +51,7 @@ void
 shim_zebra_init (struct in6_addr * sv_addr)
 {
   zclient = zclient_new ();
-  zclient_init (zclient, ZEBRA_ROUTE_BGP, sv_addr);
+  zclient_init (zclient, ZEBRA_ROUTE_BGP);
   zclient->router_id_update = NULL;
   zclient->interface_add = shim_zebra_if_add;
   zclient->interface_delete = shim_zebra_if_del;

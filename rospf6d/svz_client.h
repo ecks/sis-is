@@ -133,7 +133,7 @@ extern void svzclient_free (struct svzclient *);
 extern int svzclient_socket (struct in6_addr * sv_addr);
 
 /* Send redistribute command to zebra daemon. Do not update zclient state. */
-/*extern int svzebra_redistribute_send (int command, struct zclient *, int type); */
+extern int svzebra_redistribute_send (int command, struct svzclient *, int type); 
 
 /* If state has changed, update state and call zebra_redistribute_send. */
 /*extern void svzclient_redistribute (int command, struct zclient *, int type); */
@@ -148,19 +148,19 @@ extern int svzclient_send_message(struct svzclient *);
 /* create header for command, length to be filled in by user later */
 extern void svzclient_create_header (struct stream *, uint16_t);
 
-/*
-extern struct interface *zebra_interface_add_read (struct stream *);
-extern struct interface *zebra_interface_state_read (struct stream *s);
-extern struct connected *zebra_interface_address_read (int, struct stream *);
-extern void zebra_interface_if_set_value (struct stream *, struct interface *);
-extern void zebra_router_id_update_read (struct stream *s, struct prefix *rid);
-extern int zapi_ipv4_route (u_char, struct zclient *, struct prefix_ipv4 *, 
+
+extern struct interface *svzebra_interface_add_read (struct stream *);
+extern struct interface *svzebra_interface_state_read (struct stream *s);
+extern struct connected *svzebra_interface_address_read (int, struct stream *);
+/*extern void zebra_interface_if_set_value (struct stream *, struct interface *); */
+extern void svzebra_router_id_update_read (struct stream *s, struct prefix *rid);
+/*extern int zapi_ipv4_route (u_char, struct zclient *, struct prefix_ipv4 *, 
                             struct zapi_ipv4 *);
 */
-/*#ifdef HAVE_IPV6 */
+#ifdef HAVE_IPV6
 /* IPv6 prefix add and delete function prototype. */
-/*
-struct zapi_ipv6
+
+struct svzapi_ipv6
 {
   u_char type;
 
@@ -179,9 +179,9 @@ struct zapi_ipv6
   u_int32_t metric;
 };
 
-extern int zapi_ipv6_route (u_char cmd, struct zclient *zclient, 
-                     struct prefix_ipv6 *p, struct zapi_ipv6 *api); */
-/*#endif *//* HAVE_IPV6 */
+extern int svzapi_ipv6_route (u_char cmd, struct svzclient *svzclient, 
+                     struct prefix_ipv6 *p, struct svzapi_ipv6 *api); 
+#endif /* HAVE_IPV6 */
 
 /*extern int zapi_interface_address (u_char cmd, struct zclient *zclient, struct prefix *p, unsigned int ifindex, time_t * expires); */
 

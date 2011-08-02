@@ -116,7 +116,6 @@ struct quagga_signal_t shim_signals[] =
 int
 main (int argc, char *argv[], char *envp[])
 {
-  struct in6_addr * sv_addr;
   char * p;
   struct thread thread;
   int opt;
@@ -164,9 +163,7 @@ main (int argc, char *argv[], char *envp[])
   memory_init ();
   if_init ();
 
-  sv_addr = htonl (INADDR_LOOPBACK);
-
-  shim_init(host_num, sv_addr);
+  shim_init(host_num);
 
   sort_node();
 

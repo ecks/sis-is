@@ -269,105 +269,14 @@ shim_sisis_read(struct thread * thread)
 
   stream_set_getp(listener->ibuf, 0);
 
-  /* read header packet. */
-  length = stream_getw (listener->ibuf);
-  command = stream_getw (listener->ibuf);
+  svz_net_message_send(listener->ibuf);
 
-  // will be 0 so may be discarded
-  stream_get (&src, listener->ibuf, sizeof (struct in6_addr));
-  stream_get (&dst, listener->ibuf, sizeof (struct in6_addr));
-
-  ifindex = stream_getl(listener->ibuf);
-  checksum = stream_getw(listener->ibuf);
-
-  inet_ntop(AF_INET6, &src, src_buf, sizeof(src_buf));
-  inet_ntop(AF_INET6, &dst, dst_buf, sizeof(dst_buf));
-
-  zlog_debug("SISIS: length: %d, command: %d, ifindex: %d, checksum: %d sock %d, src: %s, dst: %s\n", length, command, ifindex, checksum, sisis_sock, src_buf, dst_buf);
-
-  if(length > STREAM_SIZE(listener->ibuf))
-  {
-    struct stream * ns;
-    zlog_warn("message size exceeds buffer size");
-    ns = stream_new(length);
-    stream_copy(ns, listener->ibuf);
-    stream_free(listener->ibuf);
-    listener->ibuf = ns;
-  }
-
-  if(already < length)
-  {
-    ssize_t nbytes;
-    if(((nbytes = stream_read_try(listener->ibuf, sisis_sock, length-already)) == 0) || nbytes == -1)
-    {
-      return -1;
-    }
-    if(nbytes != (length-already))
-    {
-      listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
-      return 0;
-    }
-  }
-
-  length -= SV_HEADER_SIZE;
-
-  switch(command)
-  {
-    case SV_JOIN_ALLSPF:
-      zlog_debug("join allspf received");
-      shim_join_allspfrouters (ifindex);
-      break;
-    case SV_LEAVE_ALLSPF:
-      zlog_debug("leave allspf received");
-      shim_leave_allspfrouters (ifindex);
-      zlog_debug("index: %d\n", ifindex);
-      break;
-    case SV_JOIN_ALLD:
-      zlog_debug("join alld received");
-      shim_join_alldrouters (ifindex);
-      zlog_debug("index: %d", ifindex);
-      break;
-    case SV_LEAVE_ALLD:
-      zlog_debug("leave alld received");
-      shim_leave_alldrouters (ifindex);
-      zlog_debug("index: %d", ifindex);
-      break;
-    case SV_MESSAGE:
-      zlog_debug("SISIS message received");
-      unsigned int num_of_addrs = number_of_sisis_addrs_for_process_type(SISIS_PTYPE_RIBCOMP_OSPF6);
-      unsigned int num_of_listeners = number_of_listeners();
-      zlog_debug("num of listeners: %d, num of addrs: %d", num_of_listeners, num_of_addrs);
-      float received_ratio = num_of_listeners/num_of_addrs;
-      listener->chksum = checksum;
-      if(received_ratio > (1/2))
-      {
-        if(are_checksums_same())
-        {
-          si = shim_interface_lookup_by_ifindex (ifindex);
-          reset_checksums();
-          shim_send(&src, &dst, si, listener->ibuf, length);
-//          shim_send(si->linklocal_addr, &dst, si, listener->ibuf, length);
-        }
-        else
-        {
-          zlog_notice("Checksums are not all the same");
-        }
-      }
-      else
-      {
-        zlog_notice("Not enough processes have sent their data: buffering ...");
-      }
-      break;
-    default:
-      break;
-  }
-
-  if (sisis_sock < 0)
+  if (sisis_sock < 0) 
     /* Connection was closed during packet processing. */
-    return -1;
+    return -1; 
 
   /* Register read thread. */
-  stream_reset(listener->ibuf);
+//  stream_reset(listener->ibuf);
 
   /* prepare for next packet. */
   listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);

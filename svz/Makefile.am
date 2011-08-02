@@ -11,10 +11,10 @@ noinst_LIBRARIES = libsvz.a
 sbin_PROGRAMS = svz
 
 libsvz_a_SOURCES = \
-	svz_zebra.c svzd.c svz_network.c svz_interface.c svz_packet.c svz_sisis.c svz_top.c
+	svz_zebra.c svzd.c svz_network.c svz_interface.c svz_packet.c svz_sisis.c svz_top.c svz_tunnel.c
 
 noinst_HEADERS = \
-	svz_zebra.h svzd.h svz_network.h svz_interface.h svz_packet.h svz_sisis.h svz_top.h
+	svz_zebra.h svzd.h svz_network.h svz_interface.h svz_packet.h svz_sisis.h svz_top.h svz_tunnel.h
 
 svz_SOURCES = svz.c $(libsvz_a_SOURCES)
 

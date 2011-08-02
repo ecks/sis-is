@@ -24,10 +24,10 @@ struct shim_master *sm;
 struct shim * shim;
 
 void
-shim_init (uint64_t host_num, struct in6_addr * sv_addr)
+shim_init (uint64_t host_num)
 {
   shim_top_init ();
-  shim_zebra_init (sv_addr);
+  shim_zebra_init ();
   struct shim * ns = shim_new (host_num);
   shim = ns;
 //  listnode_add(sm->listen_sockets, ns); // is this necessary ?
@@ -38,13 +38,9 @@ shim_new (uint64_t host_num)
 {
   struct shim * new = XCALLOC(MTYPE_SHIM, sizeof (struct shim));
 
-  // socket to the outside
-  if ((new->fd = shim_sock_init()) < 0)
-  {
-    zlog_err("shim_new: fatal error: shim_sock_init was unable to open "
-             "a socket");
-    exit(1);
-  }
+  // socket to the zebra
+  svz_net_init();
+
   new->maxsndbuflen = getsockopt_so_sendbuf (new->fd);
   if ((new->obuf = stream_new(OSPF_MAX_PACKET_SIZE+1)) == NULL)
   {

@@ -22,7 +22,7 @@
 #ifndef OSPF6_ZEBRA_H
 #define OSPF6_ZEBRA_H
 
-#include "zclient.h"
+#include "svz_client.h"
 
 /* Debug option */
 extern unsigned char conf_debug_ospf6_zebra;
@@ -35,14 +35,14 @@ extern unsigned char conf_debug_ospf6_zebra;
 #define IS_OSPF6_DEBUG_ZEBRA(e) \
   (conf_debug_ospf6_zebra & OSPF6_DEBUG_ZEBRA_ ## e)
 
-extern struct zclient *zclient;
+extern struct svzclient *svzclient;
 
 extern void ospf6_zebra_route_update_add (struct ospf6_route *request);
 extern void ospf6_zebra_route_update_remove (struct ospf6_route *request);
 
 extern void ospf6_zebra_redistribute (int);
 extern void ospf6_zebra_no_redistribute (int);
-#define ospf6_zebra_is_redistribute(type) (zclient->redist[type])
+#define ospf6_zebra_is_redistribute(type) (svzclient->redist[type])
 extern void ospf6_zebra_init (struct in6_addr * svz_addr);
 
 extern int config_write_ospf6_debug_zebra (struct vty *vty);

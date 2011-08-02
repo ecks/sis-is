@@ -285,7 +285,6 @@ main (int argc, char *argv[], char *envp[])
 
   /* initialize ospf6 */
   ospf6_init (host_num, svz_addr);
-//  ospf6_init (host_num, sv_addr);
 
   /* sort command vector */
   sort_node ();

@@ -3,7 +3,7 @@
 #include "prefix.h"
 #include "zclient.h"
 
-#include "sv/sv_zebra.h"
+#include "svz/svz_zebra.h"
 
 struct zclient * zclient = NULL;
 
@@ -46,10 +46,10 @@ shim_zebra_if_state_update (int command, struct zclient * zclient, zebra_size_t 
 }
 
 void
-shim_zebra_init (struct in6_addr * sv_addr)
+shim_zebra_init ()
 {
   zclient = zclient_new ();
-  zclient_init (zclient, ZEBRA_ROUTE_BGP, sv_addr);
+  zclient_init (zclient, ZEBRA_ROUTE_BGP);
   zclient->router_id_update = NULL;
   zclient->interface_add = shim_zebra_if_add;
   zclient->interface_delete = shim_zebra_if_del;

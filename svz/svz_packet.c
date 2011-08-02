@@ -7,16 +7,16 @@
 #include "sockopt.h"
 #include "stream.h"
 #include "buffer.h"
-#include "sv.h"
-#include "sv/svd.h"
-#include "sv/sv_interface.h"
-#include "sv/sv_network.h"
+#include "svz/svzd.h"
+#include "svz/svz_interface.h"
+#include "svz/svz_network.h"
 
 #include "rospf6d/ospf6_message.h"
 #include "rospf6d/ospf6_proto.h"
 #include "rospf6d/ospf6_lsa.h"
-#include "sv/sv_packet.h"
-#include "sv/sv_sisis.h"
+#include "svz/svz_tunnel.h"
+#include "svz/svz_packet.h"
+#include "svz/svz_sisis.h"
 
 const char *ospf6_message_type_str[] =
   { "Unknown", "Hello", "DbDesc", "LSReq", "LSUpdate", "LSAck" };
@@ -262,6 +262,13 @@ shim_lsack_print (struct ospf6_header *oh)
 }
 
 int 
+shim_receive (struct tclient * tclient)
+{
+  return shim_sisis_write(tclient->ibuf, wb);
+}
+
+/*
+int 
 shim_receive (struct thread * thread)
 {
   struct stream * obuf;
@@ -273,12 +280,12 @@ shim_receive (struct thread * thread)
   struct iovec iovector[2];
   struct ospf6_header * oh;
   struct ip * iph;
-
+*/
   /* first of all get interface pointer. */
-  shim = THREAD_ARG (thread);
+/*  tclient = THREAD_ARG (thread);
 
   shim->t_read = thread_add_read (master, shim_receive, shim, shim->fd);
-
+*/
 //  stream_reset(shim->ibuf);
 //  if (!(ibuf = shim_recv_packet (shim->fd, &ifp, shim->ibuf)))
 //    return -1;
@@ -287,7 +294,7 @@ shim_receive (struct thread * thread)
 
 //  stream_forward_getp (ibuf, iph->ip_hl * 4);
 //  oh = (struct ospf_header *) STREAM_PNT (ibuf);
-
+/*
   memset (&src, 0, sizeof(src));
   memset (&dst, 0, sizeof(dst));
   ifindex = 0;
@@ -302,9 +309,9 @@ shim_receive (struct thread * thread)
 
   obuf = stream_new (SV_HEADER_SIZE + iobuflen);
   sv_create_header (obuf, SV_MESSAGE);
-
-  len = shim_recvmsg (&src, &dst, &ifindex, iovector, shim->fd, obuf, iobuflen);
-  if (len > iobuflen)
+*/
+//  len = shim_recvmsg (&src, &dst, &ifindex, iovector, shim->fd, obuf, iobuflen);
+/*  if (len > iobuflen)
   {    
     zlog_err ("Excess message read");
     return 0;
@@ -340,23 +347,23 @@ shim_receive (struct thread * thread)
   stream_get(oh, obuf_d, len);
   switch (oh->type)
   {    
-    case OSPF6_MESSAGE_TYPE_HELLO:
+    case OSPF6_MESSAGE_TYPE_HELLO: */
 //      zlog_debug("Received OSPF6 hello");
 //      shim_hello_print (oh);
-      break;
-    case OSPF6_MESSAGE_TYPE_DBDESC:
+/*      break;
+    case OSPF6_MESSAGE_TYPE_DBDESC: */
 //      zlog_debug("Received DBDESC");
 //      shim_dbdesc_print (oh);
-      break;
-    case OSPF6_MESSAGE_TYPE_LSREQ:
+/*      break;
+    case OSPF6_MESSAGE_TYPE_LSREQ: */
 //      ospf6_lsreq_print (oh);
-      break;
-    case OSPF6_MESSAGE_TYPE_LSUPDATE:
+/*      break;
+    case OSPF6_MESSAGE_TYPE_LSUPDATE: */
 //      ospf6_lsupdate_print (oh);
-      break;
-    case OSPF6_MESSAGE_TYPE_LSACK:
+/*      break;
+    case OSPF6_MESSAGE_TYPE_LSACK: */
 //      ospf6_lsack_print (oh);
-      break;
+/*      break;
     default:
       zlog_debug ("Unknown message, type: %d", oh->type);
       break;
@@ -365,7 +372,7 @@ shim_receive (struct thread * thread)
   shim_sisis_write (obuf, wb); 
 
   return 0;
-}
+} */
 
 /*int
 shim_send(struct stream * s, struct shim_interface * si)
@@ -495,7 +502,7 @@ shim_send(struct in6_addr * src, struct in6_addr * dst,
     } */
 //  }    
     /* send message */
-  len = shim_sendmsg (src, dst, &si->interface->ifindex, iovector, shim->fd, ibuf, length);
+//  len = shim_sendmsg (src, dst, &si->interface->ifindex, iovector, shim->fd, ibuf, length);
   if (len != length)
     zlog_err ("Could not send entire message");
 }

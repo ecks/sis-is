@@ -329,7 +329,7 @@ svzclient_start (struct svzclient *svzclient)
   /* Flush all redistribute request. */
   for (i = 0; i < ZEBRA_ROUTE_MAX; i++)
     if (i != svzclient->redist_default && svzclient->redist[i])
-      zebra_redistribute_send (ZEBRA_REDISTRIBUTE_ADD, svzclient, i);
+      svzebra_redistribute_send (ZEBRA_REDISTRIBUTE_ADD, svzclient, i);
 
   /* If default information is needed. */
   if (svzclient->default_information)
@@ -353,7 +353,7 @@ svzclient_connect (struct thread *t)
 
   return svzclient_start (svzclient);
 }
-
+
  /* 
   * "xdr_encode"-like interface that allows daemon (client) to send
   * a message to zebra server for a route that needs to be
@@ -400,7 +400,7 @@ svzclient_connect (struct thread *t)
   */ 
 /*
 int
-zapi_ipv4_route (u_char cmd, struct svzclient *svzclient, struct prefix_ipv4 *p,
+svzapi_ipv4_route (u_char cmd, struct svzclient *svzclient, struct prefix_ipv4 *p,
                  struct zapi_ipv4 *api)
 {
   int i;
@@ -411,8 +411,8 @@ zapi_ipv4_route (u_char cmd, struct svzclient *svzclient, struct prefix_ipv4 *p,
 /*  s = zclient->obuf;
   stream_reset (s);
   
-  zclient_create_header (s, cmd);
- */ 
+  svzclient_create_header (s, cmd);
+*/ 
   /* Put type and nexthop. */
 /*  stream_putc (s, api->type);
   stream_putc (s, api->flags);
@@ -421,8 +421,8 @@ zapi_ipv4_route (u_char cmd, struct svzclient *svzclient, struct prefix_ipv4 *p,
   /* Put prefix information. */
 /*  psize = PSIZE (p->prefixlen);
   stream_putc (s, p->prefixlen);
-  stream_write (s, (u_char *) & p->prefix, psize); */
-
+  stream_write (s, (u_char *) & p->prefix, psize);
+*/
   /* Nexthop, ifindex, distance and metric information. */
 /*  if (CHECK_FLAG (api->message, ZAPI_MESSAGE_NEXTHOP))
     {
@@ -458,60 +458,60 @@ zapi_ipv4_route (u_char cmd, struct svzclient *svzclient, struct prefix_ipv4 *p,
 
   return zclient_send_message(zclient);
 }
-
+*/
 #ifdef HAVE_IPV6
 int
-zapi_ipv6_route (u_char cmd, struct zclient *zclient, struct prefix_ipv6 *p,
-	       struct zapi_ipv6 *api)
+svzapi_ipv6_route (u_char cmd, struct svzclient *svzclient, struct prefix_ipv6 *p,
+	       struct svzapi_ipv6 *api)
 {
   int i;
   int psize;
   struct stream *s;
-*/
+
   /* Reset stream. */
-/*  s = zclient->obuf;
+  s = svzclient->obuf;
   stream_reset (s);
 
-  zclient_create_header (s, cmd);
-*/
+  svzclient_create_header (s, cmd);
+
   /* Put type and nexthop. */
-/*  stream_putc (s, api->type);
+  stream_putc (s, api->type);
   stream_putc (s, api->flags);
   stream_putc (s, api->message);
-*/  
+  
   /* Put prefix information. */
-/*  psize = PSIZE (p->prefixlen);
+  psize = PSIZE (p->prefixlen);
   stream_putc (s, p->prefixlen);
   stream_write (s, (u_char *)&p->prefix, psize);
-*/
-  /* Nexthop, ifindex, distance and metric information. */
-/*  if (CHECK_FLAG (api->message, ZAPI_MESSAGE_NEXTHOP))
-    {
-      stream_putc (s, api->nexthop_num + api->ifindex_num);
 
-      for (i = 0; i < api->nexthop_num; i++)
-	{
-	  stream_putc (s, ZEBRA_NEXTHOP_IPV6);
-	  stream_write (s, (u_char *)api->nexthop[i], 16);
-	}
-      for (i = 0; i < api->ifindex_num; i++)
-	{
-	  stream_putc (s, ZEBRA_NEXTHOP_IFINDEX);
-	  stream_putl (s, api->ifindex[i]);
-	}
+  /* Nexthop, ifindex, distance and metric information. */
+  if (CHECK_FLAG (api->message, ZAPI_MESSAGE_NEXTHOP))
+  {
+    stream_putc (s, api->nexthop_num + api->ifindex_num);
+
+    for (i = 0; i < api->nexthop_num; i++)
+    {
+      stream_putc (s, ZEBRA_NEXTHOP_IPV6);
+      stream_write (s, (u_char *)api->nexthop[i], 16);
     }
+    for (i = 0; i < api->ifindex_num; i++)
+    {
+      stream_putc (s, ZEBRA_NEXTHOP_IFINDEX);
+      stream_putl (s, api->ifindex[i]);
+    }
+  }
 
   if (CHECK_FLAG (api->message, ZAPI_MESSAGE_DISTANCE))
     stream_putc (s, api->distance);
   if (CHECK_FLAG (api->message, ZAPI_MESSAGE_METRIC))
     stream_putl (s, api->metric);
-*/
-  /* Put length at the first point of the stream. */
-/*  stream_putw_at (s, 0, stream_get_endp (s));
 
-  return zclient_send_message(zclient);
+  /* Put length at the first point of the stream. */
+  stream_putw_at (s, 0, stream_get_endp (s));
+
+  return svzclient_send_message(svzclient);
 }
-#endif *//* HAVE_IPV6 */
+#endif /* HAVE_IPV6 */
 
 /* 
  * send a ZEBRA_REDISTRIBUTE_ADD or ZEBRA_REDISTRIBUTE_DELETE
@@ -521,7 +521,7 @@ zapi_ipv6_route (u_char cmd, struct zclient *zclient, struct prefix_ipv6 *p,
  */
 
 int
-zebra_redistribute_send (int command, struct svzclient *svzclient, int type)
+svzebra_redistribute_send (int command, struct svzclient *svzclient, int type)
 {
   struct stream *s;
 
@@ -537,18 +537,20 @@ zebra_redistribute_send (int command, struct svzclient *svzclient, int type)
 }
 
 /* Router-id update from zebra daemon. */
-/*void
-zebra_router_id_update_read (struct stream *s, struct prefix *rid)
+void
+svzebra_router_id_update_read (struct stream *s, struct prefix *rid)
 {
   int plen;
-*/
+
+  zlog_notice("router_id_update_read called");
+
   /* Fetch interface address. */
-/*  rid->family = stream_getc (s);
+  rid->family = stream_getc (s);
 
   plen = prefix_blen (rid);
   stream_get (&rid->u.prefix, s, plen);
   rid->prefixlen = stream_getc (s);
-} */
+} 
 
 /* Interface addition from zebra daemon. */
 /*  
@@ -581,24 +583,24 @@ zebra_router_id_update_read (struct stream *s, struct prefix *rid)
  * |         sockaddr_dl                                           |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
-/*
+
 struct interface *
-zebra_interface_add_read (struct stream *s)
+svzebra_interface_add_read (struct stream *s)
 {
   struct interface *ifp;
   char ifname_tmp[INTERFACE_NAMSIZ];
-*/
+
   /* Read interface name. */
-/*  stream_get (ifname_tmp, s, INTERFACE_NAMSIZ); */
+  stream_get (ifname_tmp, s, INTERFACE_NAMSIZ); 
 
   /* Lookup/create interface by name. */
-/*  ifp = if_get_by_name_len (ifname_tmp, strnlen(ifname_tmp, INTERFACE_NAMSIZ)); */
+  ifp = if_get_by_name_len (ifname_tmp, strnlen(ifname_tmp, INTERFACE_NAMSIZ)); 
 
   /* Read interface's index. */
-/*  ifp->ifindex = stream_getl (s); */
+  ifp->ifindex = stream_getl (s); 
 
   /* Read interface's value. */
-/*  ifp->status = stream_getc (s);
+  ifp->status = stream_getc (s);
   ifp->flags = stream_getq (s);
   ifp->metric = stream_getl (s);
   ifp->mtu = stream_getl (s);
@@ -610,10 +612,10 @@ zebra_interface_add_read (struct stream *s)
   ifp->hw_addr_len = stream_getl (s);
   if (ifp->hw_addr_len)
     stream_get (ifp->hw_addr, s, ifp->hw_addr_len);
-#endif *//* HAVE_STRUCT_SOCKADDR_DL */
- /* 
+#endif /* HAVE_STRUCT_SOCKADDR_DL */
+  
   return ifp;
-} */
+}
 
 /* 
  * Read interface up/down msg (ZEBRA_INTERFACE_UP/ZEBRA_INTERFACE_DOWN)
@@ -622,28 +624,28 @@ zebra_interface_add_read (struct stream *s)
  * comments for zebra_interface_add_read), except that no sockaddr_dl
  * is sent at the tail of the message.
  */
-/*struct interface *
-zebra_interface_state_read (struct stream *s)
+struct interface *
+svzebra_interface_state_read (struct stream *s)
 {
   struct interface *ifp;
   char ifname_tmp[INTERFACE_NAMSIZ];
-*/
+
   /* Read interface name. */
-/*  stream_get (ifname_tmp, s, INTERFACE_NAMSIZ); */
+  stream_get (ifname_tmp, s, INTERFACE_NAMSIZ); 
 
   /* Lookup this by interface index. */
-/*  ifp = if_lookup_by_name_len (ifname_tmp,
+  ifp = if_lookup_by_name_len (ifname_tmp,
 			       strnlen(ifname_tmp, INTERFACE_NAMSIZ));
-*/
+
   /* If such interface does not exist, indicate an error */
-/*  if (! ifp)
+  if (! ifp)
      return NULL;
-*/
+
   /* Read interface's index. */
-/*  ifp->ifindex = stream_getl (s); */
+  ifp->ifindex = stream_getl (s);
 
   /* Read interface's value. */
-/*  ifp->status = stream_getc (s);
+  ifp->status = stream_getc (s);
   ifp->flags = stream_getq (s);
   ifp->metric = stream_getl (s);
   ifp->mtu = stream_getl (s);
@@ -651,7 +653,7 @@ zebra_interface_state_read (struct stream *s)
   ifp->bandwidth = stream_getl (s);
 
   return ifp;
-} */
+}
 
 /* 
  * format of message for address additon is:
@@ -699,7 +701,7 @@ zebra_interface_if_set_value (struct stream *s, struct interface *ifp)
   ifp->mtu6 = stream_getl (s);
   ifp->bandwidth = stream_getl (s);
 }
-
+*/
 static int
 memconstant(const void *s, int c, size_t n)
 {
@@ -712,7 +714,7 @@ memconstant(const void *s, int c, size_t n)
 }
 
 struct connected *
-zebra_interface_address_read (int type, struct stream *s)
+svzebra_interface_address_read (int type, struct stream *s)
 {
   unsigned int ifindex;
   struct interface *ifp;
@@ -724,56 +726,56 @@ zebra_interface_address_read (int type, struct stream *s)
 
   memset (&p, 0, sizeof(p));
   memset (&d, 0, sizeof(d));
-*/
+
   /* Get interface index. */
-/*  ifindex = stream_getl (s); */
+  ifindex = stream_getl (s);
 
   /* Lookup index. */
-/*  ifp = if_lookup_by_index (ifindex); */
-/*  if (ifp == NULL)
-    {
-      zlog_warn ("zebra_interface_address_read(%s): "
-                 "Can't find interface by ifindex: %d ",
-                 (type == ZEBRA_INTERFACE_ADDRESS_ADD? "ADD" : "DELETE"),
-                 ifindex);
-      return NULL;
-    }
-*/
+  ifp = if_lookup_by_index (ifindex);
+  if (ifp == NULL)
+  {
+    zlog_warn ("zebra_interface_address_read(%s): "
+               "Can't find interface by ifindex: %d ",
+               (type == ZEBRA_INTERFACE_ADDRESS_ADD? "ADD" : "DELETE"),
+               ifindex);
+    return NULL;
+  }
+
   /* Fetch flag. */
-/*  ifc_flags = stream_getc (s); */
+  ifc_flags = stream_getc (s);
 
   /* Fetch interface address. */
-/*  family = p.family = stream_getc (s);
+  family = p.family = stream_getc (s);
 
   plen = prefix_blen (&p);
   stream_get (&p.u.prefix, s, plen);
   p.prefixlen = stream_getc (s);
-*/
+
   /* Fetch destination address. */
-/*  stream_get (&d.u.prefix, s, plen);
+  stream_get (&d.u.prefix, s, plen);
   d.family = family;
 
   if (type == ZEBRA_INTERFACE_ADDRESS_ADD) 
-    { */
-       /* N.B. NULL destination pointers are encoded as all zeroes */
-/*       ifc = connected_add_by_prefix(ifp, &p,(memconstant(&d.u.prefix,0,plen) ?
-					      NULL : &d));
-       if (ifc != NULL)
-	 {
-	   ifc->flags = ifc_flags;
-	   if (ifc->destination)
-	     ifc->destination->prefixlen = ifc->address->prefixlen;
-	 }
-    }
-  else
+  { 
+    /* N.B. NULL destination pointers are encoded as all zeroes */
+    ifc = connected_add_by_prefix(ifp, &p,(memconstant(&d.u.prefix,0,plen) ?
+					  NULL : &d));
+    if (ifc != NULL)
     {
-      assert (type == ZEBRA_INTERFACE_ADDRESS_DELETE);
-      ifc = connected_delete_by_prefix(ifp, &p);
+      ifc->flags = ifc_flags;
+      if (ifc->destination)
+        ifc->destination->prefixlen = ifc->address->prefixlen;
     }
+  }
+  else
+  {
+    assert (type == ZEBRA_INTERFACE_ADDRESS_DELETE);
+    ifc = connected_delete_by_prefix(ifp, &p);
+  }
 
   return ifc;
 }
-*/
+
 
 /* Zebra client message read function. */
 static int

@@ -27,7 +27,7 @@ extern struct shim * shim;
 
 extern void shim_terminate (void);
 extern void shim_master_init (void);
-extern void shim_init (uint64_t host_num, struct in6_addr * sv_addr);
+extern void shim_init (uint64_t host_num);
 extern struct shim * shim_new (uint64_t hostnum);
 
 #endif

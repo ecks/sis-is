@@ -67,8 +67,6 @@ struct zclient
   /* Redistribute defauilt. */
   u_char default_information;
 
-  struct in6_addr  * sv_addr;
-
   /* Pointer to the callback functions. */
   int (*router_id_update) (int, struct zclient *, uint16_t);
   int (*interface_add) (int, struct zclient *, uint16_t);
@@ -123,14 +121,14 @@ struct zapi_ipv4
 
 /* Prototypes of zebra client service functions. */
 extern struct zclient *zclient_new (void);
-extern void zclient_init (struct zclient *, int, struct in6_addr *);
+extern void zclient_init (struct zclient *, int);
 extern int zclient_start (struct zclient *);
 extern void zclient_stop (struct zclient *);
 extern void zclient_reset (struct zclient *);
 extern void zclient_free (struct zclient *);
 
 /* Get TCP socket connection to zebra daemon at loopback address. */
-extern int zclient_socket (struct in6_addr * sv_addr);
+extern int zclient_socket (void);
 
 /* Get unix stream socket connection to zebra daemon at given path. */
 extern int zclient_socket_un (const char *);

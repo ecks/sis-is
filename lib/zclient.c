@@ -43,7 +43,7 @@ static void zclient_event (enum event, struct zclient *);
 extern struct thread_master *master;
 
 /* This file local debug flag. */
-int zclient_debug = 1;
+int zclient_debug = 0;
 
 /* Allocate zclient structure. */
 struct zclient *
@@ -80,7 +80,7 @@ zclient_free (struct zclient *zclient)
 /* Initialize zebra client.  Argument redist_default is unwanted
    redistribute route type. */
 void
-zclient_init (struct zclient *zclient, int redist_default, struct in6_addr * sv_addr)
+zclient_init (struct zclient *zclient, int redist_default)
 {
   int i;
   
@@ -102,8 +102,6 @@ zclient_init (struct zclient *zclient, int redist_default, struct in6_addr * sv_
   /* Set default-information redistribute to zero. */
   zclient->default_information = 0;
   
-  zclient->sv_addr = sv_addr;
-
   /* Schedule first zclient connection. */
   if (zclient_debug)
     zlog_debug ("zclient start scheduled");
@@ -143,12 +141,12 @@ void
 zclient_reset (struct zclient *zclient)
 {
   zclient_stop (zclient);
-  zclient_init (zclient, zclient->redist_default, zclient->sv_addr);
+  zclient_init (zclient, zclient->redist_default);
 }
 
 /* Make socket to zebra daemon. Return zebra socket. */
 int
-zclient_socket(struct in6_addr * sv_addr)
+zclient_socket(void)
 {
   int sock;
   int ret;
@@ -169,8 +167,7 @@ zclient_socket(struct in6_addr * sv_addr)
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
   serv.sin_len = sizeof (struct sockaddr_in);
 #endif /* HAVE_STRUCT_SOCKADDR_IN_SIN_LEN */
-//  serv.sin_addr.s_addr = htonl (INADDR_LOOPBACK);
-  serv.sin_addr.s_addr = sv_addr;
+  serv.sin_addr.s_addr = htonl(INADDR_LOOPBACK);;
 
   /* Connect to zebra. */
   ret = connect (sock, (struct sockaddr *) &serv, sizeof (serv));
@@ -322,7 +319,7 @@ zclient_start (struct zclient *zclient)
 
   /* Make socket. */
 #ifdef HAVE_TCP_ZEBRA
-  zclient->sock = zclient_socket (zclient->sv_addr);
+  zclient->sock = zclient_socket ();
 #else
   zclient->sock = zclient_socket_un (ZEBRA_SERV_PATH);
 #endif /* HAVE_TCP_ZEBRA */
