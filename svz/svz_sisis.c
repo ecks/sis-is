@@ -22,6 +22,7 @@
 
 extern struct zebra_privs_t svd_privs;
 
+#include "lib/zclient.h"
 #include "svz/svzd.h"
 #include "svz/svz_sisis.h"
 #include "svz/svz_network.h"
@@ -245,31 +246,34 @@ shim_sisis_read(struct thread * thread)
   struct in6_addr dst;
   char dst_buf[INET6_ADDRSTRLEN];
 
-  zlog_notice("Reading packet from SISIS connection!\n");
+  zlog_notice("Reading packet from SISIS connection!");
 
   /* first of all get listener pointer. */
   listener = THREAD_ARG (thread);
   sisis_sock = THREAD_FD (thread);
 
-  if ((already = stream_get_endp(listener->ibuf)) < SV_HEADER_SIZE)
+  stream_reset(listener->ibuf);
+
+  if ((already = stream_get_endp(listener->ibuf)) < ZEBRA_HEADER_SIZE)
   {
     ssize_t nbytes;
-    if (((nbytes = stream_read_try (listener->ibuf, sisis_sock, SV_HEADER_SIZE-already)) == 0) || (nbytes == -1))
+    if (((nbytes = stream_read_try (listener->ibuf, sisis_sock, ZEBRA_HEADER_SIZE-already)) == 0) || (nbytes == -1))
     {
       return -1;
     }
 
-    if(nbytes != (SV_HEADER_SIZE - already))
+    if(nbytes != (ZEBRA_HEADER_SIZE - already))
     {
       listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
       return 0;
     }
-    already = SV_HEADER_SIZE;
+    already = ZEBRA_HEADER_SIZE;
   }
 
   stream_set_getp(listener->ibuf, 0);
 
-  svz_net_message_send(listener->ibuf);
+  svz_send(listener->ibuf);
+//  svz_net_message_send(listener->ibuf);
 
   if (sisis_sock < 0) 
     /* Connection was closed during packet processing. */

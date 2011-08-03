@@ -791,6 +791,9 @@ svzclient_read (struct thread *thread)
   svzclient = THREAD_ARG (thread);
   svzclient->t_read = NULL;
 
+  if(svzclient_debug)
+    zlog_debug("svzclient_read event"); 
+ 
   /* Read zebra header (if we don't have it already). */
   if ((already = stream_get_endp(svzclient->ibuf)) < ZEBRA_HEADER_SIZE)
     {

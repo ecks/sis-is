@@ -264,6 +264,93 @@ shim_lsack_print (struct ospf6_header *oh)
 int 
 shim_receive (struct tclient * tclient)
 {
+  uint16_t length, command;
+  uint8_t marker, version;
+
+  struct stream * dbuf = stream_dup(tclient->ibuf);
+
+  stream_set_getp(dbuf, 0);
+
+  length = stream_getw(dbuf);
+  marker = stream_getc(dbuf);
+  version = stream_getc(dbuf);
+  command = stream_getw(dbuf);  
+
+  switch (command)
+  {
+    case ZEBRA_INTERFACE_ADD: 
+      zlog_notice("svz_receive: INTERFACE_ADD");
+      break;
+    case ZEBRA_INTERFACE_DELETE: 
+      zlog_notice("svz_receive: INTERFACE_DELETE");
+      break;
+    case ZEBRA_INTERFACE_ADDRESS_ADD: 
+      zlog_notice("svz_receive: INTERFACE_ADDRESS_ADD");
+      break;
+    case ZEBRA_INTERFACE_ADDRESS_DELETE: 
+      zlog_notice("svz_receive: INTERFACE_ADDRESS_DELETE");
+      break;
+    case ZEBRA_INTERFACE_UP: 
+      zlog_notice("svz_receive: INTERFACE_UP");
+      break;
+    case ZEBRA_INTERFACE_DOWN: 
+      zlog_notice("svz_receive: INTERFACE_DOWN");
+      break;
+    case ZEBRA_IPV4_ROUTE_ADD:
+      zlog_notice("svz_receive: IPV4_ROUTE_ADD");
+      break;
+    case ZEBRA_IPV4_ROUTE_DELETE:
+      zlog_notice("svz_receive: IPV4_ROUTE_DELETE");
+      break;
+    case ZEBRA_IPV6_ROUTE_ADD:
+      zlog_notice("svz_receive: IPV6_ROUTE_ADD");
+      break;
+    case ZEBRA_IPV6_ROUTE_DELETE:
+      zlog_notice("svz_receive: IPV6_ROUTE_DELETE");
+      break;
+    case ZEBRA_REDISTRIBUTE_ADD:
+      zlog_notice("svz_receive: REDISTRIBUTE_ADD");
+      break;
+    case ZEBRA_REDISTRIBUTE_DELETE:
+      zlog_notice("svz_receive: REDISTRIBUTE_DELETE");
+      break;
+    case ZEBRA_REDISTRIBUTE_DEFAULT_ADD:
+      zlog_notice("svz_receive: REDISTRIBUTE_DEFAULT_ADD");
+      break;
+    case ZEBRA_REDISTRIBUTE_DEFAULT_DELETE:
+      zlog_notice("svz_receive: REDISTRIBUTE_DEFAULT_DELETE");
+      break;
+    case ZEBRA_IPV4_NEXTHOP_LOOKUP:
+      zlog_notice("svz_receive: IPV4_NEXTHOP_LOOKUP");
+      break;
+    case ZEBRA_IPV6_NEXTHOP_LOOKUP:  
+      zlog_notice("svz_receive: IPV6_NEXTHOP_LOOKUP");
+      break;
+    case ZEBRA_IPV4_IMPORT_LOOKUP: 
+      zlog_notice("svz_receive: IPV4_IMPORT_LOOKUP");
+      break;
+    case ZEBRA_IPV6_IMPORT_LOOKUP:
+      zlog_notice("svz_receive: IPV6_IMPORT_LOOKUP");
+      break;
+    case ZEBRA_INTERFACE_RENAME:
+      zlog_notice("svz_receive: INTERFACE_RENAME");
+      break;
+    case ZEBRA_ROUTER_ID_ADD:
+      zlog_notice("svz_receive: ROUTER_ID_ADD");
+      break;
+    case ZEBRA_ROUTER_ID_DELETE:
+      zlog_notice("svz_receive: ROUTER_ID_DELETE");
+      break;
+    case ZEBRA_ROUTER_ID_UPDATE:
+      zlog_notice("svz_receive: ROUTER_ID_UPDATE");
+      break;
+    default:
+      zlog_notice("svz_receive: Command not recognized");
+      break;
+  }
+ 
+  stream_free(dbuf);
+
   return shim_sisis_write(tclient->ibuf, wb);
 }
 
@@ -412,97 +499,96 @@ shim_send(struct stream * s, struct shim_interface * si)
 } */
 
 void
-shim_send(struct in6_addr * src, struct in6_addr * dst, 
-	  struct shim_interface * si, struct stream * ibuf, uint16_t length)
+svz_send(struct stream * buf)
 {
-  int len;
-  char srcname[64], dstname[64];
-  struct ospf6_header * oh;
-  struct iovec iovector[2];
+  uint16_t length, command;
+  uint8_t marker, version;
 
-  /* initialize */
-  iovector[0].iov_base = (ibuf->data + ibuf->getp);
-  iovector[0].iov_len = length;
-  iovector[1].iov_base = NULL;
-  iovector[1].iov_len = 0;
+  struct stream * dbuf = stream_dup(buf);
 
-  oh = (ibuf->data + ibuf->getp);
+  stream_set_getp(dbuf, 0);
 
-  switch (oh->type)
-  {    
-      case OSPF6_MESSAGE_TYPE_HELLO:
-        zlog_debug("Sending Hello");
-        shim_hello_print(oh);
-        break;
-      case OSPF6_MESSAGE_TYPE_DBDESC:
-        zlog_debug("Sending DBDESC");
-        shim_dbdesc_print(oh);
-        break;
-      case OSPF6_MESSAGE_TYPE_LSREQ:
-        zlog_debug("Sending LSREQ");
-        shim_lsreq_print (oh);
-        break;
-      case OSPF6_MESSAGE_TYPE_LSUPDATE:
-        zlog_debug("Sending LSUPDATE");
-        shim_lsupdate_print (oh);
-        break;
-      case OSPF6_MESSAGE_TYPE_LSACK:
-        zlog_debug("Sending LSACK");
-        shim_lsack_print (oh);
-        break;
-      default:
-        zlog_debug ("Unknown message");
-        assert (0); 
-        break;
-  } 
-    /* fill OSPF header */
-//  oh->version = OSPFV3_VERSION;                     // need to fill in for later
-  /* message type must be set before */
-  /* message length must be set before */
-//  oh->router_id = si->area->ospf6->router_id;
-//  oh->area_id = si->area->area_id;
-  /* checksum is calculated by kernel */
-//  oh->instance_id = si->instance_id;                // need to fill in for later
-//  oh->reserved = 0;                                 // need to fill in for later
+  length = stream_getw(dbuf);
+  marker = stream_getc(dbuf);
+  version = stream_getc(dbuf);
+  command = stream_getw(dbuf);  
 
-  /* Log */
-/*  if (IS_OSPF6_DEBUG_MESSAGE (oh->type, SEND))
-  {    
-    inet_ntop (AF_INET6, dst, dstname, sizeof (dstname));
-    if (src)
-      inet_ntop (AF_INET6, src, srcname, sizeof (srcname));
-    else 
-      memset (srcname, 0, sizeof (srcname));
-    zlog_debug ("%s send on %s",
-               OSPF6_MESSAGE_TYPE_NAME (oh->type), si->interface->name);
-    zlog_debug ("    src: %s", srcname);
-    zlog_debug ("    dst: %s", dstname);
+  switch (command)
+  {
+    case ZEBRA_INTERFACE_ADD: 
+      zlog_notice("svz_send: INTERFACE_ADD");
+      break;
+    case ZEBRA_INTERFACE_DELETE: 
+      zlog_notice("svz_send: INTERFACE_DELETE");
+      break;
+    case ZEBRA_INTERFACE_ADDRESS_ADD: 
+      zlog_notice("svz_send: INTERFACE_ADDRESS_ADD");
+      break;
+    case ZEBRA_INTERFACE_ADDRESS_DELETE: 
+      zlog_notice("svz_send: INTERFACE_ADDRESS_DELETE");
+      break;
+    case ZEBRA_INTERFACE_UP: 
+      zlog_notice("svz_send: INTERFACE_UP");
+      break;
+    case ZEBRA_INTERFACE_DOWN: 
+      zlog_notice("svz_send: INTERFACE_DOWN");
+      break;
+    case ZEBRA_IPV4_ROUTE_ADD:
+      zlog_notice("svz_send: IPV4_ROUTE_ADD");
+      break;
+    case ZEBRA_IPV4_ROUTE_DELETE:
+      zlog_notice("svz_send: IPV4_ROUTE_DELETE");
+      break;
+    case ZEBRA_IPV6_ROUTE_ADD:
+      zlog_notice("svz_send: IPV6_ROUTE_ADD");
+      break;
+    case ZEBRA_IPV6_ROUTE_DELETE:
+      zlog_notice("svz_send: IPV6_ROUTE_DELETE");
+      break;
+    case ZEBRA_REDISTRIBUTE_ADD:
+      zlog_notice("svz_send: REDISTRIBUTE_ADD");
+      break;
+    case ZEBRA_REDISTRIBUTE_DELETE:
+      zlog_notice("svz_send: REDISTRIBUTE_DELETE");
+      break;
+    case ZEBRA_REDISTRIBUTE_DEFAULT_ADD:
+      zlog_notice("svz_send: REDISTRIBUTE_DEFAULT_ADD");
+      break;
+    case ZEBRA_REDISTRIBUTE_DEFAULT_DELETE:
+      zlog_notice("svz_send: REDISTRIBUTE_DEFAULT_DELETE");
+      break;
+    case ZEBRA_IPV4_NEXTHOP_LOOKUP:
+      zlog_notice("svz_send: IPV4_NEXTHOP_LOOKUP");
+      break;
+    case ZEBRA_IPV6_NEXTHOP_LOOKUP:  
+      zlog_notice("svz_send: IPV6_NEXTHOP_LOOKUP");
+      break;
+    case ZEBRA_IPV4_IMPORT_LOOKUP: 
+      zlog_notice("svz_send: IPV4_IMPORT_LOOKUP");
+      break;
+    case ZEBRA_IPV6_IMPORT_LOOKUP:
+      zlog_notice("svz_send: IPV6_IMPORT_LOOKUP");
+      break;
+    case ZEBRA_INTERFACE_RENAME:
+      zlog_notice("svz_send: INTERFACE_RENAME");
+      break;
+    case ZEBRA_ROUTER_ID_ADD:
+      zlog_notice("svz_send: ROUTER_ID_ADD");
+      break;
+    case ZEBRA_ROUTER_ID_DELETE:
+      zlog_notice("svz_send: ROUTER_ID_DELETE");
+      break;
+    case ZEBRA_ROUTER_ID_UPDATE:
+      zlog_notice("svz_send: ROUTER_ID_UPDATE");
+      break;
+    default:
+      zlog_notice("svz_send: Command not recognized");
+      break;
+  }
+ 
+  stream_free(dbuf);
 
-    switch (oh->type)
-    {    
-      case OSPF6_MESSAGE_TYPE_HELLO:
-        shim_hello_print (oh);
-        break;
-      case OSPF6_MESSAGE_TYPE_DBDESC:
-//        ospf6_dbdesc_print (oh);
-        break;
-      case OSPF6_MESSAGE_TYPE_LSREQ:
-//        ospf6_lsreq_print (oh);
-         break;
-      case OSPF6_MESSAGE_TYPE_LSUPDATE:
-//        ospf6_lsupdate_print (oh);
-        break;
-      case OSPF6_MESSAGE_TYPE_LSACK:
-//          ospf6_lsack_print (oh);
-          break;
-      default:
-        zlog_debug ("Unknown message");
-        assert (0); 
-        break;
-    } */
-//  }    
-    /* send message */
-//  len = shim_sendmsg (src, dst, &si->interface->ifindex, iovector, shim->fd, ibuf, length);
-  if (len != length)
-    zlog_err ("Could not send entire message");
+  /* send message */
+  svz_net_message_send (buf);
+
 }

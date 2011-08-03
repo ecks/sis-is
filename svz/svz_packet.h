@@ -12,6 +12,6 @@ extern int shim_iobuf_size (unsigned int size);
 extern int shim_receive (struct tclient * tclient);
 
 //extern int shim_hello_send (struct stream * s, struct shim_interface * si);
-extern void shim_send(struct in6_addr * src, struct in6_addr * dst, 
-	              struct shim_interface * si, struct stream * ibuf, uint16_t length);
+extern void svz_send(struct stream * buf);
+
 #endif
