@@ -48,7 +48,7 @@ shim_new (uint64_t host_num)
              OSPF_MAX_PACKET_SIZE+1);
     exit(1);
   }
-  new->t_read = thread_add_read (master, shim_receive, new, new->fd);
+//  new->t_read = thread_add_read (master, shim_receive, new, new->fd);
 
   // internal socket to sisis
   if ((new->sis_fd = shim_sisis_init(host_num)) < 0)

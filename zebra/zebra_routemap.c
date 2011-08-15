@@ -689,7 +689,7 @@ zebra_route_map_init ()
   route_map_install_match (&route_match_ip_address_prefix_list_cmd);
 /* */
   route_map_install_set (&route_set_src_cmd);
-/* */
+/* 
   install_element (RMAP_NODE, &match_interface_cmd);
   install_element (RMAP_NODE, &no_match_interface_cmd); 
   install_element (RMAP_NODE, &no_match_interface_val_cmd); 
@@ -705,7 +705,9 @@ zebra_route_map_init ()
   install_element (RMAP_NODE, &match_ip_address_prefix_list_cmd); 
   install_element (RMAP_NODE, &no_match_ip_address_prefix_list_cmd); 
   install_element (RMAP_NODE, &no_match_ip_address_prefix_list_val_cmd);
-/* */
+*/
+/*
   install_element (RMAP_NODE, &set_src_cmd);
   install_element (RMAP_NODE, &no_set_src_cmd);
+*/
 }

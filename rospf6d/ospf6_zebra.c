@@ -94,7 +94,7 @@ ospf6_zebra_if_add (int command, struct svzclient *svzclient, zebra_size_t lengt
   struct interface *ifp;
 
   ifp = svzebra_interface_add_read (svzclient->ibuf);
-  if (IS_OSPF6_DEBUG_ZEBRA (RECV))
+//  if (IS_OSPF6_DEBUG_ZEBRA (RECV))
     zlog_debug ("Zebra Interface add: %s index %d mtu %d",
 		ifp->name, ifp->ifindex, ifp->mtu6);
   ospf6_interface_if_add (ifp);
