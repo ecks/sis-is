@@ -2,6 +2,7 @@
 #define SV_H
 
 #define SV_HEADER_SIZE             42
+#define SVZ_HEADER_SIZE            8
 
 #define SV_JOIN_ALLSPF             0
 #define SV_LEAVE_ALLSPF            1

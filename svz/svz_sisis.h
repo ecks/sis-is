@@ -3,6 +3,7 @@
 
 #define SV_SISIS_PORT 50000
 #define SVZ_SISIS_PORT 50001
+#define MAX_DIF_THRESHOLD 5
 
 struct sisis_listener
 {
@@ -11,6 +12,8 @@ struct sisis_listener
   struct stream * ibuf;
   u_int16_t chksum;
   struct thread *thread;
+  struct stream_fifo * dif;
+  int dif_size;
 };
 
 

@@ -32,8 +32,10 @@
 #include "thread.h"
 #include "svz_client.h"
 #include "memory.h"
+#include "checksum.h"
 #include "table.h"
 #include "ospf6_network.h"
+#include "sv.h"
 
 
 /* Zebra client events. */
@@ -190,6 +192,9 @@ svzclient_socket(struct in6_addr * svz_addr)
       perror("connect");
       return -1;
     }
+
+  sleep(1.0);
+
   return sock;
 }
 
@@ -252,10 +257,16 @@ svzclient_send_message(struct svzclient *svzclient)
 }
 
 void
+svzclient_create_pre_header (struct stream *s)
+{
+  stream_putw (s, 0);
+}
+
+void
 svzclient_create_header (struct stream *s, uint16_t command)
 {
   /* length placeholder, caller can update */
-  stream_putw (s, ZEBRA_HEADER_SIZE);
+  stream_putw (s, SVZ_HEADER_SIZE);
   stream_putc (s, ZEBRA_HEADER_MARKER);
   stream_putc (s, ZSERV_VERSION);
   stream_putw (s, command);
@@ -266,13 +277,20 @@ static int
 zebra_message_send (struct svzclient *svzclient, int command)
 {
   struct stream *s;
+  u_int16_t checksum;
 
   /* Get zclient output buffer. */
   s = svzclient->obuf;
   stream_reset (s);
 
   /* Send very simple command only Zebra message. */
+  svzclient_create_pre_header (s);
   svzclient_create_header (s, command);
+
+  checksum = in_cksum(STREAM_DATA(s), SVZ_HEADER_SIZE);
+  zlog_debug("checksum: %d", checksum);
+
+  stream_putw_at(s, 0, checksum);  
   
   return svzclient_send_message(svzclient);
 }
@@ -322,6 +340,8 @@ svzclient_start (struct svzclient *svzclient)
 
   /* We need router-id information. */
   zebra_message_send (svzclient, ZEBRA_ROUTER_ID_ADD);
+
+  sleep(1.0);
 
   /* We need interface information. */
   zebra_message_send (svzclient, ZEBRA_INTERFACE_ADD);

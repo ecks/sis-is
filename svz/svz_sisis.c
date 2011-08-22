@@ -32,6 +32,8 @@ extern struct zebra_privs_t svd_privs;
 
 #define BACKLOG 10
 
+struct sisis_listener * primary_listener;
+
 int
 shim_sisis_init (uint64_t host_num)
 {
@@ -77,6 +79,8 @@ shim_sisis_init (uint64_t host_num)
   if ((shim_sisis_listener(sockfd, addr->ai_addr, addr->ai_addrlen)) != 0)
     close(sockfd);
 
+  primary_listener = NULL;
+
   // Bind to port
 //  if (bind(sockfd, addr->ai_addr, addr->ai_addrlen) < 0)
 //  {
@@ -120,7 +124,7 @@ are_checksums_same (void)
 
   for(ALL_LIST_ELEMENTS (sm->listen_sockets, node, nnode, listener))
   {
-    zlog_debug("checksum: %d\n", listener->chksum);
+    zlog_debug("checksum: %d", listener->chksum);
     if(listener->chksum == chsum_swp)
     {
       same = 1;
@@ -226,6 +230,7 @@ shim_sisis_accept(struct thread * thread)
   listener->ibuf = stream_new (SV_HEADER_SIZE + 1500);
 //  memcpy(&listener->su, sa, salen);
   listener->sisis_fd = sisis_sock;
+  listener->dif = stream_fifo_new();
   listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
   listnode_add (sm->listen_sockets, listener);
 
@@ -254,26 +259,58 @@ shim_sisis_read(struct thread * thread)
 
   stream_reset(listener->ibuf);
 
-  if ((already = stream_get_endp(listener->ibuf)) < ZEBRA_HEADER_SIZE)
+  if ((already = stream_get_endp(listener->ibuf)) < SVZ_HEADER_SIZE)
   {
     ssize_t nbytes;
-    if (((nbytes = stream_read_try (listener->ibuf, sisis_sock, ZEBRA_HEADER_SIZE-already)) == 0) || (nbytes == -1))
+    if (((nbytes = stream_read_try (listener->ibuf, sisis_sock, SVZ_HEADER_SIZE-already)) == 0) || (nbytes == -1))
     {
       return -1;
     }
 
-    if(nbytes != (ZEBRA_HEADER_SIZE - already))
+    if(nbytes != (SVZ_HEADER_SIZE - already))
     {
       listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
       return 0;
     }
-    already = ZEBRA_HEADER_SIZE;
+
+    already = SVZ_HEADER_SIZE;
   }
 
   stream_set_getp(listener->ibuf, 0);
 
-  svz_send(listener->ibuf);
-//  svz_net_message_send(listener->ibuf);
+  checksum = stream_getw(listener->ibuf);
+
+  unsigned int num_of_addrs = number_of_sisis_addrs_for_process_type(SISIS_PTYPE_RIBCOMP_OSPF6);
+  unsigned int num_of_listeners = number_of_listeners();
+ 
+  zlog_notice("Number of addr: %d", num_of_addrs);
+  zlog_notice("Number of listeners: %d", num_of_listeners);
+ 
+  float received_ratio = num_of_listeners/num_of_addrs;
+  listener->chksum = checksum;
+  if(received_ratio > 1/2)
+  {
+    if(are_checksums_same())
+    {
+      zlog_notice("Checksums are all the same");
+
+      if(primary_listener == NULL)
+        primary_listener = listener;
+
+      reset_checksums();
+      svz_send(listener->ibuf);
+    }
+    else
+    {
+      zlog_notice("Checksums are not all the same");
+      stream_fifo_push(listener->dif, listener->ibuf);
+      listener->dif_size++;
+    }
+  }
+  else
+  {
+    zlog_notice("Not enough processes have sent their data; buffering...");
+  }
 
   if (sisis_sock < 0) 
     /* Connection was closed during packet processing. */

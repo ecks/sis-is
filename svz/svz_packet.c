@@ -506,7 +506,7 @@ svz_send(struct stream * buf)
 
   struct stream * dbuf = stream_dup(buf);
 
-  stream_set_getp(dbuf, 0);
+//  stream_set_getp(dbuf, 0);
 
   length = stream_getw(dbuf);
   marker = stream_getc(dbuf);
