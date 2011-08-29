@@ -23,6 +23,7 @@
 extern struct zebra_privs_t svd_privs;
 
 #include "lib/zclient.h"
+#include "lib/bmap.h"
 #include "svz/svzd.h"
 #include "svz/svz_sisis.h"
 #include "svz/svz_network.h"
@@ -209,22 +210,22 @@ shim_sisis_accept(struct thread * thread)
 
   accept_sock = THREAD_FD (thread);
   if (accept_sock < 0)
-    {
-      zlog_err ("accept_sock is negative value %d", accept_sock);
-      return -1;
-    }
+  {
+    zlog_err ("accept_sock is negative value %d", accept_sock);
+    return -1;
+  }
   thread_add_read (master, shim_sisis_accept, NULL, accept_sock);
 
   sisis_sock = sockunion_accept(accept_sock, &su);
 
   if (sisis_sock < 0)
-    {
-      zlog_err ("[Error] SISIS socket accept failed (%s)", safe_strerror (errno));
-      return -1;
-    }
+  {
+    zlog_err ("[Error] SISIS socket accept failed (%s)", safe_strerror (errno));
+    return -1;
+  }
 
   zlog_notice ("SISIS connection from host %s", inet_sutop (&su, buf));
-
+ 
   listener = XMALLOC (MTYPE_SHIM_SISIS_LISTENER, sizeof(*listener));
   listener->fd = accept_sock;
   listener->ibuf = stream_new (SV_HEADER_SIZE + 1500);
@@ -242,7 +243,7 @@ shim_sisis_read(struct thread * thread)
 {
   struct sisis_listener *listener;
   int sisis_sock;
-  uint16_t length, command, checksum;
+  uint16_t length, checksum;
   int already;
   u_int ifindex;
   struct shim_interface * si;
@@ -259,53 +260,83 @@ shim_sisis_read(struct thread * thread)
 
   stream_reset(listener->ibuf);
 
-  if ((already = stream_get_endp(listener->ibuf)) < SVZ_HEADER_SIZE)
+  if ((already = stream_get_endp(listener->ibuf)) < SVZ_OUT_HEADER_SIZE)
   {
     ssize_t nbytes;
-    if (((nbytes = stream_read_try (listener->ibuf, sisis_sock, SVZ_HEADER_SIZE-already)) == 0) || (nbytes == -1))
+    if (((nbytes = stream_read_try (listener->ibuf, sisis_sock, SVZ_OUT_HEADER_SIZE-already)) == 0) || (nbytes == -1))
     {
       return -1;
     }
 
-    if(nbytes != (SVZ_HEADER_SIZE - already))
+    if(nbytes != (SVZ_OUT_HEADER_SIZE - already))
     {
       listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
       return 0;
     }
 
-    already = SVZ_HEADER_SIZE;
+    already = SVZ_OUT_HEADER_SIZE;
   }
 
   stream_set_getp(listener->ibuf, 0);
 
+  length = stream_getw(listener->ibuf);
   checksum = stream_getw(listener->ibuf);
+
+  if(length > STREAM_SIZE(listener->ibuf))
+  {
+    struct stream * ns; 
+    zlog_warn("message size exceeds buffer size");
+    ns = stream_new(length);
+    stream_copy(ns, listener->ibuf);
+    stream_free(listener->ibuf);
+    listener->ibuf = ns; 
+  }
+
+  if(already < length)
+  {
+    ssize_t nbytes;
+    if(((nbytes = stream_read_try(listener->ibuf, sisis_sock, length-already)) == 0) || nbytes == -1) 
+    {   
+      return -1; 
+    }   
+    if(nbytes != (length-already))
+    {   
+      listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
+      return 0;
+    }   
+  } 
 
   unsigned int num_of_addrs = number_of_sisis_addrs_for_process_type(SISIS_PTYPE_RIBCOMP_OSPF6);
   unsigned int num_of_listeners = number_of_listeners();
  
   zlog_notice("Number of addr: %d", num_of_addrs);
   zlog_notice("Number of listeners: %d", num_of_listeners);
+
+  struct bmap * bmap = bmap_set(checksum);
+  bmap->count++;
+  zlog_notice("# of streams %d for checksum %d with length %d", bmap->count, checksum, length);
  
-  float received_ratio = num_of_listeners/num_of_addrs;
+  float received_ratio = bmap->count/num_of_addrs;
   listener->chksum = checksum;
   if(received_ratio > 1/2)
   {
-    if(are_checksums_same())
-    {
-      zlog_notice("Checksums are all the same");
+//    if(are_checksums_same())
+//    {
+//      zlog_notice("Checksums are all the same");
 
-      if(primary_listener == NULL)
-        primary_listener = listener;
+    if(primary_listener == NULL)
+      primary_listener = listener;
 
-      reset_checksums();
-      svz_send(listener->ibuf);
-    }
-    else
-    {
-      zlog_notice("Checksums are not all the same");
-      stream_fifo_push(listener->dif, listener->ibuf);
-      listener->dif_size++;
-    }
+    reset_checksums();
+    svz_send(listener->ibuf);
+    bmap->count = 0;
+//    }
+//    else
+//    {
+//      zlog_notice("Checksums are not all the same");
+//      stream_fifo_push(listener->dif, listener->ibuf);
+//      listener->dif_size++;
+//    }
   }
   else
   {

@@ -184,8 +184,8 @@ svz_tunnel_send_message (struct tclient * tclient)
 {
   if (tclient->sock < 0)
     return -1;
-  switch(buffer_write(tclient->wb, tclient->sock, STREAM_DATA(tclient->obuf) + tclient->obuf->getp,
-                      stream_get_endp(tclient->obuf)))
+  switch(buffer_write(tclient->wb, tclient->sock, STREAM_DATA(tclient->obuf) + stream_get_getp(tclient->obuf),
+                      stream_get_endp(tclient->obuf) - stream_get_getp(tclient->obuf)))
   {
     case BUFFER_ERROR:
       zlog_warn("%s: buffer_write failed to tclient fd %d, closing",

@@ -501,18 +501,17 @@ shim_send(struct stream * s, struct shim_interface * si)
 void
 svz_send(struct stream * buf)
 {
+  struct stream * dbuf = stream_dup(buf);
   uint16_t length, command;
   uint8_t marker, version;
-
-  struct stream * dbuf = stream_dup(buf);
-
-//  stream_set_getp(dbuf, 0);
 
   length = stream_getw(dbuf);
   marker = stream_getc(dbuf);
   version = stream_getc(dbuf);
   command = stream_getw(dbuf);  
 
+  zlog_notice("svz_send: length %d marker %d version %d", length, marker, version);
+  /* debug */
   switch (command)
   {
     case ZEBRA_INTERFACE_ADD: 
@@ -585,9 +584,8 @@ svz_send(struct stream * buf)
       zlog_notice("svz_send: Command not recognized");
       break;
   }
- 
-  stream_free(dbuf);
 
+  stream_free(dbuf);
   /* send message */
   svz_net_message_send (buf);
 

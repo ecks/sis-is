@@ -8,6 +8,7 @@
 #include "linklist.h"
 #include "stream.h"
 
+#include "lib/bmap.h"
 #include "svz/svzd.h"
 #include "svz/svz_interface.h"
 #include "rospf6d/ospf6_message.h"
@@ -28,6 +29,7 @@ shim_init (uint64_t host_num)
 {
   shim_top_init ();
   shim_zebra_init ();
+  bmap_init();
   struct shim * ns = shim_new (host_num);
   shim = ns;
 //  listnode_add(sm->listen_sockets, ns); // is this necessary ?

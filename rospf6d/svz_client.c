@@ -235,6 +235,7 @@ svzclient_flush_data(struct thread *thread)
 int
 svzclient_send_message(struct svzclient *svzclient)
 {
+  zlog_debug("svzclient_send_message called ...");
   if (svzclient->sock < 0)
     return -1;
   switch (buffer_write(svzclient->wb, svzclient->sock, STREAM_DATA(svzclient->obuf),
@@ -259,6 +260,7 @@ svzclient_send_message(struct svzclient *svzclient)
 void
 svzclient_create_pre_header (struct stream *s)
 {
+  stream_putw (s, SVZ_HEADER_SIZE);
   stream_putw (s, 0);
 }
 
@@ -266,7 +268,7 @@ void
 svzclient_create_header (struct stream *s, uint16_t command)
 {
   /* length placeholder, caller can update */
-  stream_putw (s, SVZ_HEADER_SIZE);
+  stream_putw (s, SVZ_IN_HEADER_SIZE);
   stream_putc (s, ZEBRA_HEADER_MARKER);
   stream_putc (s, ZSERV_VERSION);
   stream_putw (s, command);
@@ -288,9 +290,9 @@ zebra_message_send (struct svzclient *svzclient, int command)
   svzclient_create_header (s, command);
 
   checksum = in_cksum(STREAM_DATA(s), SVZ_HEADER_SIZE);
-  zlog_debug("checksum: %d", checksum);
+  zlog_debug("zebra_message_send -> checksum: %d", checksum);
 
-  stream_putw_at(s, 0, checksum);  
+  stream_putw_at(s, 2, checksum);  
   
   return svzclient_send_message(svzclient);
 }
@@ -341,7 +343,6 @@ svzclient_start (struct svzclient *svzclient)
   /* We need router-id information. */
   zebra_message_send (svzclient, ZEBRA_ROUTER_ID_ADD);
 
-  sleep(1.0);
 
   /* We need interface information. */
   zebra_message_send (svzclient, ZEBRA_INTERFACE_ADD);
@@ -487,11 +488,13 @@ svzapi_ipv6_route (u_char cmd, struct svzclient *svzclient, struct prefix_ipv6 *
   int i;
   int psize;
   struct stream *s;
+  u_int16_t checksum;
 
   /* Reset stream. */
   s = svzclient->obuf;
   stream_reset (s);
 
+  svzclient_create_pre_header (s);
   svzclient_create_header (s, cmd);
 
   /* Put type and nexthop. */
@@ -528,6 +531,12 @@ svzapi_ipv6_route (u_char cmd, struct svzclient *svzclient, struct prefix_ipv6 *
 
   /* Put length at the first point of the stream. */
   stream_putw_at (s, 0, stream_get_endp (s));
+  stream_putw_at (s, 4, stream_get_endp (s) - SVZ_OUT_HEADER_SIZE);
+
+  checksum = in_cksum(STREAM_DATA(s), stream_get_endp(s));
+  zlog_debug("svzapi_ipv6_route -> checksum: %d", checksum);
+
+  stream_putw_at (s, 2, checksum);
 
   return svzclient_send_message(svzclient);
 }
@@ -551,6 +560,8 @@ svzebra_redistribute_send (int command, struct svzclient *svzclient, int type)
   svzclient_create_header (s, command);
   stream_putc (s, type);
   
+  zlog_debug("svzebra_redistribute_send");
+
   stream_putw_at (s, 0, stream_get_endp (s));
   
   return svzclient_send_message(svzclient);

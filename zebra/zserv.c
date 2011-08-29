@@ -1238,6 +1238,8 @@ zebra_client_read (struct thread *thread)
   marker = stream_getc (client->ibuf);
   version = stream_getc (client->ibuf);
   command = stream_getw (client->ibuf);
+ 
+  zlog_debug("%s: length: %d", __func__, length);
 
   if (marker != ZEBRA_HEADER_MARKER || version != ZSERV_VERSION)
     {
