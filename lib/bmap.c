@@ -59,6 +59,7 @@ bmap_alloc(void * arg)
   bmap = bmap_new();
   bmap->key = bmaparg->key;
   bmap->count = 0;
+  bmap->sent = 0;
   return bmap;
 }
 
@@ -115,6 +116,9 @@ bmap_unset(unsigned int checksum)
 
   if(bmap_delete_hook)
     (*bmap_delete_hook) (bmap);
+
+  hash_release(buffers, bmap);
+  bmap_free(bmap);
 
   return 1;
 }

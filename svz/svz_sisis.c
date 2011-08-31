@@ -1,6 +1,7 @@
 #include <zebra.h>
 
 #include <thread.h>
+#include <pthread.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -34,6 +35,8 @@ extern struct zebra_privs_t svd_privs;
 #define BACKLOG 10
 
 struct sisis_listener * primary_listener;
+
+pthread_mutex_t bmap_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int
 shim_sisis_init (uint64_t host_num)
@@ -232,9 +235,35 @@ shim_sisis_accept(struct thread * thread)
 //  memcpy(&listener->su, sa, salen);
   listener->sisis_fd = sisis_sock;
   listener->dif = stream_fifo_new();
-  listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
+  listener->read_thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
   listnode_add (sm->listen_sockets, listener);
 
+  return 0;
+}
+
+int
+svz_sisis_clean_bmap(struct thread * thread)
+{
+  uint16_t * chcksum_ptr;
+  struct bmap * bmap;
+
+  chcksum_ptr = (uint16_t *)THREAD_ARG(thread);
+
+  pthread_mutex_lock(&bmap_mutex);
+  bmap = bmap_lookup(*chcksum_ptr);
+
+  if(bmap)
+  {
+    zlog_debug("periodic called to clean up bmap for checksum [%d]: cleaning...", *chcksum_ptr);
+    bmap_unset(*chcksum_ptr);
+  }
+  else
+  {
+    zlog_debug("periodic called to clean up bmap for checksum [%d]: already cleaned...", *chcksum_ptr);
+  }
+  pthread_mutex_unlock(&bmap_mutex);
+
+  free(chcksum_ptr); 
   return 0;
 }
 
@@ -270,7 +299,7 @@ shim_sisis_read(struct thread * thread)
 
     if(nbytes != (SVZ_OUT_HEADER_SIZE - already))
     {
-      listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
+      listener->read_thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
       return 0;
     }
 
@@ -301,7 +330,7 @@ shim_sisis_read(struct thread * thread)
     }   
     if(nbytes != (length-already))
     {   
-      listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
+      listener->read_thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
       return 0;
     }   
   } 
@@ -312,13 +341,26 @@ shim_sisis_read(struct thread * thread)
   zlog_notice("Number of addr: %d", num_of_addrs);
   zlog_notice("Number of listeners: %d", num_of_listeners);
 
+  pthread_mutex_lock(&bmap_mutex);
   struct bmap * bmap = bmap_set(checksum);
+
+  // if we added initially
+  // set timer at which to recycle bmap 
+  // if there are no more processes sending data
+  if(bmap->count == 0)
+  {
+    uint16_t * chcksum_ptr = malloc(sizeof(uint16_t));
+    *chcksum_ptr = checksum;
+  
+    listener->bmap_thread = thread_add_timer_msec (master, svz_sisis_clean_bmap, chcksum_ptr, 100);
+  }
+
   bmap->count++;
   zlog_notice("# of streams %d for checksum %d with length %d", bmap->count, checksum, length);
  
-  float received_ratio = bmap->count/num_of_addrs;
+  float received_ratio = (float)bmap->count/(float)num_of_addrs;
   listener->chksum = checksum;
-  if(received_ratio > 1/2)
+  if((received_ratio > 1.0/2.0) && !bmap->sent)
   {
 //    if(are_checksums_same())
 //    {
@@ -329,7 +371,7 @@ shim_sisis_read(struct thread * thread)
 
     reset_checksums();
     svz_send(listener->ibuf);
-    bmap->count = 0;
+    bmap->sent = 1;
 //    }
 //    else
 //    {
@@ -338,10 +380,25 @@ shim_sisis_read(struct thread * thread)
 //      listener->dif_size++;
 //    }
   }
-  else
+  else if(!bmap->sent)
   {
     zlog_notice("Not enough processes have sent their data; buffering...");
   }
+  else
+  {
+    zlog_notice("Data has already been sent...");
+  }
+
+  if((bmap->count == num_of_addrs) && (bmap->sent))
+  {
+    zlog_notice("Bmap no longer needed, freeing...");
+
+    bmap->count = 0;
+    bmap->sent = 0;
+
+    bmap_unset(checksum);
+  } 
+  pthread_mutex_unlock(&bmap_mutex);
 
   if (sisis_sock < 0) 
     /* Connection was closed during packet processing. */
@@ -351,7 +408,7 @@ shim_sisis_read(struct thread * thread)
 //  stream_reset(listener->ibuf);
 
   /* prepare for next packet. */
-  listener->thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
+  listener->read_thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
 
   return 0;
 }

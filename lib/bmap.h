@@ -4,7 +4,8 @@
 struct bmap
 {
   uint16_t key;
-  int count;
+  unsigned int count;
+  unsigned int sent;
 };
 
 extern void bmap_init();

@@ -11,7 +11,8 @@ struct sisis_listener
   int sisis_fd;
   struct stream * ibuf;
   u_int16_t chksum;
-  struct thread *thread;
+  struct thread *read_thread;
+  struct thread *bmap_thread;
   struct stream_fifo * dif;
   int dif_size;
 };
