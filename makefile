@@ -9,7 +9,7 @@ remote_spawn: remote_spawn.o $(SISIS_API_OBJECTS)
 	$(CC) $(CFLAGS) $(LIBS) -o $@ remote_spawn.o $(SISIS_API_OBJECTS)
 
 .c.o: 
-	gcc -c $*.c
+	gcc -ggdb -c $*.c
 
 clean:
 	/bin/rm -f *.o core $(EXECUTABLES) 
