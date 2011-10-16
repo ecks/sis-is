@@ -26,7 +26,10 @@
 #include "sockunion.h"
 #include "sockopt.h"
 #include "privs.h"
+#include <sisis_api.h>
+#include <sisis_process_types.h>
 
+#include "ospf6d.h"
 #include "ospf6_sisis.h"
 #include "ospf6_proto.h"
 #include "ospf6_network.h"
@@ -84,18 +87,15 @@ ospf6_serv_sock (uint64_t host_num)
   struct in6_addr * sv_addr;
   char  s_addr[INET6_ADDRSTRLEN+1];
   int status;
-
+  
   if (ospf6d_privs.change (ZPRIVS_RAISE))
     zlog_err ("ospf6_serv_sock: could not raise privs");
 
-
-  sv_addr = get_sv_addr();
+  sv_addr = get_sv_addr(); 
 
   inet_ntop(AF_INET6, sv_addr, s_addr, INET6_ADDRSTRLEN+1);
   printf("done getting sv addr: %s\n", s_addr);
 
-  rospf6_sisis_register(host_num);
-  
   // Set up socket address info
   struct addrinfo hints, *addr;
   memset(&hints, 0, sizeof hints);

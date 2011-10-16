@@ -1885,7 +1885,9 @@ ospf6_init (uint64_t host_num, struct in6_addr * svz_addr)
   INSTALL (ENABLE, database_type_self_originated_linkstate_id_detail_cmd);
 
   /* Make ospf protocol socket. */
-  ospf6_serv_sock (host_num);
+  ospf6_serv_sock(host_num);
+
+  redundancy_main(host_num);
   thread_add_read (master, rospf6_receive, NULL, ospf6_sock);
 }
 

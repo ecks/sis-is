@@ -771,7 +771,7 @@ static int zread_interface_address_add_or_delete (int command, struct zserv *cli
 				ipv6_address_uninstall (NULL, ifp, addr_str, NULL, NULL, 0);
 		}
 	}
-	
+
   return 0;
 }
 

@@ -107,8 +107,8 @@ static zebra_capabilities_t _caps_p [] =
 struct zebra_privs_t sisisd_privs =
 {
 #if defined(QUAGGA_USER) && defined(QUAGGA_GROUP)
-  .user = QUAGGA_USER,
-  .group = QUAGGA_GROUP,
+//  .user = QUAGGA_USER,
+//  .group = QUAGGA_GROUP,
 #endif
 #ifdef VTY_GROUP
   .vty_group = VTY_GROUP,

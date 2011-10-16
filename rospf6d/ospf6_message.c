@@ -42,6 +42,7 @@
 #include "ospf6_area.h"
 #include "ospf6_neighbor.h"
 #include "ospf6_interface.h"
+#include "ospf6_sisis.h"
 
 #include "ospf6_flood.h"
 #include "ospf6d.h"
@@ -1209,6 +1210,9 @@ rospf6_receive (struct thread * thread)
   uint16_t length, command;
 
   zlog_debug("Received message");
+  int number_of_processes;
+  number_of_processes = num_of_processes(); 
+  zlog_debug("number of processes %d\n", number_of_processes);
 
   /* add next read thread */
   sockfd = THREAD_FD (thread);

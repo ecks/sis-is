@@ -94,6 +94,12 @@ int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, 
 #endif /* USE_IPV6 */
 
 #ifdef USE_IPV6
+ 
+/**
+ * Need to free outside of function
+ */
+void sisis_register_host(uint64_t host_num, uint64_t ptype, uint64_t ptype_version);
+
 /**
  * Unregisters SIS-IS process.
  *
@@ -154,6 +160,12 @@ int unsubscribe_to_rib_changes(struct subscribe_to_rib_changes_info * info);
  * responsibility to free the list when done with it.
  */
 struct list_sis * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p);
+
+/** Get list of processes of a given type and version.  Caller should call FREE_LINKED_LIST on result after. */
+struct list_sis * get_processes_by_type_version(uint64_t process_type, uint64_t process_version);
+
+/** Count number of processes of a given type/version*/
+int get_process_type_version_count(uint64_t process_type, uint64_t process_version);
 
 /**
  * Creates an IPv6 prefix

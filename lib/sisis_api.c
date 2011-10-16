@@ -599,6 +599,27 @@ int sisis_register(char * sisis_addr, ...)
 	return rtn;
 }
 
+void sisis_register_host(uint64_t host_num, uint64_t ptype, uint64_t ptype_version)
+{
+  uint64_t pid, timestamp;
+  char sisis_addr[INET6_ADDRSTRLEN];
+
+  // Get pid
+  pid = getpid();        // Get start time
+  struct timeval tv; 
+  gettimeofday(&tv, NULL);
+  timestamp = (tv.tv_sec * 100 + (tv.tv_usec / 10000)) & 0x00000000ffffffffLLU;   // In 100ths of seconds
+  
+  // Register SIS-IS address
+  if (sisis_register(sisis_addr, ptype, ptype_version, host_num, pid, timestamp) != 0)
+  {
+    zlog_notice("Failed to register SIS-IS address.");
+    exit(1);    
+  }
+
+  printf("Opening socket at %s.\n", sisis_addr);
+}
+
 /**
  * Unregisters SIS-IS process.
  *
@@ -683,6 +704,27 @@ int sisis_register(unsigned int ptype, unsigned int host_num, unsigned int pid, 
 	pthread_create(&reregistrations[idx]->thread, NULL, sisis_reregister, (void *)reregistrations[idx]);
 	
 	return rtn;
+}
+
+void sisis_register_host(uint64_t host_num, uint64_t ptype, uint64_t ptype_version)
+{
+  uint64_t pid, timestamp;
+  char sisis_addr[INET4_ADDRSTRLEN];
+
+  // Get pid
+  pid = getpid();        // Get start time
+  struct timeval tv; 
+  gettimeofday(&tv, NULL);
+  timestamp = (tv.tv_sec * 100 + (tv.tv_usec / 10000)) & 0x00000000ffffffffLLU;   // In 100ths of seconds
+  
+  // Register SIS-IS address
+  if (sisis_register(sisis_addr, ptype, ptype_version, host_num, pid, timestamp) != 0)
+  {
+    zlog_notice("Failed to register SIS-IS address.");
+    exit(1);    
+  }
+
+  printf("Opening socket at %s.\n", sisis_addr);
 }
 
 /**
@@ -940,6 +982,35 @@ struct list_sis * get_sisis_addrs_for_prefix(struct prefix_ipv6 * p)
 	return rtn;
 }
 
+/** Get list of processes of a given type and version.  Caller should call FREE_LINKED_LIST on result after. */
+struct list_sis * get_processes_by_type_version(uint64_t process_type, uint64_t process_version)
+{
+        char addr[INET6_ADDRSTRLEN+1];
+        sisis_create_addr(addr, process_type, process_version, 0LLU, 0LLU, 0LLU);
+        struct prefix_ipv6 prefix = sisis_make_ipv6_prefix(addr, 42);
+        return get_sisis_addrs_for_prefix(&prefix);
+}
+
+/** Count number of processes of a given type/version*/
+int get_process_type_version_count(uint64_t process_type, uint64_t process_version)
+{
+        int cnt = 0;
+    
+        char addr[INET6_ADDRSTRLEN+1];
+        sisis_create_addr(addr, process_type, process_version, 0LLU, 0LLU, 0LLU);
+        struct prefix_ipv6 prefix = sisis_make_ipv6_prefix(addr, 42);
+        struct list_sis * addrs = get_sisis_addrs_for_prefix(&prefix);
+        if (addrs != NULL)
+        {   
+          cnt = addrs->size;
+    
+          // Free memory
+          FREE_LINKED_LIST(addrs);
+        }   
+                       
+        return cnt;
+}
+                
 /**
  * Creates an IPv6 prefix
  */

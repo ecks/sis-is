@@ -164,6 +164,13 @@ connected_implicit_withdraw (struct interface *ifp, struct connected *ifc)
         }
       
       UNSET_FLAG(current->conf, ZEBRA_IFC_CONFIGURED);
+
+      if(CHECK_FLAG (current->flags, ZEBRA_IFA_EXPIRES))
+      {
+        SET_FLAG (ifc->flags, ZEBRA_IFA_EXPIRES);
+      }
+      ifc->expires = current->expires; // HSA - need to copy over address expiration info if we are to explicitly withdraw a route
+
       connected_withdraw (current); /* implicit withdraw - freebsd does this */
     }
   return ifc;

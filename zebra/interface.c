@@ -1388,6 +1388,7 @@ ipv6_address_install (struct vty *vty, struct interface *ifp,
     }
 
   ifc = connected_check (ifp, (struct prefix *) &cp);
+
   if (! ifc)
     {
       ifc = connected_new ();
@@ -1409,13 +1410,14 @@ ipv6_address_install (struct vty *vty, struct interface *ifp,
       /* Add to linked list. */
       listnode_add (ifp->connected, ifc);
     }
-		
-		// Check if this route expires
-		if (expires != NULL)
-		{
-			SET_FLAG (ifc->flags, ZEBRA_IFA_EXPIRES);
-			ifc->expires = *expires;
-		}
+
+  // Check if this route expires
+  if (expires != NULL)
+  {
+    
+    SET_FLAG (ifc->flags, ZEBRA_IFA_EXPIRES);
+    ifc->expires = *expires;
+  }
 
   /* This address is configured from zebra. */
   if (! CHECK_FLAG (ifc->conf, ZEBRA_IFC_CONFIGURED))
@@ -1461,6 +1463,9 @@ ipv6_address_install (struct vty *vty, struct interface *ifp,
 				netlink_del_reject_route(AF_INET6, &p->prefix, 128, lo_ifp->ifindex);
     }
 		
+  struct listnode *node, *node2, *node3;
+  struct connected *ifc2;
+
   return CMD_SUCCESS;
 }
 
@@ -1626,11 +1631,16 @@ struct thread * zebra_if_addr_expire_thread = NULL;
 /* Check for interface IP addresses that have expired. */
 int if_addr_expired_checker(struct thread* th)
 {
-	struct listnode *node, *node2, *node3;
+  struct listnode *node, *node2, *node3;
   struct interface *ifp;
 	struct connected *ifc;
+
+  struct tm * exp_tm;
+  struct tm * lcl_tm;
+  time_t now;
+  char buf[80];
 	
-	for (ALL_LIST_ELEMENTS_RO (iflist, node, ifp))
+  for (ALL_LIST_ELEMENTS_RO (iflist, node, ifp))
   {
 		for (ALL_LIST_ELEMENTS (ifp->connected, node2, node3, ifc))
 		{

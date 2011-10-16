@@ -28,8 +28,8 @@ zebra_capabilities_t _caps_p [] =
 struct zebra_privs_t svd_privs =
 {
 #if defined(QUAGGA_USER) && defined(QUAGGA_GROUP)
-  .user = QUAGGA_USER,
-  .group = QUAGGA_GROUP,
+//  .user = QUAGGA_USER,
+//  .group = QUAGGA_GROUP,
 #endif
 #if defined(VTY_GROUP)
   .vty_group = VTY_GROUP,

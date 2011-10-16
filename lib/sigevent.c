@@ -49,7 +49,7 @@ struct quagga_sigevent_master_t
 
 /* Generic signal handler 
  * Schedules signal event thread
- */
+*/
 static void
 quagga_signal_handler (int signo)
 {
@@ -255,6 +255,7 @@ trap_default_signals(void)
 #endif
   };
   static const int ignore_signals[] = {
+    SIGUSR2,
     SIGPIPE,
   };
   static const struct {

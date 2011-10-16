@@ -54,10 +54,10 @@ zebra_capabilities_t _caps_p [] =
 struct zebra_privs_t ospf6d_privs =
 {
 #if defined(QUAGGA_USER)
-  .user = QUAGGA_USER,
+//  .user = QUAGGA_USER,
 #endif
 #if defined QUAGGA_GROUP
-  .group = QUAGGA_GROUP,
+//  .group = QUAGGA_GROUP,
 #endif
 #ifdef VTY_GROUP
   .vty_group = VTY_GROUP,

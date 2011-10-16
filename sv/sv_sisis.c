@@ -35,27 +35,18 @@ int
 shim_sisis_init (uint64_t host_num)
 {
   int sockfd;
-  uint64_t ptype, ptype_version, pid, timestamp;
-  char sisis_addr[INET6_ADDRSTRLEN];
 
-  // Store process type
-  ptype = (uint64_t)SISIS_PTYPE_RIBCOMP_SV;
-  ptype_version = (uint64_t)VERSION;
+  sisis_register_host(host_num, SISIS_PTYPE_RIBCOMP_SV, VERSION);
 
-  //       // Get pid
-  pid = getpid();        // Get start time
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  timestamp = (tv.tv_sec * 100 + (tv.tv_usec / 10000)) & 0x00000000ffffffffLLU;   // In 100ths of seconds
-
-  // Register SIS-IS address
-  if (sisis_register(sisis_addr, ptype, ptype_version, host_num, pid, timestamp) != 0)
+  char sv_addr[INET6_ADDRSTRLEN+1];
+  sisis_create_addr(sv_addr, (uint64_t)SISIS_PTYPE_RIBCOMP_SV, (uint64_t)0, (uint64_t)0, (uint64_t)0, (uint64_t)0); 
+  struct prefix_ipv6 sv_prefix = sisis_make_ipv6_prefix(sv_addr, 37);
+  struct list_sis * sv_addrs = get_sisis_addrs_for_prefix(&sv_prefix);
+  if(sv_addrs->size == 1)
   {
-    printf("Failed to register SIS-IS address.\n");
-    exit(1);
+    struct listnode_sis * node = sv_addrs->head;
+    inet_ntop(AF_INET6, (struct in6_addr *)node->data, sv_addr, INET6_ADDRSTRLEN+1);
   }
-
-  printf("Opening socket at %s on port %i.\n", sisis_addr, SHIM_SISIS_PORT);
 
   // Set up socket address info
   struct addrinfo hints, *addr;
@@ -64,7 +55,7 @@ shim_sisis_init (uint64_t host_num)
   hints.ai_socktype = SOCK_STREAM;  // TCP
   char port_str[8];
   sprintf(port_str, "%u", SHIM_SISIS_PORT);
-  getaddrinfo(sisis_addr, port_str, &hints, &addr);
+  getaddrinfo(sv_addr, port_str, &hints, &addr);
 
   // Create socket
   if ((sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)) < 0)
