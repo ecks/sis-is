@@ -316,6 +316,13 @@ stream_getw (struct stream *s)
   return w;
 }
 
+/* Only peek, do not modify getp */
+u_int16_t
+stream_peekw (struct stream *s)
+{
+  return stream_getw_from(s, stream_get_getp(s));
+}
+
 /* Get next word from the stream. */
 u_int16_t
 stream_getw_from (struct stream *s, size_t from)

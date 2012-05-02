@@ -29,7 +29,7 @@ shim_init (uint64_t host_num)
 {
   shim_top_init ();
   shim_zebra_init ();
-//  bmap_init();
+  bmap_init();
   struct shim * ns = shim_new (host_num);
   shim = ns;
 //  listnode_add(sm->listen_sockets, ns); // is this necessary ?

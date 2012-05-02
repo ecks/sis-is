@@ -12,5 +12,4 @@ version.h
 .arch-ids
 *~
 *.loT
-memtypes.h
 route_types.h

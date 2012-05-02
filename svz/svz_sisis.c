@@ -112,37 +112,80 @@ unsigned int
 are_checksums_same (void)
 {
   int same = 0;
+  int first_iter = 1;
   struct listnode * node, * nnode;
   struct sisis_listener * listener;
-  struct sisis_listener * listener_swp = (struct sisis_listener *)listgetdata(listhead(sm->listen_sockets));
-  u_int16_t chsum_swp = listener_swp->chksum;
+  u_int16_t chksum_swp;
+  int i =  0;
 
   for(ALL_LIST_ELEMENTS (sm->listen_sockets, node, nnode, listener))
   {
-    zlog_debug("checksum: %d", listener->chksum);
-    if(listener->chksum == chsum_swp)
+    zlog_debug("iter: %d", i);
+    i++;
+    zlog_debug("getp before: %d", stream_get_getp(listener->chksum_stream));
+    zlog_debug("endp before: %d", stream_get_endp(listener->chksum_stream));
+    if(stream_get_endp(listener->chksum_stream) != stream_get_getp(listener->chksum_stream))
     {
-      same = 1;
-      chsum_swp = listener->chksum;
+      u_int16_t chksum = stream_getw(listener->chksum_stream);
+      zlog_debug("getp after: %d", stream_get_getp(listener->chksum_stream));
+      zlog_debug("endp after: %d", stream_get_endp(listener->chksum_stream));
+      zlog_debug("checksum: %d", chksum);
+      if(first_iter)
+      {
+        chksum_swp = chksum;
+        first_iter = 0;
+      }
+      else if(chksum == chksum_swp)
+      {
+        same = 1;
+        chksum_swp = chksum;
+      }
+      else
+      {
+        return 0;
+      }
     }
-    else
-    {
-      return 0;
-     }
   }
 
   return same;
 }
 
 void
-reset_checksums (void)
+reset_checksum_streams (void)
 {
   struct listnode * node, * nnode;
   struct sisis_listener * listener;
 
   for(ALL_LIST_ELEMENTS (sm->listen_sockets, node, nnode, listener))
   {
-    listener->chksum = 0;
+    if(stream_get_endp(listener->chksum_stream) == stream_get_getp(listener->chksum_stream))
+      stream_reset(listener->chksum_stream);
+  }
+}
+
+void
+clear_checksum_streams (uint16_t checksum)
+{
+  struct listnode * node, * nnode;
+  struct sisis_listener * listener;
+
+  for(ALL_LIST_ELEMENTS (sm->listen_sockets, node, nnode, listener))
+  {
+     if(stream_get_getp(listener->chksum_stream) < stream_get_endp(listener->chksum_stream))
+     {
+       uint16_t checksum_head = stream_getw(listener->chksum_stream);
+       if(checksum_head != checksum)
+       {
+         stream_putw(listener->chksum_stream, checksum_head);
+         uint16_t next_checksum = stream_peekw(listener->chksum_stream);
+         while(next_checksum != checksum_head)
+         {
+           next_checksum = stream_getw(listener->chksum_stream);
+           if(next_checksum != checksum)
+             stream_putw(listener->chksum_stream, next_checksum);
+         }
+       }
+     }
   }
 }
 
@@ -226,6 +269,7 @@ shim_sisis_accept(struct thread * thread)
 //  memcpy(&listener->su, sa, salen);
   listener->sisis_fd = sisis_sock;
   listener->dif = stream_fifo_new();
+  listener->chksum_stream = stream_new(4 * 20); // need to figure out good size for buffering
   listener->read_thread = thread_add_read (master, shim_sisis_read, listener, sisis_sock);
   listnode_add (sm->listen_sockets, listener);
 
@@ -252,6 +296,7 @@ svz_sisis_clean_bmap(struct thread * thread)
   {
     zlog_debug("periodic called to clean up bmap for checksum [%d]: already cleaned...", *chcksum_ptr);
   }
+  clear_checksum_streams(*chcksum_ptr);
   pthread_mutex_unlock(&bmap_mutex);
 
   free(chcksum_ptr); 
@@ -350,26 +395,26 @@ shim_sisis_read(struct thread * thread)
   zlog_notice("# of streams %d for checksum %d with length %d", bmap->count, checksum, length);
  
   float received_ratio = (float)bmap->count/(float)num_of_addrs;
-  listener->chksum = checksum;
+  stream_putw(listener->chksum_stream, checksum);
   if((received_ratio > 1.0/2.0) && !bmap->sent)
   {
-//    if(are_checksums_same())
-//    {
-//      zlog_notice("Checksums are all the same");
+    if(are_checksums_same())
+    {
+      zlog_notice("Checksums are all the same");
 
     if(primary_listener == NULL)
       primary_listener = listener;
 
-    reset_checksums();
+    reset_checksum_streams();
     svz_send(listener->ibuf);
     bmap->sent = 1;
-//    }
-//    else
-//    {
-//      zlog_notice("Checksums are not all the same");
-//      stream_fifo_push(listener->dif, listener->ibuf);
-//      listener->dif_size++;
-//    }
+    }
+    else
+    {
+      zlog_notice("Checksums are not all the same");
+      stream_fifo_push(listener->dif, listener->ibuf);
+      listener->dif_size++;
+    }
   }
   else if(!bmap->sent)
   {
@@ -387,6 +432,7 @@ shim_sisis_read(struct thread * thread)
     bmap->count = 0;
     bmap->sent = 0;
 
+    clear_checksum_streams(checksum);
     bmap_unset(checksum);
   } 
   pthread_mutex_unlock(&bmap_mutex);

@@ -167,6 +167,7 @@ extern void stream_get (void *, struct stream *, size_t);
 extern u_char stream_getc (struct stream *);
 extern u_char stream_getc_from (struct stream *, size_t);
 extern u_int16_t stream_getw (struct stream *);
+extern u_int16_t stream_peekw (struct stream *);
 extern u_int16_t stream_getw_from (struct stream *, size_t);
 extern u_int32_t stream_getl (struct stream *);
 extern u_int32_t stream_getl_from (struct stream *, size_t);

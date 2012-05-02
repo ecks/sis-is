@@ -193,7 +193,7 @@ svzclient_socket(struct in6_addr * svz_addr)
       return -1;
     }
 
-  sleep(1.0);
+  sleep(2.0);
 
   return sock;
 }
