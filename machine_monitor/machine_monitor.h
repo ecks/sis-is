@@ -1,0 +1,6 @@
+#ifndef _MACHINE_MONITOR_H
+#define _MACHINE_MONITOR_H
+
+#define MACHINE_MONITOR_PORT 50000
+
+#endif
